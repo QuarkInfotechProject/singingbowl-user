@@ -1,54 +1,52 @@
 import Link from "next/link";
-
 import { Facebook, Instagram, YouTube, Pinterest } from "@mui/icons-material";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import { FaTiktok } from "react-icons/fa";
 
-const socialLinks = [
-  { name: "TikTok", icon: <FaTiktok size={18} />, url: "https://tiktok.com" },
-  {
-    name: "WhatsApp",
-    icon: <WhatsAppIcon sx={{ fontSize: 18 }} />,
-    url: "https://wa.me/",
-  },
-  {
-    name: "Facebook",
-    icon: <Facebook sx={{ fontSize: 18 }} />,
-    url: "https://facebook.com",
-  },
-  {
-    name: "Instagram",
-    icon: <Instagram sx={{ fontSize: 18 }} />,
-    url: "https://instagram.com",
-  },
-  {
-    name: "YouTube",
-    icon: <YouTube sx={{ fontSize: 18 }} />,
-    url: "https://youtube.com",
-  },
-  {
-    name: "Pinterest",
-    icon: <Pinterest sx={{ fontSize: 18 }} />,
-    url: "https://pinterest.com",
-  },
+const iconMap: Record<string, React.ReactNode> = {
+  TikTok: <FaTiktok size={18} />,
+  WhatsApp: <WhatsAppIcon sx={{ fontSize: 18 }} />,
+  Facebook: <Facebook sx={{ fontSize: 18 }} />,
+  Instagram: <Instagram sx={{ fontSize: 18 }} />,
+  YouTube: <YouTube sx={{ fontSize: 18 }} />,
+  Pinterest: <Pinterest sx={{ fontSize: 18 }} />,
+};
+
+const defaultSocialLinks = [
+  { name: "TikTok", href: "https://tiktok.com" },
+  { name: "WhatsApp", href: "https://wa.me/" },
+  { name: "Facebook", href: "https://facebook.com" },
+  { name: "Instagram", href: "https://instagram.com" },
+  { name: "YouTube", href: "https://youtube.com" },
+  { name: "Pinterest", href: "https://pinterest.com" },
 ];
 
-const Socialmedia = () => {
+type SocialmediaProps = {
+  socialLinks?: Array<{
+    name: string;
+    href: string;
+  }>;
+};
+
+const Socialmedia: React.FC<SocialmediaProps> = ({ socialLinks }) => {
+  const links = socialLinks || defaultSocialLinks;
+
   return (
     <div className="flex items-center gap-3">
-      {socialLinks.map((social) => (
+      {links.map((social) => (
         <Link
           key={social.name}
-          href={social.url}
+          href={social.href}
           target="_blank"
           rel="noopener noreferrer"
           className="text-gray-700 hover:text-gray-900 transition-colors"
           aria-label={social.name}
         >
-          {social.icon}
+          {iconMap[social.name]}
         </Link>
       ))}
     </div>
   );
 };
+
 export default Socialmedia;
