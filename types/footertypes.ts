@@ -1,7 +1,7 @@
 import React from "react";
 
 export interface ContactInfo {
-  icon: React.ElementType;
+  icon: string;
   title: string;
   lines: string[];
 }

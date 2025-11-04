@@ -2,6 +2,7 @@ import React from "react";
 import { FooterData } from "@/types/footertypes";
 import FooterColumn from "./FooterColumn";
 import Socialmedia from "../Socialmedia";
+import Image from "next/image";
 
 type FooterMainProps = Pick<
   FooterData,
@@ -24,9 +25,8 @@ const FooterMain: React.FC<FooterMainProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-32 pb-12">
       {/* About Section */}
       <div className="space-y-4">
-        <h2 className="text-white text-lg font-semibold tracking-wider">
-          {about.title}
-        </h2>
+               <Image src="/assets/images/logo/logo.png" alt="Logo" width={150} height={50} />
+       
         <p className="text-sm">{about.description}</p>
         <div>
           <h3 className="text-white text-lg font-semibold mb-3">Follow Us</h3>

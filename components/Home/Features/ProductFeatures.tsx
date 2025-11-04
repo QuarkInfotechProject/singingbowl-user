@@ -1,0 +1,100 @@
+import React from "react";
+
+const productData = {
+  title: "Product Features",
+  headline: "We have made the most",
+  highlightedText: "Powerful Healing",
+  subHeadline: "System",
+  description:
+    "Our handcrafted singing bowls are made from high-quality metal alloys, designed to produce rich, calming, and resonant tones. Available in a variety of sizes and finishes, each bowl comes with a wooden mallet and cushion for easy use. Compact and portable, they are perfect for meditation, relaxation, or as a beautiful decorative piece.",
+  features: [
+    {
+      id: 1,
+      title: "Stress Relief & Relaxation",
+      description: "The vibrations help reduce stress.",
+    },
+    {
+      id: 2,
+      title: "Energy Balancing",
+      description: "Believed to harmonize energy flow within the body.",
+    },
+    {
+      id: 3,
+      title: "Improved Sleep",
+      description: "Helps reduce anxiety for better sleep.",
+    },
+    {
+      id: 4,
+      title: "Sound Therapy",
+      description:
+        "Useful for sound healing practices, chakra balancing, and holistic therapy.",
+    },
+  ],
+  image: {
+    src: "/assets/images/home/bowl.png",
+    alt: "Hand holding a singing bowl with a mallet",
+  },
+};
+
+const ProductFeatures = () => {
+  return (
+    <div className="w-full mx-auto pr-4 py-8 sm:pr-6 lg:pr-8">
+      <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center justify-center">
+        {/* Image Section */}
+        <div className="w-full lg:w-2/5 flex justify-center lg:justify-end">
+          <img
+            src={productData.image.src}
+            alt={productData.image.alt}
+            className="w-full max-w-sm md:max-w-md lg:max-w-none h-auto object-contain"
+          />
+        </div>
+
+        {/* Content Section */}
+        <div className="w-full lg:w-3/5 flex flex-col gap-8">
+          <div className="text-center lg:text-left flex flex-col gap-12">
+            <h2 className="font-bold text-4xl md:text-5xl text-black tracking-tight mb-6">
+              {productData.title}
+            </h2>
+            <h3 className="text-3xl md:text-4xl font-bold text-gray-800 leading-tight">
+              {productData.headline}{" "}
+              <span className="text-[#A12717]">
+                {productData.highlightedText}
+              </span>
+              <br />
+              {productData.subHeadline}
+            </h3>
+          </div>
+
+          <div className="flex flex-col gap-8 w-full text-center lg:text-left">
+            <p className="text-lg text-gray-600 leading-relaxed">
+              {productData.description}
+            </p>
+
+            <div>
+              <ul className="space-y-4">
+                {productData.features.map((feature) => (
+                  <li
+                    key={feature.id}
+                    className="flex items-start justify-center lg:justify-start gap-3"
+                  >
+                    <span className="text-[#A12717] font-bold text-xl mt-1 leading-none">
+                      •
+                    </span>
+                    <p className="text-lg text-gray-700 text-left">
+                      <span className="font-semibold text-gray-900">
+                        {feature.title}
+                      </span>{" "}
+                      – <span>{feature.description}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProductFeatures;

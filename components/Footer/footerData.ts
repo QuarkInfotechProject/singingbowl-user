@@ -1,20 +1,19 @@
 import { FooterData } from "@/types/footertypes";
-import { ClockIcon, PhoneIcon, MailIcon } from "./icons";
 
 export const footerData: FooterData = {
   contactInfo: [
     {
-      icon: ClockIcon,
+      icon: "/assets/images/icons/time.svg",
       title: "Opening Hours",
       lines: ["Monday - Friday 09:00 - 18:00", "Saturday 09:00 - 14:00"],
     },
     {
-      icon: PhoneIcon,
+      icon: "/assets/images/icons/phone.svg",
       title: "Call Us Anytime",
       lines: ["+977 9841000000"],
     },
     {
-      icon: MailIcon,
+      icon: "/assets/images/icons/plane.svg",
       title: "Mail Us",
       lines: ["singingbowlvillage@gmail.com", "support@singingbowl.com"],
     },
