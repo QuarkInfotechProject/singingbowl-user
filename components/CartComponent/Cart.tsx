@@ -4,7 +4,7 @@ const Cart = () => {
   return (
     <div>
       <ShoppingCartOutlinedIcon />
-      <span>Cart</span>
+      <span className="hidden sm:inline">Cart</span>
     </div>
   );
 };

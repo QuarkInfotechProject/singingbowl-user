@@ -38,10 +38,15 @@ const productData = {
 
 const ProductFeatures = () => {
   return (
-    <div className="w-full mx-auto pr-4 py-8 sm:pr-6 lg:pr-8">
-      <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center justify-center">
+    <div className="w-full px-2 lg:px-0 py-8 sm:pr-6 lg:pr-20">
+      <div className="flex md:hidden px-20 border">
+        <h2 className="font-bold text-4xl md:text-5xl text-black text-center tracking-tight mb-6">
+          {productData.title}
+        </h2>
+      </div>
+      <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-center justify-center border">
         {/* Image Section */}
-        <div className="w-full lg:w-2/5 flex justify-center lg:justify-end">
+        <div className="w-full lg:w-2/5 flex justify-center lg:justify-start">
           <img
             src={productData.image.src}
             alt={productData.image.alt}

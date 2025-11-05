@@ -2,7 +2,7 @@ import Image from "next/image";
 
 const HeroSection = () => {
   return (
-    <div className="w-full items-center flex relative px-20">
+    <div className="w-full items-center flex relative px-1 md:px-20">
       <div className="w-full">
         <Image
           src="/assets/images/home/hero.png"
@@ -12,8 +12,8 @@ const HeroSection = () => {
           className="w-full h-auto"
         />
       </div>
-      <div className=" max-w-3xl absolute bottom-10 left-40">
-        <span className="text-[40px] font-bold text-black">
+      <div className="max-w-3xl absolute bottom-1 md:bottom-10 left-4 md:left-40">
+        <span className="text-md md:text-[40px] font-bold text-black">
           Be a part of our family and enjoy the Singing Bowl Village experience
         </span>
       </div>

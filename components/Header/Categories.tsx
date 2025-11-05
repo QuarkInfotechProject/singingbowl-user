@@ -44,7 +44,7 @@ const Categories = () => {
     <div className="w-full bg-[#A12717] py-2 overflow-hidden">
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-hidden whitespace-nowrap"
+        className="flex gap-2 md:gap-4 overflow-x-hidden whitespace-nowrap"
         style={{ scrollBehavior: "auto" }}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
@@ -54,7 +54,7 @@ const Categories = () => {
           <Button
             key={index}
             variant="ghost"
-            className="text-white hover:bg-[#8a2014] hover:text-white px-6 py-2 text-sm font-normal flex-shrink-0"
+            className="text-white hover:bg-[#8a2014] hover:text-white px-4 md:px-6 py-2 text-sm font-normal flex-shrink-0"
             asChild
           >
             <Link href={category.href}>{category.name}</Link>
