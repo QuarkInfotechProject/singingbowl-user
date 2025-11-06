@@ -1,41 +1,36 @@
-import Image from "next/image";
-import { Product } from "./data";
-import { Button } from "@/components/ui/button";
+"use client";
 
-interface ProductCardProps extends Product {}
+import Link from "next/link";
+import ProductImage from "./ProductImage";
+import ProductInfo from "./ProductInfo";
+import { Product } from "@/types/product";
 
-const ProductCard = ({ id, name, description, image }: ProductCardProps) => {
+interface ProductCardProps {
+  product: Product;
+  isHovered: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+}
+
+export default function ProductCard({
+  product,
+  isHovered,
+  onMouseEnter,
+  onMouseLeave,
+}: ProductCardProps) {
   return (
-    <div className="flex-shrink-0 w-full">
-      <div className="flex flex-col gap-3 items-center justify-center">
-        {/* Product Image Container */}
-        <div className="relative">
-          <div className="w-[210px] h-[210px] rounded-full overflow-hidden border border-gray-300">
-            <Image
-              src={image}
-              alt={name}
-              width={210}
-              height={210}
-              className="w-full h-full object-cover"
-            />
-          </div>
+    <div className="flex flex-col gap-1 sm:gap-2 md:gap-3 items-center justify-start w-full">
+      <Link href={`/products/${product.id}`} className="w-full">
+        <ProductImage
+          src={product.image}
+          alt={product.name}
+          isHovered={isHovered}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+        />
+      </Link>
 
-          {/* Hover Overlay - Only on Image */}
-          <div className="absolute inset-0 rounded-full cursor-pointer bg-[#D9D9D9]/70 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10">
-            <Button className="px-6 py-2 bg-[#A12717] text-white cursor-pointer font-semibold rounded-full hover:bg-[#A12717] transition-colors shadow-lg">
-              Buy Now
-            </Button>
-          </div>
-        </div>
-
-        {/* Product Info */}
-        <div className="flex flex-col gap-2 items-center">
-          <h3 className="font-semibold text-2xl text-black">{name}</h3>
-          <p className="text-gray-600 text-base">{description}</p>
-        </div>
-      </div>
+      <ProductInfo name={product.name} description={product.description} />
     </div>
   );
-};
-
-export default ProductCard;
+}

@@ -1,6 +1,8 @@
 import ProductFeatures from "@/components/Home/Features/ProductFeatures";
+import SingingBowlComponent from "@/components/Home/HandCrafted/index";
 import HeroSection from "@/components/Home/Hero/HeroSection";
 import ProductCollection from "@/components/Home/Product/ProductCollection";
+import WhySingingBowl from "@/components/Home/Why";
 
 const Home = () => {
   return (
@@ -10,6 +12,8 @@ const Home = () => {
         <div className="flex flex-col items-center">
           <ProductFeatures />
           <ProductCollection />
+          <SingingBowlComponent />
+          <WhySingingBowl />
         </div>
       </div>
     </div>
