@@ -1,4 +1,5 @@
 import React from "react";
+import SectionTitle from "../SectionTitle";
 
 const productData = {
   title: "Product Features",
@@ -42,7 +43,7 @@ const ProductFeatures = () => {
       {/* Title - Visible on all screens */}
       <div className="mb-8 lg:mb-0">
         <h2 className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-black text-center lg:hidden tracking-tight">
-          {productData.title}
+          <SectionTitle title="Product Features" />
         </h2>
       </div>
 
@@ -60,7 +61,7 @@ const ProductFeatures = () => {
         <div className="w-full lg:w-3/5 flex flex-col gap-6 sm:gap-8">
           <div className="text-center lg:text-left flex flex-col gap-6 sm:gap-8">
             <h2 className="hidden lg:flex font-bold text-4xl md:text-5xl text-black tracking-tight">
-              {productData.title}
+              <SectionTitle title="Product Features" />
             </h2>
             <h3 className="text-xl sm:text-3xl md:text-4xl lg:text-4xl font-bold text-gray-800 leading-tight">
               {productData.headline}{" "}

@@ -2,6 +2,7 @@ import ProductFeatures from "@/components/Home/Features/ProductFeatures";
 import SingingBowlComponent from "@/components/Home/HandCrafted/index";
 import HeroSection from "@/components/Home/Hero/HeroSection";
 import ProductCollection from "@/components/Home/Product/ProductCollection";
+import CustomerReviews from "@/components/Home/Reviews/CustomerReviews";
 import WhySingingBowl from "@/components/Home/Why";
 
 const Home = () => {
@@ -14,6 +15,7 @@ const Home = () => {
           <ProductCollection />
           <SingingBowlComponent />
           <WhySingingBowl />
+          <CustomerReviews />
         </div>
       </div>
     </div>
