@@ -1,3 +1,4 @@
+import BlogGrid from "@/components/Home/Blogs/BlogGrid";
 import ProductFeatures from "@/components/Home/Features/ProductFeatures";
 import SingingBowlComponent from "@/components/Home/HandCrafted/index";
 import HeroSection from "@/components/Home/Hero/HeroSection";
@@ -17,6 +18,7 @@ const Home = () => {
           <WhySingingBowl />
           <CustomerReviews />
         </div>
+        <BlogGrid />
       </div>
     </div>
   );
