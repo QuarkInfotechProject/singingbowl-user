@@ -1,6 +1,6 @@
 "use client";
 
-import BestSeller from "@/components/Products/BestSeller";
+import ProductGrid from "@/components/Products/ProductGrid";
 import BreadCrumbs from "@/components/Products/Breadcrumbs";
 import CategoryCaraousel from "@/components/Products/Category/CategoryCaraousel";
 import FilterSection from "@/components/Products/Category/CategoryFilterSection";
@@ -34,7 +34,7 @@ const Product = () => {
         </div>
 
         <Find />
-        <BestSeller />  
+        <ProductGrid title="Our Best Sellers Product" />
       </div>
     </div>
   );

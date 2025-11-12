@@ -1,11 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Heart, Star } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 const ProductCard = () => {
   return (
     <div className="w-full">
-      <div className="flex flex-col gap-3">
+      <Link href="/products/details">
+<div className="flex flex-col gap-3">
         <div className="w-full w-[200px] h-auto relative">
           <Image
             src="/assets/images/product/1.jpg"
@@ -31,6 +33,7 @@ const ProductCard = () => {
           <b className="text-[#39B856]">$ 115,000</b>
         </div>
       </div>
+      </Link>
     </div>
   );
 };
