@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Star, Heart, Minus, Plus } from "lucide-react";
 import { useState } from "react";
+import CartSheet from "../Cart/CartSlide";
 
 const ProductInfo = () => {
   const [quantity, setQuantity] = useState(1);
@@ -12,7 +13,7 @@ const ProductInfo = () => {
 
   return (
     <div className="w-full max-w-2xl">
-      <div className="flex w-full flex-col gap-8">
+      <div className="flex w-full flex-col gap-6">
         <h2 className="font-bold text-4xl">Jambati Bowls</h2>
 
         <span className="flex items-center gap-3">
@@ -32,7 +33,7 @@ const ProductInfo = () => {
           </a>
         </span>
 
-        <h3 className="text-[#39B856] text-3xl font-semibold">Rs. 115,000</h3>
+        <h3 className="text-[#39B856] text-3xl font-semibold">$ 1150</h3>
 
         <hr className="border-gray-200" />
 
@@ -41,7 +42,10 @@ const ProductInfo = () => {
             The Enigmatic Jambati Bowls: A Deep Dive into History and
             Craftsmanship Jambati bowls, cherished for their deep, resonant
             tones and exquisite craftsmanship, hail from the Himalayan regions
-            of Nepal and Tibet.
+            of Nepal and Tibet. The Enigmatic Jambati Bowls: A Deep Dive into
+            History and Craftsmanship Jambati bowls, cherished for their deep,
+            resonant tones and exquisite craftsmanship, hail from the Himalayan
+            regions of Nepal and Tibet.
           </p>
           <Button
             variant="outline"
@@ -52,23 +56,14 @@ const ProductInfo = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center border border-gray-300 rounded-full">
-            <button onClick={decrementQuantity} className="p-2 cursor-pointer">
-              <Minus size={20} />
-            </button>
-            <span className="px-6 py-2 font-medium">{quantity}</span>
-            <button onClick={incrementQuantity} className="p-2 cursor-pointer">
-              <Plus size={20} />
-            </button>
-          </div>
-          <Button className="flex-1 bg-[#A12717] hover:bg-[#A12717] cursor-pointer text-white rounded-full py-6 font-semibold text-base">
-            Add to cart
+          <Button className="flex-1 bg-trasnparent border border-[#A12717] hover:bg-trasnparent cursor-pointer text-[#A12717] rounded-full py-6 font-semibold text-base">
+            Buy Now
           </Button>
+          {/* <Button className="flex-1 bg-[#A12717] hover:bg-[#A12717] cursor-pointer text-white rounded-full py-6 font-semibold text-base">
+            Add to cart
+          </Button> */}
+          <CartSheet />
         </div>
-
-        <p className="text-red-600 text-sm font-medium">
-          Only 10 left in stock
-        </p>
 
         <div className="flex items-center gap-8">
           <button className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium">

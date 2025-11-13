@@ -17,8 +17,8 @@ const Home = () => {
           <SingingBowlComponent />
           <WhySingingBowl />
           <CustomerReviews />
+          <BlogGrid />
         </div>
-        <BlogGrid />
       </div>
     </div>
   );
