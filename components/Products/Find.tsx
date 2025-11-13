@@ -5,7 +5,7 @@ const Find = () => {
   return (
     <div className="w-full">
       <div className="w-full bg-[#EBE9E9] rounded-xl p-6">
-        <div className="flex items-center justify-center gap-18 w-full">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-18 w-full">
           <div className="w-[320px] rounded-full">
             <Image
               src="/assets/images/product/3.png"
@@ -15,7 +15,7 @@ const Find = () => {
               className="rounded-full"
             />
           </div>
-          <div className="w-[50%] flex flex-col items-start justify-start text-start gap-4">
+          <div className="w-full lg:w-[50%] flex flex-col items-start justify-start text-start gap-4">
             <h2 className="text-[40px] font-semibold leading-tight">
               Find the right product for your needs
             </h2>

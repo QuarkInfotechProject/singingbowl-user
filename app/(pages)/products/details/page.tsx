@@ -8,12 +8,12 @@ const ProductDetail = () => {
   return (
     <div className="w-full">
       <div className="w-full flex flex-col gap-12 py-6">
-        <div className="px-26 mx-auto w-full flex flex-col gap-12">
+        <div className="px-4 md:px-26 mx-auto w-full flex flex-col gap-12">
           <DetailBreadCrumbs />
           <ProductHeroSection />
         </div>
         <IconCard />
-        <div className="px-26 mx-auto w-full flex flex-col gap-12">
+        <div className="px-4 md:px-26 mx-auto w-full flex flex-col gap-12">
           <ProductGrid title="You Might also like" />
           <DetailsSection />
           <ProductGrid title="Recently Viewed" />

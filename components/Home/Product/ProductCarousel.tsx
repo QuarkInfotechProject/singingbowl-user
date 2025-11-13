@@ -18,7 +18,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
 
   return (
-    <div className="w-full max-w-6xl">
+    <div className="w-full">
       <Carousel
         opts={{
           align: "start",
@@ -26,11 +26,11 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
         }}
         className="w-full"
       >
-        <CarouselContent className="-ml-2 sm:-ml-4 md:-ml-6 lg:-ml-8">
+        <CarouselContent className="-ml-2 sm:-ml-3 md:-ml-4 lg:-ml-6">
           {products.map((product) => (
             <CarouselItem
               key={product.id}
-              className="basis-1/3 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 pl-2 sm:pl-4 md:pl-6 lg:pl-8"
+              className="basis-1/2 sm:basis-1/3 md:basis-1/3 lg:basis-1/4 pl-2 sm:pl-3 md:pl-4 lg:pl-6"
             >
               <ProductCard
                 product={product}

@@ -39,7 +39,7 @@ const productData = {
 
 const ProductFeatures = () => {
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-0 py-8 lg:pr-20">
+    <div className="w-full px-2 sm:px-6 lg:px-0 py-8 lg:pr-20">
       {/* Title - Visible on all screens */}
       <div className="mb-8 lg:mb-0">
         <h2 className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-black text-center lg:hidden tracking-tight">

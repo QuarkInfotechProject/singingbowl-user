@@ -9,9 +9,9 @@ import WhySingingBowl from "@/components/Home/Why";
 const Home = () => {
   return (
     <div className="w-full">
-      <div className="flex flex-col items-center gap-12">
+      <div className="flex flex-col items-center gap-12 ">
         <HeroSection />
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col gap-8 md:gap-1 items-center overflow-hidden">
           <ProductFeatures />
           <ProductCollection />
           <SingingBowlComponent />

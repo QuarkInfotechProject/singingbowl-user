@@ -9,7 +9,7 @@ const SecondaryImage: React.FC<SecondaryImageProps> = ({ src, alt }) => {
       <img
         src={src}
         alt={alt}
-        className="w-full h-[204px] object-cover rounded-lg"
+        className="w-full h-auto md:h-[204px] object-cover rounded-lg"
       />
     </div>
   );

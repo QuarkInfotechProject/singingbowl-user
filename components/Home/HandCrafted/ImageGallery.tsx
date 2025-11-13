@@ -11,7 +11,7 @@ const ImageGallery = ({
   discount,
 }: ImageGalleryProps) => {
   return (
-    <div className="grid grid-cols-2 gap-2 h-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 h-full">
       {/* Main large image */}
       <div className="rounded-lg overflow-hidden">
         <FeaturedImage

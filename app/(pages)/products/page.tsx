@@ -15,20 +15,20 @@ const Product = () => {
   };
 
   return (
-    <div className="px-26 mx-auto w-full">
+    <div className="px-4 md:px-26 mx-auto w-full">
       <div className="w-full flex flex-col gap-12 py-6">
         <BreadCrumbs />
         <CategoryCaraousel />
 
         <div className="flex items-start justify-start gap-8">
-          <div className="w-1/5 sticky top-8">
+          <div className="hidden md:flex w-1/5 sticky top-8">
             <FilterSection
               categories={FILTER_DATA}
               resultsCount={245}
               onFilterChange={handleFilterChange}
             />
           </div>
-          <div className="w-[80%] flex flex-col gap-4 bg-white rounded-lg">
+          <div className="w-full md:w-[80%] flex flex-col gap-4 bg-white rounded-lg">
             <ProductSection />
           </div>
         </div>

@@ -14,14 +14,14 @@ const CategoryCarousel = () => {
         {categories.map((category) => (
           <CarouselItem
             key={category.id}
-            className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/6"
+            className="pl-2 md:pl-4 basis-1/2 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/6"
           >
             <CategoryCard category={category} />
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="text-white hover:text-white rounded-md bg-[#A12717] w-8 h-12 hover:bg-[#A12717] cursor-pointer" />
-      <CarouselNext className="text-white hover:text-white rounded-md bg-[#A12717] w-8 h-12 hover:bg-[#A12717] cursor-pointer" />
+      <CarouselPrevious className="hidden md:flex text-white hover:text-white rounded-md bg-[#A12717] w-8 h-12 hover:bg-[#A12717] cursor-pointer" />
+      <CarouselNext className="hidden md:flex text-white hover:text-white rounded-md bg-[#A12717] w-8 h-12 hover:bg-[#A12717] cursor-pointer" />
     </Carousel>
   );
 };

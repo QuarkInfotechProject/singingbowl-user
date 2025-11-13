@@ -16,7 +16,7 @@ const FeaturedImage: React.FC<FeaturedImageProps> = ({
       <img
         src={src}
         alt={alt}
-        className="w-full h-[416px] object-cover rounded-lg"
+        className="w-full h-auto md:h-[416px] object-cover rounded-lg"
       />
       {discount && <DiscountBadge discount={discount} />}
     </div>
