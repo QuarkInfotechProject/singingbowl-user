@@ -25,37 +25,55 @@ const Cart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([
     {
       id: "1",
-      name: "Premium Wireless Headphones",
-      price: 129.99,
+      name: "Tibetan Brass Singing Bowl 7 inch",
+      price: 89.99,
       quantity: 1,
       image: "/assets/images/product/1.jpg",
-      stock: 10,
-      discount: 15,
-    },
-    {
-      id: "2",
-      name: "USB-C Fast Charging Cable",
-      price: 24.99,
-      quantity: 2,
-      image: "/assets/images/product/2.jpg",
-      stock: 50,
-    },
-    {
-      id: "3",
-      name: "Portable Power Bank 20000mAh",
-      price: 45.99,
-      quantity: 1,
-      image: "/assets/images/product/3.jpg",
-      stock: 8,
+      stock: 15,
       discount: 10,
     },
     {
+      id: "2",
+      name: "Crystal Singing Bowl Set - Clear Quartz",
+      price: 149.99,
+      quantity: 1,
+      image: "/assets/images/product/2.jpg",
+      stock: 8,
+      discount: 15,
+    },
+    {
+      id: "3",
+      name: "Chakra Singing Bowl Set - 7 Chakra Bowls",
+      price: 199.99,
+      quantity: 1,
+      image: "/assets/images/product/3.jpg",
+      stock: 5,
+      discount: 20,
+    },
+    {
       id: "4",
-      name: "Screen Protector Pack",
-      price: 12.99,
-      quantity: 3,
+      name: "Meditation Singing Bowl 5 inch",
+      price: 59.99,
+      quantity: 2,
       image: "/assets/images/product/4.jpg",
-      stock: 100,
+      stock: 25,
+    },
+    {
+      id: "5",
+      name: "Hand-Hammered Singing Bowl 8 inch",
+      price: 129.99,
+      quantity: 1,
+      image: "/assets/images/product/5.jpg",
+      stock: 12,
+      discount: 12,
+    },
+    {
+      id: "6",
+      name: "Frosted Quartz Singing Bowl - Rose Quartz",
+      price: 169.99,
+      quantity: 1,
+      image: "/assets/images/product/6.jpg",
+      stock: 6,
     },
   ]);
 
@@ -200,25 +218,6 @@ const Cart = () => {
                                 item.quantity
                               ).toFixed(2)}
                             </p>
-                          </div>
-
-                          {/* Quantity Selector */}
-                          <div className="flex items-center border border-slate-300 rounded-lg">
-                            <button
-                              onClick={() => updateQuantity(item.id, -1)}
-                              className="p-1 text-slate-600 hover:bg-slate-100 transition-colors"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <span className="px-4 py-1 font-semibold text-slate-900 min-w-12 text-center">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => updateQuantity(item.id, 1)}
-                              className="p-1 text-slate-600 hover:bg-slate-100 transition-colors"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
                           </div>
                         </div>
                       </div>
