@@ -3,7 +3,7 @@ name: 🚀 Deploy to Production Server
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy:
