@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { memo } from "react";
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -12,7 +13,11 @@ const navItems = [
 ];
 
 const NavigationBar = () => {
-  const [activeTab, setActiveTab] = useState("Home");
+  const pathname = usePathname();
+
+  // Determine active tab based on pathname
+  const activeTab =
+    navItems.find((item) => item.href === pathname)?.name;
 
   return (
     <nav className="w-full bg-white">
@@ -28,13 +33,12 @@ const NavigationBar = () => {
                 <Button
                   variant="ghost"
                   className="text-gray-700 hover:text-[#A12717] hover:bg-transparent p-0 text-sm font-medium h-auto rounded-none"
-                  onClick={() => setActiveTab(item.name)}
                   asChild
                 >
                   <a href={item.href}>{item.name}</a>
                 </Button>
                 {activeTab === item.name && (
-                  <div className="absolute bottom-3 left-4 right-4 h-0.5 bg-[#A12717]" />
+                  <div className="absolute bottom-3 left-4 right-4 h-0.5 bg-[#A12717] transition-all duration-300" />
                 )}
               </div>
             ))}
@@ -45,4 +49,4 @@ const NavigationBar = () => {
   );
 };
 
-export default NavigationBar;
+export default memo(NavigationBar);

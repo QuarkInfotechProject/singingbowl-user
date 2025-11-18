@@ -3,7 +3,7 @@ import { SingingBowlProps } from "@/types/SingingBowl.types";
 export const singingBowlData: SingingBowlProps = {
   title: "Handcrafted Carving Singing Bowl",
   description:
-    "Our handcrafted singing bowl, plated with genuine 24K gold, embodies both artistic beauty and spiritual depth. Expertly made by skilled artisans, the bowl produces rich, resonant tones that calm the mind, restore balance, and enhance meditation practices. The golden finish not only adds a touch of elegance but also symbolizes purity and divine energy, making it a perfect tool for healing, mindfulness, and spiritual connection. Each bowl is unique, carrying its own sacred vibration that enhances every spiritual journey.",
+    "Carving bowls are handcrafted by our skilled artisans in Nepal. Each singing bowl takes about 2–3 months to carve, as every detail is made with patience, precision, and traditional techniques. We are proud to be the only sellers in Nepal offering truly authentic hand-carved bowls, especially at a time when most of the market is filled with mass-produced, machine-made imitations. Our work supports local craftsmanship and preserves the traditional art of bowl-making.",
   size: '8"/20 cm diameter (custom sizes available)',
   materials: "Bronze Alloy, 24K Gold Plating",
   discount: "15%",

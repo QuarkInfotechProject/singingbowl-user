@@ -63,7 +63,7 @@ export default function ContactPage() {
               We warmly invite our clients to engage with us on a journey
               through the world of singing bowls. Whether you're interested in
               factory tours to witness firsthand the meticulous craftsmanship
-              behind each bowl, purchasing singing bowls, exploring healing
+              behind each bowl, purchasing singingbowls, exploring healing
               classes to deepen your understanding of sound therapy, or
               acquiring exquisite antique products steeped in cultural heritage,
               we are here to guide you. Our commitment to quality, authenticity,
@@ -112,7 +112,9 @@ export default function ContactPage() {
                         href="tel:+1234567890"
                         className="text-slate-900 hover:text-[#39B856] transition-colors font-medium"
                       >
-                        +1 (234) 567-890
+                        +977 9851352794, 9841422331
+                        <br />
+                        01-5353501
                       </a>
                     </div>
                   </div>
@@ -127,9 +129,9 @@ export default function ContactPage() {
                     <div>
                       <p className="text-sm text-slate-600">Address</p>
                       <p className="text-slate-900 font-medium">
-                        123 Design Street
+                        Kwabahal Chowk & Jyatha Street
                         <br />
-                        Creative City, CC 12345
+                        Thamel-17 Kathmandu, Nepal
                       </p>
                     </div>
                   </div>
@@ -257,16 +259,31 @@ export default function ContactPage() {
         </div>
 
         {/* Map */}
-        <div className="bg-white rounded-2xl mt-20 overflow-hidden shadow-sm hover:shadow-md transition-shadow h-120">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3532.1629301011144!2d85.3112074!3d27.7122553!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb18fdca609831%3A0x3e2bc4d23b67c920!2sSinging%20Bowl%20Gallery%20%26%20Museum%20by%20Freedom%20Export!5e0!3m2!1sen!2snp!4v1763017841435!5m2!1sen!2snp"
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            allowFullScreen={false}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 ">
+          <div className="bg-white rounded-2xl mt-20 overflow-hidden shadow-sm hover:shadow-md transition-shadow h-120">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3532.1629301011144!2d85.3112074!3d27.7122553!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb18fdca609831%3A0x3e2bc4d23b67c920!2sSinging%20Bowl%20Gallery%20%26%20Museum%20by%20Freedom%20Export!5e0!3m2!1sen!2snp!4v1763465522005!5m2!1sen!2snp"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen={false}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+            
+          </div>
+
+          <div className="bg-white rounded-2xl mt-20 overflow-hidden shadow-sm hover:shadow-md transition-shadow h-120">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d7064.321028700457!2d85.3096129!3d27.7123299!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb190fc5dffb3b%3A0xe3f6dadd18f9f5ba!2sSinging%20Bowl%20Village%20by%20Freedom%20Export!5e0!3m2!1sen!2snp!4v1763465399485!5m2!1sen!2snp"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen={false}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
         </div>
       </div>
     </div>
