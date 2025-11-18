@@ -1,15 +1,14 @@
-import Image from "next/image";
-
 const HeroSection = () => {
   return (
     <div className="w-full items-center flex relative px-1 md:px-20">
-      <div className="w-full">
-        <Image
-          src="/assets/images/home/hero.png"
-          alt="Hero Image"
-          width={1920}
-          height={1080}
-          className="w-full h-auto"
+      <div className="w-full relative overflow-hidden">
+        <video
+          src="/assets/video/home.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-auto rounded-3xl"
         />
       </div>
       <div className="max-w-3xl absolute bottom-1 md:bottom-10 left-4 md:left-40">
@@ -19,5 +18,5 @@ const HeroSection = () => {
       </div>
     </div>
   );
-}
-export default HeroSection
+};
+export default HeroSection;

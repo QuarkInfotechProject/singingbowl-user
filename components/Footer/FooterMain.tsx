@@ -25,7 +25,7 @@ const FooterMain: React.FC<FooterMainProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-32 pb-12">
       {/* About Section */}
       <div className="space-y-4">
-               <Image src="/assets/images/logo/logo.png" alt="Logo" width={150} height={50} />
+               <Image src="/assets/logo/logo3.png" alt="Logo" width={150} height={50} />
        
         <p className="text-sm">{about.description}</p>
         <div>
