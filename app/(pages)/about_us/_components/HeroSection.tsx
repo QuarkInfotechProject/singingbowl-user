@@ -6,7 +6,7 @@ const HeroSection = () => (
     <div
       className="absolute inset-0 bg-cover bg-center opacity-80"
       style={{
-        backgroundImage: "url('https://picsum.photos/seed/hero/1920/1080')",
+        backgroundImage: "url('/assets/images/md/bg.webp')",
       }}
     ></div>
     <div className="absolute inset-0 bg-gradient-to-t from-stone-50 via-stone-50/20 to-transparent"></div>

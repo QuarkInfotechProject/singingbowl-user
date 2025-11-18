@@ -12,7 +12,7 @@ const HeroSection = () => {
         />
       </div>
       <div className="max-w-3xl absolute bottom-1 md:bottom-10 left-4 md:left-40">
-        <span className="text-md md:text-[40px] font-bold text-black">
+        <span className="text-md md:text-[40px] font-bold text-white">
           Be a part of our family and enjoy the Singing Bowl Village experience
         </span>
       </div>
