@@ -1,7 +1,7 @@
 module.exports = {
     apps: [
       {
-        name: 'user.singingbowlvillagenepal.com',
+        name: 'www.singingbowlvillagenepal.com',
         script: 'npm',
         exec_mode: "fork",  // Enables clustering
         instances: "1", // Change to "max" to use all available cores        

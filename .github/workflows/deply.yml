@@ -1,0 +1,143 @@
+name: 🚀 Deploy to Production Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+
+    env:
+      DEBUG: false # Set to true for verbose SSH logging
+
+    steps:
+      # ======================================================
+      # 1️⃣ CHECKOUT REPOSITORY
+      # ======================================================
+      - name: ⏳ Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for clean git operations
+
+      # ======================================================
+      # 2️⃣ SETUP NODE.JS + PNPM + CACHE
+      # ======================================================
+      - name: 🧰 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: ⚡ Cache PNPM Store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: 📦 Install PNPM
+        run: |
+          npm install -g pnpm
+          echo "✅ PNPM version: $(pnpm --version)"
+
+      # ======================================================
+      # 3️⃣ SETUP SSH
+      # ======================================================
+      - name: 🔐 Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SINGINGBOWL_SSH_PRIVATE_KEY }}
+
+      # ======================================================
+      # 4️⃣ DEPLOY TO VPS
+      # ======================================================
+      - name: 🚀 Deploy to VPS
+        env:
+          VPS_USER: ${{ secrets.SINGINGBOWL_USER }}
+          VPS_HOST: ${{ secrets.QUARK_VPS_HOST }}
+          VPS_PORT: ${{ secrets.QUARK_VPS_PORT }}
+          GIT_AUTH_TOKEN: ${{ secrets.GIT_AUTH_TOKEN }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEBUG: ${{ env.DEBUG }}
+          REPO_SLUG: ${{ github.repository }}
+        run: |
+          echo "🌍 Connecting to VPS: $VPS_HOST:$VPS_PORT as $VPS_USER"
+          echo "📂 Target Path: $DEPLOY_PATH"
+
+          if [ "$DEBUG" = "true" ]; then
+            echo "🧩 DEBUG MODE ENABLED — will print commands as they execute"
+            set -x
+          fi
+
+          ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST -p $VPS_PORT "
+            set -e
+
+            echo '🖥️ Connected to:' \$(hostname)
+            echo '📦 Starting deployment in:' $DEPLOY_PATH
+
+            # ================================
+            # CHECK OR CREATE DEPLOYMENT DIRECTORY
+            # ================================
+            if [ ! -d '$DEPLOY_PATH' ]; then
+              echo '📁 Directory not found — creating: $DEPLOY_PATH'
+              mkdir -p '$DEPLOY_PATH'
+              echo '🆕 New deployment directory created.'
+            fi
+            cd '$DEPLOY_PATH'
+
+            # ================================
+            # GIT OPERATIONS
+            # ================================
+            echo '🔄 Updating repository...'
+            if [ ! -d '.git' ]; then
+              echo '⚠️ .git folder missing — cloning repository fresh...'
+
+              if [ -z '${GIT_AUTH_TOKEN}' ]; then
+                echo '❌ ERROR: GIT_AUTH_TOKEN not set or invalid. Check GitHub Secrets.'
+                exit 1
+              fi
+
+              git clone https://x-access-token:${GIT_AUTH_TOKEN}@github.com/${REPO_SLUG}.git .
+            else
+              git fetch origin main
+              git reset --hard origin/main
+            fi
+
+            # ================================
+            # DEPENDENCIES INSTALL
+            # ================================
+            echo '📥 Installing dependencies with PNPM...'
+            pnpm install --frozen-lockfile
+
+            # ================================
+            # BUILD (Dynamic Memory)
+            # ================================
+            echo '⚙️ Preparing to build... calculating memory limits.'
+            TOTAL_MEM=\$(free -m | awk '/^Mem:/{print \$2}')
+            BUILD_MEM=\$((TOTAL_MEM * 75 / 100))
+            export NODE_OPTIONS=\"--max-old-space-size=\$BUILD_MEM\"
+
+            echo \"🧠 Total Memory: \${TOTAL_MEM}MB | Allocating: \${BUILD_MEM}MB for Node build\"
+            echo '🏗️ Building project...'
+            pnpm run build
+
+            # ================================
+            # PM2 DEPLOYMENT
+            # ================================
+            echo '🔁 Restarting PM2 service...'
+            pm2 startOrRestart ecosystem.config.js --env production
+
+            # ================================
+            # SUCCESS MESSAGE
+            # ================================
+            echo '✅ Deployment completed successfully!'
+            echo '📅 Finished at:' \$(date)
+          "
+
+          if [ "$DEBUG" = "true" ]; then
+            set +x
+            echo "🧩 DEBUG MODE DISABLED — end of logs"
+          fi
