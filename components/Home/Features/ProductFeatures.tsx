@@ -1,11 +1,8 @@
-import React from "react";
-import SectionTitle from "../SectionTitle";
 
 const productData = {
   title: "Product Features",
   highlightedText: "TRANQUILITY. RESONANCE. PEACE.",
-  description:
-    "What if your greatest healing came not from a pill, but from a frequency? Welcome to the future of wellness, where ancient sonic wisdom meets modern science. We craft immersive soundscapes that do more than just relax-they recalibrate. Feel the profound resonance of bowls and sacred instruments guide your brainwaves from chaos to coherence, releasing stored anxiety, mental fog, and emotional weight. This is a homecoming for your soul. It's time to remember what it feels like to be vibrantly, authentically you. Your journey back to balance starts with a single, powerful note.",
+  
   image: {
     src: "/assets/images/home/bowl.png",
     alt: "Hand holding a singing bowl with a mallet",
@@ -48,7 +45,18 @@ const ProductFeatures = () => {
 
           <div className="flex flex-col gap-6 sm:gap-8 w-full text-center lg:text-left">
             <p className="w-full text-base sm:text-lg text-gray-600 leading-relaxed px-2 sm:px-0">
-              {productData.description}
+              What if your greatest healing came not from a pill, but from a
+              frequency? Welcome to the future of wellness, where ancient sonic
+              wisdom meets modern science.
+              <br />
+              <br />
+              We craft immersive soundscapes that do more than just relax-they
+              recalibrate. Feel the profound resonance of bowls and sacred
+              instruments guide your brainwaves from chaos to coherence,
+              releasing stored anxiety, mental fog, and emotional weight. This
+              is a homecoming for your soul. It's time to remember what it feels
+              like to be vibrantly, authentically you. Your journey back to
+              balance starts with a single, powerful note.
             </p>
           </div>
         </div>

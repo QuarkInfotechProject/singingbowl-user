@@ -10,6 +10,7 @@ const navItems = [
   { name: "About Us", href: "/about_us" },
   { name: "Contact", href: "/contact_us" },
   { name: "Blog", href: "/blog" },
+  { name: "Gallery", href: "/gallery" },
 ];
 
 const NavigationBar = () => {
