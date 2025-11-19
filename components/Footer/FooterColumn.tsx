@@ -1,7 +1,10 @@
 import React from "react";
 import { FooterColumnData } from "@/types/footertypes";
 
-const FooterColumn: React.FC<FooterColumnData> = ({ title, links }) => {
+const FooterColumn= ({
+  title,
+  links,
+}: FooterColumnData) => {
   return (
     <div className="space-y-4">
       <h2 className="text-white text-lg font-semibold">{title}</h2>

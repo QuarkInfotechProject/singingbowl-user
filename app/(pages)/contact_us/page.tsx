@@ -94,10 +94,10 @@ export default function ContactPage() {
                     <div>
                       <p className="text-sm text-slate-600">Email</p>
                       <a
-                        href="mailto:hello@example.com"
+                        href="mailto:singingbowlvillagenepal@gmail.com"
                         className="text-slate-900 hover:text-[#A12717] transition-colors font-medium"
                       >
-                        hello@example.com
+                        singingbowlvillagenepal@gmail.com
                       </a>
                     </div>
                   </div>
@@ -143,7 +143,7 @@ export default function ContactPage() {
                 <h3 className="text-xl font-light text-slate-900 mb-5">
                   Follow Us
                 </h3>
-                <Socialmedia />
+                <Socialmedia background="white" />
               </div>
             </div>
           </div>
@@ -270,7 +270,6 @@ export default function ContactPage() {
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />
-            
           </div>
 
           <div className="bg-white rounded-2xl mt-20 overflow-hidden shadow-sm hover:shadow-md transition-shadow h-120">

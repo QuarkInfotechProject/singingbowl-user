@@ -8,9 +8,9 @@ export const singingBowlData: SingingBowlProps = {
   materials: "Bronze Alloy, 24K Gold Plating",
   discount: "15%",
   images: [
-    "/assets/images/home/about/peace.png",
-    "/assets/images/home/about/bowl.png",
-    "/assets/images/home/about/bowl1.png",
+    "/assets/images/home/why/1.jpeg",
+    "/assets/images/home/why/2.jpeg",
+    "/assets/images/home/why/3.jpeg",
   ],
   buttonText: "View Carving Singing Bowl",
 };

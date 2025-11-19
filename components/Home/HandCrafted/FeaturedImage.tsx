@@ -1,3 +1,4 @@
+import Image from "next/image";
 import DiscountBadge from "./DiscountBadge";
 
 interface FeaturedImageProps {
@@ -13,12 +14,14 @@ const FeaturedImage: React.FC<FeaturedImageProps> = ({
 }) => {
   return (
     <div className="relative rounded-lg overflow-hidden h-full">
-      <img
+      <Image
         src={src}
+        width={500}
+        height={500}
         alt={alt}
         className="w-full h-auto md:h-[416px] object-cover rounded-lg"
       />
-      {discount && <DiscountBadge discount={discount} />}
+      {/* {discount && <DiscountBadge discount={discount} />} */}
     </div>
   );
 };

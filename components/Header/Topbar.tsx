@@ -13,7 +13,7 @@ const Topbar = () => {
           </div>
 
           <div>
-            <Socialmedia />
+            <Socialmedia background="white" />
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import {  Facebook, Instagram } from "@mui/icons-material";
+import { Facebook, Instagram } from "@mui/icons-material";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -25,12 +25,19 @@ type SocialmediaProps = {
     name: string;
     href: string;
   }>;
+  background?: "white" | "black";
 };
 
 const Socialmedia = ({
   socialLinks,
+  background = "white",
 }: SocialmediaProps) => {
   const links = socialLinks || defaultSocialLinks;
+
+  const textColorClass =
+    background === "white"
+      ? "text-black hover:text-gray-700"
+      : "text-white hover:text-gray-300";
 
   return (
     <div className="flex items-center gap-3">
@@ -40,7 +47,7 @@ const Socialmedia = ({
           href={social.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-gray-700 hover:text-gray-900 transition-colors"
+          className={`${textColorClass} transition-colors`}
           aria-label={social.name}
         >
           {iconMap[social.name]}

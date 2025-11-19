@@ -3,19 +3,20 @@ import { FooterData } from "@/types/footertypes";
 import FooterColumn from "./FooterColumn";
 import Socialmedia from "../Socialmedia";
 import Image from "next/image";
+import Link from "next/link";
 
 type FooterMainProps = Pick<
   FooterData,
   "about" | "information" | "products" | "navigation" | "socialLinks"
 >;
 
-const FooterMain: React.FC<FooterMainProps> = ({
+const FooterMain = ({
   about,
   information,
   products,
   navigation,
   socialLinks,
-}) => {
+}: FooterMainProps) => {
   // Only render if data is provided
   if (!about || !information || !products || !navigation) {
     return null;
@@ -25,12 +26,19 @@ const FooterMain: React.FC<FooterMainProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-32 pb-12">
       {/* About Section */}
       <div className="space-y-4">
-               <Image src="/assets/logo/logo3.png" alt="Logo" width={150} height={50} />
-       
+        <Link href="/">
+          <Image
+            src="/assets/logo/logo3.png"
+            alt="Logo"
+            width={150}
+            height={50}
+          />
+        </Link>
+
         <p className="text-sm">{about.description}</p>
         <div>
           <h3 className="text-white text-lg font-semibold mb-3">Follow Us</h3>
-          <Socialmedia socialLinks={socialLinks} />
+          <Socialmedia socialLinks={socialLinks} background="black" />
         </div>
       </div>
 

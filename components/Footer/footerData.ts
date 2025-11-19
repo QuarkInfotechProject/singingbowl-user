@@ -29,7 +29,7 @@ export const footerData: FooterData = {
       "Kwabahal chowk, Thamel-17,",
       "Kathmandu, Nepal,",
       "+977 9841000000",
-      "singingbowl@gmail.com",
+      "singingbowlvillagenepal@gmail.com",
     ],
   },
   products: {
@@ -45,11 +45,12 @@ export const footerData: FooterData = {
   navigation: {
     title: "Navigation",
     links: [
-      { name: "Home", href: "#" },
-      { name: "Products", href: "#" },
-      { name: "About Us", href: "#" },
-      { name: "Contacts", href: "#" },
-      { name: "Blog", href: "#" },
+      { name: "Home", href: "/" },
+      { name: "Products", href: "/products" },
+      { name: "About Us", href: "/about_us" },
+      { name: "Contacts", href: "/contact_us" },
+      { name: "Blog", href: "/blog" },
+      { name: "Gallery", href: "/gallery" },
     ],
   },
   socialLinks: [
@@ -63,7 +64,7 @@ export const footerData: FooterData = {
   copyright:
     "Copyright @2025. All Right Reserved. Designed and developed by Quark Infotech",
   bottomLinks: [
-    { name: "Privacy Policy", href: "#" },
-    { name: "Terms of use", href: "#" },
+    { name: "Privacy Policy", href: "/privacy-policy" },
+    { name: "Terms of use", href: "/terms-of-use" },
   ],
 };
