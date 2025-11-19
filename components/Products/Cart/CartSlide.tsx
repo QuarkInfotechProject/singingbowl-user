@@ -11,6 +11,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { X } from "lucide-react";
+import Link from "next/link";
 
 interface CartItem {
   id: string;
@@ -137,14 +138,15 @@ export default function CartSheet() {
                   ${totalPrice.toFixed(2)}
                 </span>
               </div>
-
-              <Button
-                onClick={() => setIsOpen(false)}
-                className="w-full py-6 text-base font-semibold transition-all duration-300 hover:shadow-lg"
-                style={{ backgroundColor: "#39B856" }}
-              >
-                Checkout
-              </Button>
+              <Link href="/checkout">
+                <Button
+                  onClick={() => setIsOpen(false)}
+                  className="w-full py-6 text-base font-semibold cursor-pointer transition-all duration-300 hover:shadow-lg"
+                  style={{ backgroundColor: "#39B856" }}
+                >
+                  Checkout
+                </Button>
+              </Link>
 
               <Button
                 variant="outline"

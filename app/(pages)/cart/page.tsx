@@ -10,6 +10,7 @@ import {
   Lock,
   ArrowRight,
 } from "lucide-react";
+import Link from "next/link";
 
 interface CartItem {
   id: string;
@@ -296,11 +297,12 @@ const Cart = () => {
                       ${total.toFixed(2)}
                     </span>
                   </div>
-
-                  <button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 mb-3 shadow-lg hover:shadow-xl">
-                    Proceed to Checkout
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
+                  <Link href="/checkout">
+                    <button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 mb-3 shadow-lg hover:shadow-xl">
+                      Proceed to Checkout
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+                  </Link>
 
                   <button className="w-full border-2 border-slate-300 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-50 transition-colors">
                     Continue Shopping
