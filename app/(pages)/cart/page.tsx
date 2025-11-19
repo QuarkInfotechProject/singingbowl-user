@@ -124,12 +124,12 @@ const Cart = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <ShoppingBag className="w-8 h-8 text-blue-600" />
+              <ShoppingBag className="w-8 h-8 text-[#A12717]" />
               <h1 className="text-3xl font-bold text-slate-900">
                 Shopping Cart
               </h1>
             </div>
-            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
+            <span className="bg-[#A12717] text-white px-3 py-1 rounded-full text-sm font-semibold">
               {cartItems.length} items
             </span>
           </div>
@@ -188,7 +188,7 @@ const Cart = () => {
                           </div>
                           <button
                             onClick={() => removeItem(item.id)}
-                            className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                            className="text-slate-400 hover:text-red-500 cursor-pointer transition-colors p-1"
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
@@ -236,9 +236,9 @@ const Cart = () => {
                   <input
                     type="text"
                     placeholder="Enter promo code"
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A12717] text-sm"
                   />
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm">
+                  <button className="px-4 py-2 bg-[#A12717] text-white rounded-lg font-medium hover:bg-[#A12717] transition-colors text-sm">
                     Apply
                   </button>
                 </div>
@@ -288,17 +288,17 @@ const Cart = () => {
                   </div>
                 </div>
 
-                <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-t border-blue-200">
+                <div className="p-6 bg-gradient-to-br from-[#A12717]to-indigo-50 border-t border-[#A12717]">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-lg font-semibold text-slate-900">
                       Total
                     </span>
-                    <span className="text-2xl font-bold text-blue-600">
+                    <span className="text-2xl font-bold text-[#A12717]">
                       ${total.toFixed(2)}
                     </span>
                   </div>
                   <Link href="/checkout">
-                    <button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 mb-3 shadow-lg hover:shadow-xl">
+                    <button className="w-full cursor-pointer bg-gradient-to-r from-[#A12717] to-[#A12717] text-white font-semibold py-3 rounded-lg hover:from-[#A12717] hover:to-[#A12717] transition-all flex items-center justify-center gap-2 mb-3 shadow-lg hover:shadow-xl">
                       Proceed to Checkout
                       <ArrowRight className="w-5 h-5" />
                     </button>
@@ -316,7 +316,7 @@ const Cart = () => {
                     <span>Secure checkout</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <Truck className="w-4 h-4 text-blue-600" />
+                    <Truck className="w-4 h-4 text-[#A12717]" />
                     <span>Free shipping over $100</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-600">
