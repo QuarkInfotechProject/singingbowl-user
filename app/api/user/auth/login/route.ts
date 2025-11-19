@@ -19,17 +19,18 @@ export async function POST(request: NextRequest) {
     if (res.ok) {
       const tokenValue = data.data.token;
       const expiresAt = addDays(new Date(), 30);
+      const cookieStore = await cookies();
 
-      cookies().set({
+      cookieStore.set({
         name: "token",
         value: tokenValue,
         httpOnly: true,
-        sameSite: false,
-        secure: false,
+        sameSite: "strict",
+        secure: true,
         path: "/",
         expires: expiresAt,
       });
-      cookies().set({
+      cookieStore.set({
         name: "isLoggedIn",
         value: "true",
         httpOnly: false,
