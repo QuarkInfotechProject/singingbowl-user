@@ -23,7 +23,7 @@ const FooterMain = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-32 pb-12">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-32 pb-12">
       {/* About Section */}
       <div className="space-y-4">
         <Link href="/">
@@ -54,11 +54,13 @@ const FooterMain = ({
         </div>
       </div>
 
-      {/* Products Column */}
-      <FooterColumn title={products.title} links={products.links} />
+      <div className="w-full grid grid-cols-2 gap-16">
+        {/* Products Column */}
+        <FooterColumn title={products.title} links={products.links} />
 
-      {/* Navigation Column */}
-      <FooterColumn title={navigation.title} links={navigation.links} />
+        {/* Navigation Column */}
+        <FooterColumn title={navigation.title} links={navigation.links} />
+      </div>
     </div>
   );
 };
