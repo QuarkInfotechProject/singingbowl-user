@@ -30,11 +30,31 @@ export async function GET(
     const params = await context.params;
     const endpoint = `/${params.path.join("/")}`;
 
-    const response = await apiClient.get(endpoint);
+    // Get query parameters from the original request
+    const searchParams = request.nextUrl.searchParams.toString();
+    const fullEndpoint = searchParams ? `${endpoint}?${searchParams}` : endpoint;
 
+    console.log("=== API PROXY DEBUG ===");
+    console.log("BASE_URL from env:", process.env.BASE_URL);
+    console.log("Endpoint path:", endpoint);
+    console.log("Query params:", searchParams);
+    console.log("Full URL:", `${process.env.BASE_URL}${fullEndpoint}`);
+    console.log("========================");
+
+    const response = await apiClient.get(fullEndpoint);
+
+    console.log("Upstream API Response Status:", response.status);
     return Response.json(response.data);
   } catch (error: any) {
     const axiosError = error as AxiosError;
+
+    console.error("API Proxy Error:", {
+      message: axiosError.message,
+      url: axiosError.config?.url,
+      baseURL: axiosError.config?.baseURL,
+      status: axiosError.response?.status,
+      responseData: axiosError.response?.data,
+    });
 
     return Response.json(
       {

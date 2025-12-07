@@ -1,6 +1,7 @@
 "use client";
 
 import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import { ReactNode } from "react";
 
 const theme = createTheme({
@@ -24,9 +25,11 @@ const theme = createTheme({
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {children}
-    </ThemeProvider>
+    <AppRouterCacheProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+    </AppRouterCacheProvider>
   );
 }

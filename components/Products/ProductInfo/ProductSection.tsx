@@ -1,24 +1,51 @@
 import ProductGrid from "./ProductGrid";
+import { Product } from "./ProductCard";
+import { ProductGridSkeleton } from "@/components/ui/skeletons";
 
-const ProductSection = () => {
+export interface CategoryData {
+  id: number;
+  url: string;
+  name: string;
+  image?: string;
+  description?: string;
+  products?: Product[];
+}
+
+interface ProductSectionProps {
+  category?: CategoryData;
+  isLoading?: boolean;
+}
+
+const ProductSection = ({ category, isLoading }: ProductSectionProps) => {
+  if (isLoading) {
+    return (
+      <div className="w-full">
+        <div className="w-full flex flex-col gap-4 items-start justify-start text-start">
+          <div className="h-8 bg-gray-200 rounded w-1/3 animate-pulse" />
+          <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
+          <ProductGridSkeleton count={8} />
+        </div>
+      </div>
+    );
+  }
+
+  if (!category) {
+    return (
+      <div className="w-full h-96 flex items-center justify-center">
+        <p className="text-gray-500">Select a category to view products.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <div className="w-full flex flex-col gap-4 items-start justify-start text-start">
-        <p className="font-bold text-3xl">Jambati Bowls</p>
+        <p className="font-bold text-3xl">{category.name}</p>
         <p>
-          The Enigmatic Jambati Bowls: A Deep Dive into History and
-          Craftsmanship Jambati bowls, cherished for their deep, resonant tones
-          and exquisite craftsmanship, hail from the Himalayan regions of Nepal
-          and Tibet. Historically used in spiritual rituals by Tibetan Buddhist
-          monks, these bowls feature wide rims, gently sloping sides, and flat
-          bottoms, producing harmonious tones that enhance meditation and
-          promote healing. Crafted from a blend of seven metals, Jambati bowls
-          are meticulously hammered into shape, resulting in unique vibrational
-          qualities that aid in stress reduction, emotional balance, and chakra
-          alignment.
+          {category.description || `Explore our exclusive collection of ${category.name}. Crafted with precision and care, these items represent the finest quality and tradition.`}
         </p>
 
-        <ProductGrid />
+        <ProductGrid products={category.products || []} />
       </div>
     </div>
   );

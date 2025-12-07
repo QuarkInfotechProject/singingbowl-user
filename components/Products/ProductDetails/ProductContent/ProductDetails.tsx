@@ -4,14 +4,19 @@ import { TabNavigation } from "./TabNavigation";
 import { TabContent } from "./TabContent";
 import { DetailsSection } from "./DetailsSection";
 
-export default function ProductDetailsPage() {
+interface ProductDetailsPageProps {
+  description?: string;
+  additionalDescription?: string;
+}
+
+export default function ProductDetailsPage({ description, additionalDescription }: ProductDetailsPageProps) {
   return (
     <div className="w-full md:max-w-4xl mx-auto p-6 bg-gradient-to-b from-white to-gray-50 h-auto md:min-h-screen">
       <Header />
 
       <TabNavigation>
         <TabsContent value="details" className="space-y-4">
-          <DetailsSection />
+          <DetailsSection description={description} additionalDescription={additionalDescription} />
         </TabsContent>
 
         <TabContent

@@ -18,19 +18,21 @@ export default function ProductCard({
   onMouseEnter,
   onMouseLeave,
 }: ProductCardProps) {
+  const imageUrl = product.files?.baseImage?.url || "/assets/images/product/1.jpg";
+
   return (
     <div className="flex flex-col gap-1 sm:gap-2 md:gap-3 items-center justify-start w-full">
-      <Link href={`/products/${product.id}`} className="w-full">
+      <Link href={`/products/${product.url}`} className="w-full">
         <ProductImage
-          src={product.image}
-          alt={product.name}
+          src={imageUrl}
+          alt={product.productName}
           isHovered={isHovered}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
         />
       </Link>
 
-      <ProductInfo name={product.name} description={product.description} />
+      <ProductInfo name={product.productName} description={product.description} />
     </div>
   );
 }
