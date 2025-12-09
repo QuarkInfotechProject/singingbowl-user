@@ -52,13 +52,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+  auth,
+}: Readonly<{ children: React.ReactNode; auth: React.ReactNode }>) {
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
         <Providers>
           <Navbar />
           {children}
+          {auth}
           <Footer />
         </Providers>
       </body>

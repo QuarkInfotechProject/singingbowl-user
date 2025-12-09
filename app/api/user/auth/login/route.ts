@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   try {
-    const res = await fetch(`${process.env.BASE_URL}/login`, {
+    const res = await fetch(`${process.env.BASE_URL}/user/login`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json({
         success: true,
+        user: data.data.user,
       });
     } else {
       return NextResponse.json(data, { status: res.status });

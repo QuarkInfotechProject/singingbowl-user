@@ -45,32 +45,23 @@ interface SacredMetal {
 const AboutUsPage = () => {
   const artisans: Artisan[] = [
     {
-      name: "Mr. Babindra Singh Tamang",
+      name: "Mr. Norbu Lama",
       role: "Managing Director",
       experience: "45 years",
       specialty: "Hand-hammering & alloy mixing",
       quote:
-        "Each bowl is a meditation. Every strike of the hammer carries intention and the spirit of the Himalayas.",
-      image: "/assets/images/md/1.avif",
+        "AS the MD of our singingbowl company, we have a team dedicated to preserving Himalayun traditions. We offer authentic bowls blending craftsmanship with spiritual resonance. Whether exploring our tours joining healing classes or discovering angtique treasures join us in this journey of trtanquility and wisdom and become a part of our family",
+      image: "/assets/images/md/3.avif",
     },
     {
-      name: "Dawa Sherpa",
+      name: "Mr. Babindra Singh Tamang",
       role: "Managing Director",
       experience: "38 years",
       specialty: "Sacred blessings & acoustic tuning",
       quote:
-        "We don't just make bowls; we create vessels of healing. The blessings transform them into instruments of peace.",
-      image: "/assets/images/md/2.avif",
-    },
-    {
-      name: "Karma Lama",
-      role: "Managing Director",
-      experience: "32 years",
-      specialty: "Tone verification & finishing",
-      quote:
-        "Perfect sound requires perfect patience. We test every bowl until it sings with clarity and grace.",
-      image: "/assets/images/md/3.avif",
-    },
+        "Reflecting on my 30-year journey with our singing bowl company fills me with pride and gratitude. From humble beginnings, we've grown into a symbol of authenticity and excellence in Himalayan traditions. Our dedication to craftsmanship, spiritual resonance, and customer satisfaction has fueled our success. Beyond producing bowls, we preserve ancient wisdom and foster a healing community. Thank you for being part of our journey. We look forward to continuing to serve you with unwavering passion and dedication.",
+      image: "/assets/images/md/1.avif",
+    },    
   ];
 
   const milestones: Milestone[] = [
@@ -178,10 +169,10 @@ const AboutUsPage = () => {
   return (
     <div className="w-full bg-stone-50 text-stone-700 font-sans leading-relaxed">
       <HeroSection />
+            <ChairmanMessage />
       <OriginStory />
       <SacredMetals sacredMetals={sacredMetals} />
       <ArtisansSection artisans={artisans} />
-      <ChairmanMessage />
       <TimelineSection milestones={milestones} />
       <LegacyAndImpact values={values} faqItems={faqItems} />
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   User,
   Package,
@@ -10,19 +10,32 @@ import {
   LogOut,
   Menu,
   X,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { fetchUserProfile, updateUserProfile, logoutUser, changeUserPassword } from "@/lib/apiItems";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { logout } = useAuth(); // Update context if available
   const [activeSection, setActiveSection] = useState("profile");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
+
+  // Profile Data State
   const [formData, setFormData] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    profilePicture: "",
   });
 
+  // Other states (Address/Password) kept as is for now or initialized
   const [addressData, setAddressData] = useState({
     firstName: "John",
     lastName: "Doe",
@@ -41,6 +54,35 @@ export default function ProfilePage() {
     newPassword: "",
     confirmPassword: "",
   });
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const res = await fetchUserProfile();
+      if (res && res.data) {
+        const { fullName, email, phone, profilePicture } = res.data;
+        const nameParts = (fullName || "").split(" ");
+        const firstName = nameParts[0] || "";
+        const lastName = nameParts.slice(1).join(" ") || "";
+
+        setFormData({
+          firstName,
+          lastName,
+          email: email || "",
+          phone: phone || "",
+          profilePicture: profilePicture || "",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load profile", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -65,30 +107,91 @@ export default function ProfilePage() {
     });
   };
 
-  const handleSaveProfile = () => {
-    alert("Profile updated successfully!");
+  const handleSaveProfile = async () => {
+    try {
+      setSaving(true);
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+      const payload = {
+        fullName,
+        email: formData.email,
+        phone: formData.phone,
+        // Include other fields if API expects them to be preserved
+      };
+
+      const res = await updateUserProfile(payload);
+      if (res.code === 0 || res.success) { // Adjust based on actual success response
+        alert(res.message || "Profile updated successfully!");
+      } else {
+        alert(res.message || "Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Update failed", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSaveAddress = () => {
     alert("Address updated successfully!");
   };
 
-  const handleSavePassword = () => {
+  const handleSavePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-    alert("Password changed successfully!");
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+    if (!passwordData.currentPassword) {
+      alert("Please enter your current password");
+      return;
+    }
+
+    try {
+      setPasswordSaving(true);
+      const res = await changeUserPassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+        confirmPassword: passwordData.confirmPassword
+      });
+
+      if (res.code === 0 || res.success) {
+        alert(res.message || "Password changed successfully!");
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      } else {
+        alert(res.message || "Failed to change password");
+      }
+    } catch (error: any) {
+      console.error("Password change failed", error);
+      alert(error?.response?.data?.message || "Failed to change password. Please check your current password.");
+    } finally {
+      setPasswordSaving(false);
+    }
   };
 
-  const handleLogout = () => {
-    alert("Logged out successfully!");
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      logout(); // Context logout
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed", error);
+      // Force logout anyway
+      logout();
+      router.push("/");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full px-3 md:px-10 lg:px-26 min-h-screen bg-gray-50 flex flex-col">
@@ -106,16 +209,19 @@ export default function ProfilePage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <div
-          className={`${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } fixed lg:relative lg:translate-x-0 z-30 w-64 h-full bg-white border-r border-gray-200 transition-transform duration-300 overflow-y-auto`}
+          className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            } fixed lg:relative lg:translate-x-0 z-30 w-64 h-full bg-white border-r border-gray-200 transition-transform duration-300 overflow-y-auto`}
         >
           <div className="p-6">
             {/* Profile Section */}
             <div className="text-center mb-8">
               <div className="mb-4">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mx-auto flex items-center justify-center text-white">
-                  <User size={40} />
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mx-auto flex items-center justify-center text-white overflow-hidden">
+                  {formData.profilePicture ? (
+                    <img src={formData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={40} />
+                  )}
                 </div>
               </div>
               <h2 className="text-lg font-semibold text-gray-900">
@@ -137,11 +243,10 @@ export default function ProfilePage() {
                     setActiveSection("orders");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex p-0 hover:bg-gray-400 items-center bg-transparent cursor-pointer gap-3 rounded-lg text-start transition-colors ${
-                    activeSection === "orders"
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                  className={`w-full flex p-0 hover:bg-gray-400 items-center bg-transparent cursor-pointer gap-3 rounded-lg text-start transition-colors ${activeSection === "orders"
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
                 >
                   <Package size={18} />
                   <span className="text-sm">Orders</span>
@@ -151,11 +256,10 @@ export default function ProfilePage() {
                     setActiveSection("history");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex p-0 hover:bg-gray-400 items-center bg-transparent cursor-pointer gap-3 rounded-lg text-start transition-colors ${
-                    activeSection === "history"
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                  className={`w-full flex p-0 hover:bg-gray-400 items-center bg-transparent cursor-pointer gap-3 rounded-lg text-start transition-colors ${activeSection === "history"
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
                 >
                   <History size={18} />
                   <span className="text-sm">Purchase History</span>
@@ -174,11 +278,10 @@ export default function ProfilePage() {
                     setActiveSection("profile");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex p-0 hover:bg-gray-400 items-center gap-3 bg-transparent cursor-pointer rounded-lg text-start transition-colors ${
-                    activeSection === "profile"
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                  className={`w-full flex p-0 hover:bg-gray-400 items-center gap-3 bg-transparent cursor-pointer rounded-lg text-start transition-colors ${activeSection === "profile"
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
                 >
                   <User size={18} />
                   <span className="text-sm">Profile Details</span>
@@ -188,11 +291,10 @@ export default function ProfilePage() {
                     setActiveSection("address");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex p-0 hover:bg-gray-400 items-center gap-3 bg-transparent cursor-pointer rounded-lg text-start transition-colors ${
-                    activeSection === "address"
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                  className={`w-full flex p-0 hover:bg-gray-400 items-center gap-3 bg-transparent cursor-pointer rounded-lg text-start transition-colors ${activeSection === "address"
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
                 >
                   <MapPin size={18} />
                   <span className="text-sm">Address</span>
@@ -202,11 +304,10 @@ export default function ProfilePage() {
                     setActiveSection("password");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex p-0 hover:bg-gray-400 items-center bg-transparent cursor-pointer gap-3 rounded-lg text-start transition-colors ${
-                    activeSection === "password"
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                  className={`w-full flex p-0 hover:bg-gray-400 items-center bg-transparent cursor-pointer gap-3 rounded-lg text-start transition-colors ${activeSection === "password"
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
                 >
                   <Lock size={18} />
                   <span className="text-sm">Change Password</span>
@@ -270,7 +371,8 @@ export default function ProfilePage() {
                       name="email"
                       value={formData.email}
                       onChange={handleProfileChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                      disabled
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
                     />
                   </div>
                   <div>
@@ -287,9 +389,17 @@ export default function ProfilePage() {
                   </div>
                   <Button
                     onClick={handleSaveProfile}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+                    disabled={saving}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
                   >
-                    Save Changes
+                    {saving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
                   </Button>
                 </div>
               </div>
@@ -493,9 +603,17 @@ export default function ProfilePage() {
                   </div>
                   <Button
                     onClick={handleSavePassword}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+                    disabled={passwordSaving}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
                   >
-                    Update Password
+                    {passwordSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Password"
+                    )}
                   </Button>
                 </div>
               </div>

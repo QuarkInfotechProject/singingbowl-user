@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { EmailInput } from "./EmailInput";
 import { PasswordInput } from "./PasswordInput";
 import { GoogleSignIn } from "./GoogleSignIn";
-import { AuthFormState } from "@/hooks/useAuthForm";
 
 interface LoginFormProps {
   email: string;

@@ -3,6 +3,8 @@
 import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import { ReactNode } from "react";
+import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
 
 const theme = createTheme({
   typography: {
@@ -28,7 +30,11 @@ export function Providers({ children }: { children: ReactNode }) {
     <AppRouterCacheProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        {children}
+        <AuthProvider>
+          <CartProvider>
+            {children}
+          </CartProvider>
+        </AuthProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );

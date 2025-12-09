@@ -13,25 +13,21 @@ const OriginStory = () => (
           From a Sacred Vow to a Living Legacy
         </h2>
         <p className="text-lg text-stone-600 mb-6">
-          In 1984, amidst the spiritual heart of Kathmandu, our founder, the
-          late Mr. Kashiram Lama Tamang, embarked on a sacred mission: to
-          preserve the ancient art of singing bowl craftsmanship. His vision was
-          to create not just a workshop, but a sanctuary where the ancestral
-          echoes of the Himalayas could resonate globally.
+          Singing Bowl Village is one of Kathmandu’s oldest and most respected singing bowl makers, carrying nearly 45 years of tradition, craftsmanship, and cultural heritage. Our factory is located in the peaceful village of Nallu in the Kathmandu district, where our bowls are handcrafted using time-honored techniques passed down through generations.
+
         </p>
         <blockquote className="border-l-4 border-amber-600 pl-6 italic text-stone-700 text-xl my-8">
           "We do not merely sell bowls. We are custodians of a sound that has
           healed for centuries. It is our duty to protect it."
         </blockquote>
         <p className="text-lg text-stone-600">
-          He sought out the last remaining master artisans, families who had
-          passed down this sacred knowledge for generations, and built a
-          community founded on respect, authenticity, and shared purpose.
+          From our beginnings as Kathmandu’s oldest singing bowl store, we have grown steadily—expanding to multiple locations across Thamel, Kathmandu and even internationally, including Bangkok. Despite this growth, our heart remains in Kathmandu , where each bowl continues to be created with the same dedication, skill, and spirit that define our history.
+
         </p>
       </div>
       <div className="relative h-[500px] md:h-[600px] rounded-lg overflow-hidden shadow-xl">
         <Image
-          src="/assets/images/home/why/history.png"
+          src="/assets/images/home/1.avif"
           alt="Founder of the Himalayan Singing Bowl brand"
           width={500}
           height={600}

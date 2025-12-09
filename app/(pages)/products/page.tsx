@@ -24,7 +24,6 @@ const Product = () => {
         setLoading(true);
         const response: any = await fetchProductsByCategory();
 
-        // Handle API response structure { success: true, data: [...] }
         const rawData = response.data || response;
         const categoryListRaw = Array.isArray(rawData) ? rawData : [];
 

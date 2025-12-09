@@ -5,6 +5,7 @@ import { Star, Heart } from "lucide-react";
 import { useState } from "react";
 import CartSheet from "../Cart/CartSlide";
 import { ProductDetail } from "@/app/(pages)/products/[slug]/page";
+import { useCart } from "@/context/CartContext";
 
 interface ProductInfoProps {
   product: ProductDetail;
@@ -12,6 +13,7 @@ interface ProductInfoProps {
 
 const ProductInfo = ({ product }: ProductInfoProps) => {
   const [quantity, setQuantity] = useState(1);
+  const { addToCart, isLoading } = useCart();
 
   const incrementQuantity = () => setQuantity(quantity + 1);
   const decrementQuantity = () => quantity > 1 && setQuantity(quantity - 1);
@@ -19,6 +21,20 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
   // Generate star rating
   const rating = product.average_rating || 0;
   const fullStars = Math.floor(rating);
+
+  const handleAddToCart = async () => {
+    // Map ProductDetail to CartItem
+    const cartItem = {
+      id: product.uuid, // used uuid instead of id
+      name: product.productName,
+      price: parseFloat(product.specialPrice || product.originalPrice), // Parse string to number
+      quantity: quantity,
+      image: product.files.baseImage?.url || "/assets/images/product/1.jpg", // Correct image path
+      stock: product.inStock ? 100 : 0,
+      discount: product.discountPercentage
+    };
+    await addToCart(cartItem);
+  };
 
   return (
     <div className="w-full max-w-2xl">
@@ -35,18 +51,18 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
               />
             ))}
           </span>
-          <a href="#" className="text-sm underline hover:no-underline">
+          <span className="text-sm underline hover:no-underline cursor-pointer">
             {product.review_count} reviews
-          </a>
+          </span>
         </span>
 
         <div className="flex items-center gap-3">
           <h3 className="text-[#39B856] text-3xl font-semibold">
-            $ {product.originalPrice}
+            $ {product.specialPrice || product.originalPrice}
           </h3>
           {product.specialPrice && (
             <span className="text-gray-400 line-through text-xl">
-              $ {product.specialPrice}
+              $ {product.originalPrice}
             </span>
           )}
           {product.discountPercentage > 0 && (
@@ -68,30 +84,41 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           >
             More Details
           </Button>
-        </div>
+        </div>        
 
-        <div className="flex items-center gap-4">
-          <Button className="flex-1 bg-trasnparent border border-[#A12717] hover:bg-trasnparent cursor-pointer text-[#A12717] rounded-full py-6 font-semibold text-base">
+        <div className="flex items-center gap-4 mt-4">
+          <Button className="flex-1 bg-transparent border border-[#A12717] hover:bg-transparent cursor-pointer text-[#A12717] rounded-full py-6 font-semibold text-base">
             Buy Now
           </Button>
-          <CartSheet />
+          <Button
+            onClick={handleAddToCart}
+            disabled={isLoading}
+            className="flex-1 bg-[#A12717] hover:bg-[#A12717] cursor-pointer text-white rounded-full py-6 font-semibold text-base"
+          >
+            {isLoading ? "Adding..." : "Add to cart"}
+          </Button>
         </div>
 
-        <div className="flex items-center gap-8">
+        {/* Wishlist & Stock Status */}
+        <div className="flex items-center gap-8 mt-2">
           <button className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium">
             <Heart size={20} />
             Add to wishlist
           </button>
           <span className="flex items-center gap-2 text-gray-700 font-medium ">
-            <span className="text-[#EB5930] bg-[#FAE8E3] p-1 w-6 h-6 rounded-full flex items-center justify-center">
-              ✓
+            <span className={`text-[#EB5930] ${product.inStock ? "bg-[#FAE8E3]" : "bg-gray-200"} p-1 w-6 h-6 rounded-full flex items-center justify-center`}>
+              {product.inStock ? "✓" : "×"}
             </span>
             {product.inStock ? "In Stock" : "Out of Stock"}
           </span>
         </div>
+
+        {/* Cart Sheet Component - Kept here to ensure it's rendered, controlled by context */}
+        <CartSheet />
       </div>
     </div>
   );
 };
+
 
 export default ProductInfo;
