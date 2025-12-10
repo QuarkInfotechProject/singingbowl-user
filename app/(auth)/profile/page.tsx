@@ -11,11 +11,16 @@ import {
   Menu,
   X,
   Loader2,
+  Heart,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchUserProfile, updateUserProfile, logoutUser, changeUserPassword } from "@/lib/apiItems";
+import { fetchUserProfile, updateUserProfile, logoutUser, changeUserPassword, fetchWishlist, removeFromWishlist } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import Image from "next/image";
+import Link from "next/link";
+import AddressList from "@/components/Address/AddressList";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -55,9 +60,60 @@ export default function ProfilePage() {
     confirmPassword: "",
   });
 
+  // Wishlist state
+  interface WishlistItem {
+    uuid: string;
+    productName: string;
+    slug?: string;
+    url?: string;
+    originalPrice: string;
+    specialPrice?: string;
+    baseImage?: string;
+  }
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [removingIds, setRemovingIds] = useState<string[]>([]);
+
   useEffect(() => {
     loadProfile();
   }, []);
+
+  // Load wishlist when section becomes active
+  useEffect(() => {
+    if (activeSection === "wishlist") {
+      loadWishlist();
+    }
+  }, [activeSection]);
+
+  const loadWishlist = async () => {
+    try {
+      setWishlistLoading(true);
+      const res = await fetchWishlist();
+      console.log("Wishlist API response:", res);
+      if (res && res.data && Array.isArray(res.data)) {
+        setWishlistItems(res.data);
+      } else if (Array.isArray(res)) {
+        setWishlistItems(res);
+      }
+    } catch (error) {
+      console.error("Failed to load wishlist", error);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
+
+  const handleRemoveFromWishlist = async (productId: string) => {
+    try {
+      setRemovingIds((prev) => [...prev, productId]);
+      await removeFromWishlist(productId);
+      setWishlistItems((prev) => prev.filter((item) => item.uuid !== productId));
+    } catch (error) {
+      console.error("Failed to remove from wishlist", error);
+    } finally {
+      setRemovingIds((prev) => prev.filter((id) => id !== productId));
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -237,13 +293,13 @@ export default function ProfilePage() {
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
                 Quick Actions
               </h3>
-              <nav className="space-y-2 flex flex-col justify-start items-start text-start">
+              <nav className="space-y-2 flex flex-col">
                 <Button
                   onClick={() => {
                     setActiveSection("orders");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex p-0 hover:bg-gray-400 items-center bg-transparent cursor-pointer gap-3 rounded-lg text-start transition-colors ${activeSection === "orders"
+                  className={`w-full flex justify-start p-0 hover:bg-gray-100 items-center bg-transparent cursor-pointer gap-3 rounded-lg transition-colors ${activeSection === "orders"
                     ? "bg-blue-50 text-blue-600"
                     : "text-gray-700 hover:bg-gray-50"
                     }`}
@@ -256,7 +312,7 @@ export default function ProfilePage() {
                     setActiveSection("history");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex p-0 hover:bg-gray-400 items-center bg-transparent cursor-pointer gap-3 rounded-lg text-start transition-colors ${activeSection === "history"
+                  className={`w-full flex justify-start p-0 hover:bg-gray-100 items-center bg-transparent cursor-pointer gap-3 rounded-lg transition-colors ${activeSection === "history"
                     ? "bg-blue-50 text-blue-600"
                     : "text-gray-700 hover:bg-gray-50"
                     }`}
@@ -264,21 +320,35 @@ export default function ProfilePage() {
                   <History size={18} />
                   <span className="text-sm">Purchase History</span>
                 </Button>
+                <Button
+                  onClick={() => {
+                    setActiveSection("wishlist");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex justify-start p-0 hover:bg-gray-100 items-center bg-transparent cursor-pointer gap-3 rounded-lg transition-colors ${activeSection === "wishlist"
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                >
+                  <Heart size={18} />
+                  <span className="text-sm">Wishlist</span>
+                </Button>
               </nav>
             </div>
+
 
             {/* Account Section */}
             <div className="mb-8">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">
                 Account
               </h3>
-              <nav className="space-y-2">
+              <nav className="space-y-2 flex flex-col">
                 <Button
                   onClick={() => {
                     setActiveSection("profile");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex p-0 hover:bg-gray-400 items-center gap-3 bg-transparent cursor-pointer rounded-lg text-start transition-colors ${activeSection === "profile"
+                  className={`w-full flex justify-start p-0 hover:bg-gray-100 items-center gap-3 bg-transparent cursor-pointer rounded-lg transition-colors ${activeSection === "profile"
                     ? "bg-blue-50 text-blue-600"
                     : "text-gray-700 hover:bg-gray-50"
                     }`}
@@ -291,7 +361,7 @@ export default function ProfilePage() {
                     setActiveSection("address");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex p-0 hover:bg-gray-400 items-center gap-3 bg-transparent cursor-pointer rounded-lg text-start transition-colors ${activeSection === "address"
+                  className={`w-full flex justify-start p-0 hover:bg-gray-100 items-center gap-3 bg-transparent cursor-pointer rounded-lg transition-colors ${activeSection === "address"
                     ? "bg-blue-50 text-blue-600"
                     : "text-gray-700 hover:bg-gray-50"
                     }`}
@@ -304,7 +374,7 @@ export default function ProfilePage() {
                     setActiveSection("password");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex p-0 hover:bg-gray-400 items-center bg-transparent cursor-pointer gap-3 rounded-lg text-start transition-colors ${activeSection === "password"
+                  className={`w-full flex justify-start p-0 hover:bg-gray-100 items-center gap-3 bg-transparent cursor-pointer rounded-lg transition-colors ${activeSection === "password"
                     ? "bg-blue-50 text-blue-600"
                     : "text-gray-700 hover:bg-gray-50"
                     }`}
@@ -314,6 +384,7 @@ export default function ProfilePage() {
                 </Button>
               </nav>
             </div>
+
 
             {/* Logout Button */}
             <Button
@@ -409,152 +480,13 @@ export default function ProfilePage() {
             {activeSection === "address" && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
                 <h1 className="text-2xl font-bold text-gray-900 mb-6">
-                  Address
+                  My Addresses
                 </h1>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        First Name
-                      </label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={addressData.firstName}
-                        onChange={handleAddressChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Last Name
-                      </label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={addressData.lastName}
-                        onChange={handleAddressChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Company Name (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      name="company"
-                      value={addressData.company}
-                      onChange={handleAddressChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Street Address
-                    </label>
-                    <input
-                      type="text"
-                      name="streetAddress"
-                      value={addressData.streetAddress}
-                      onChange={handleAddressChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Apartment, Suite, etc. (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      name="apartment"
-                      value={addressData.apartment}
-                      onChange={handleAddressChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        name="city"
-                        value={addressData.city}
-                        onChange={handleAddressChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        State / Province / Region
-                      </label>
-                      <input
-                        type="text"
-                        name="state"
-                        value={addressData.state}
-                        onChange={handleAddressChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Postal Code / ZIP
-                      </label>
-                      <input
-                        type="text"
-                        name="postalCode"
-                        value={addressData.postalCode}
-                        onChange={handleAddressChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Country
-                    </label>
-                    <select
-                      name="country"
-                      value={addressData.country}
-                      onChange={handleAddressChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    >
-                      <option>United States</option>
-                      <option>Canada</option>
-                      <option>United Kingdom</option>
-                      <option>Germany</option>
-                      <option>France</option>
-                      <option>Spain</option>
-                      <option>Italy</option>
-                      <option>Japan</option>
-                      <option>Australia</option>
-                      <option>India</option>
-                      <option>Brazil</option>
-                      <option>Mexico</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={addressData.phone}
-                      onChange={handleAddressChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleSaveAddress}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-                  >
-                    Save Address
-                  </Button>
-                </div>
+                <AddressList
+                  showActions={true}
+                  selectable={false}
+                  redirectPath="/profile"
+                />
               </div>
             )}
 
@@ -644,8 +576,85 @@ export default function ProfilePage() {
                 </div>
               </div>
             )}
+
+            {/* Wishlist */}
+            {activeSection === "wishlist" && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
+                <h1 className="text-2xl font-bold text-gray-900 mb-6">
+                  My Wishlist
+                </h1>
+                {wishlistLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
+                  </div>
+                ) : wishlistItems.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Heart size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">Your wishlist is empty</p>
+                    <Link href="/products">
+                      <Button className="mt-4 bg-blue-600 text-white hover:bg-blue-700">
+                        Browse Products
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {wishlistItems.map((item) => (
+                      <div
+                        key={item.uuid}
+                        className={`relative border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow ${removingIds.includes(item.uuid) ? "opacity-50" : ""
+                          }`}
+                      >
+                        <Link href={`/products/${item.slug || item.url}`}>
+                          <div className="aspect-square relative bg-gray-100">
+                            <Image
+                              src={item.baseImage || "/assets/images/product/1.jpg"}
+                              alt={item.productName}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </Link>
+                        <div className="p-4">
+                          <Link href={`/products/${item.slug || item.url}`}>
+
+                            <h3 className="font-semibold text-gray-900 mb-2 hover:text-blue-600 line-clamp-2">
+                              {item.productName}
+                            </h3>
+                          </Link>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-lg font-bold text-green-600">
+                              ${item.specialPrice || item.originalPrice}
+                            </span>
+                            {item.specialPrice && (
+                              <span className="text-sm text-gray-400 line-through">
+                                ${item.originalPrice}
+                              </span>
+                            )}
+                          </div>
+                          <Button
+                            onClick={() => handleRemoveFromWishlist(item.uuid)}
+                            disabled={removingIds.includes(item.uuid)}
+                            variant="outline"
+                            className="w-full flex items-center justify-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                          >
+                            {removingIds.includes(item.uuid) ? (
+                              <Loader2 className="animate-spin h-4 w-4" />
+                            ) : (
+                              <Trash2 size={16} />
+                            )}
+                            <span>Remove</span>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
+
 
         {/* Overlay for mobile sidebar */}
         {sidebarOpen && (

@@ -4,7 +4,6 @@ const nextConfig: NextConfig = {
   /* config options here */
   images: {
     unoptimized: true, // Bypass image optimization for external URLs
-    domains: ["localhost", "api.singingbowlvillagenepal.com"],
     remotePatterns: [
       {
         protocol: 'http',

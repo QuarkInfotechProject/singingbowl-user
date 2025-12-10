@@ -71,6 +71,10 @@ export async function POST(
     const endpoint = `/${params.path.join("/")}`;
     const body = await request.json();
 
+    console.log("=== API POST Request ===");
+    console.log("Endpoint:", endpoint);
+    console.log("Request Body:", JSON.stringify(body, null, 2));
+
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
@@ -84,6 +88,11 @@ export async function POST(
     return Response.json(response.data);
   } catch (error: any) {
     const axiosError = error as AxiosError;
+
+    console.log("=== API POST Error ===");
+    console.log("Status:", axiosError.response?.status);
+    console.log("Error Response Data:", JSON.stringify(axiosError.response?.data, null, 2));
+    console.log("Error Message:", axiosError.message);
 
     return Response.json(
       {

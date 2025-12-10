@@ -9,12 +9,12 @@ import {
   SheetTitle,
   SheetFooter,
 } from "@/components/ui/sheet";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 
 export default function CartSheet() {
-  const { cartItems, isOpen, toggleCart, removeFromCart } = useCart();
+  const { cartItems, isOpen, toggleCart, removeFromCart, removingItemIds } = useCart();
 
   const totalPrice = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -40,51 +40,59 @@ export default function CartSheet() {
             </div>
           ) : (
             <div className="space-y-4">
-              {cartItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 transition-all duration-200 hover:border-slate-300 hover:shadow-sm"
-                >
-                  <Link href={item.url ? `/products/${item.url}` : "#"} className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md bg-white block" onClick={toggleCart}>
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 80px, 80px"
-                    />
-                  </Link>
+              {cartItems.map((item) => {
+                const isRemoving = removingItemIds.includes(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4 transition-all duration-200 hover:border-slate-300 hover:shadow-sm relative ${isRemoving ? 'opacity-50 pointer-events-none' : ''}`}
+                  >
+                    {isRemoving && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-lg z-10">
+                        <Loader2 className="w-5 h-5 text-[#A12717] animate-spin" />
+                      </div>
+                    )}
+                    <Link href={item.url ? `/products/${item.url}` : "#"} className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md bg-white block" onClick={toggleCart}>
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 80px, 80px"
+                      />
+                    </Link>
 
-                  <div className="flex flex-1 flex-col justify-between">
-                    <div>
-                      <Link href={item.url ? `/products/${item.url}` : "#"} onClick={toggleCart}>
-                        <h3 className="font-semibold text-slate-900 line-clamp-2 hover:text-[#A12717] transition-colors">
-                          {item.name}
-                        </h3>
-                      </Link>
-                      <p
-                        className="mt-1 text-sm font-bold"
-                        style={{ color: "#A12717" }}
+                    <div className="flex flex-1 flex-col justify-between">
+                      <div>
+                        <Link href={item.url ? `/products/${item.url}` : "#"} onClick={toggleCart}>
+                          <h3 className="font-semibold text-slate-900 line-clamp-2 hover:text-[#A12717] transition-colors">
+                            {item.name}
+                          </h3>
+                        </Link>
+                        <p
+                          className="mt-1 text-sm font-bold"
+                          style={{ color: "#A12717" }}
+                        >
+                          ${item.price.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-sm text-gray-500">Qty: {item.quantity}</span>
+                      </div>
+                    </div>
+
+                    {item.cartItemId && (
+                      <button
+                        onClick={() => removeFromCart(item.cartItemId!, item.id)}
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded transition-colors hover:bg-red-50 cursor-pointer"
+                        aria-label="Remove item"
                       >
-                        ${item.price.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm text-gray-500">Qty: {item.quantity}</span>
-                    </div>
+                        <X className="h-4 w-4 text-slate-400 hover:text-red-500" />
+                      </button>
+                    )}
                   </div>
-
-                  {item.cartItemId && (
-                    <button
-                      onClick={() => removeFromCart(item.cartItemId!, item.id)}
-                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded transition-colors hover:bg-red-50 cursor-pointer"
-                      aria-label="Remove item"
-                    >
-                      <X className="h-4 w-4 text-slate-400 hover:text-red-500" />
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

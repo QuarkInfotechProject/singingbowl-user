@@ -38,13 +38,16 @@ const Product = () => {
             id: prod.id, // String UUID
             url: prod.url,
             name: prod.productName,
-            price: prod.originalPrice,
+            // If special price exists, show it as main price and original as strikethrough
+            price: prod.specialPrice || prod.originalPrice,
+            originalPrice: prod.specialPrice ? prod.originalPrice : undefined,
             image: prod.baseImage,
             rating: prod.rating || 0,
             reviews: prod.reviewCount || 0,
             discount: prod.specialPrice ? "On Sale" : undefined,
           })) : [],
         }));
+
 
         setCategories(mappedCategories);
         if (mappedCategories.length > 0) {

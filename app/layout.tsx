@@ -4,6 +4,8 @@ import Navbar from "@/components/Header/Navbar";
 import { Inter } from "next/font/google";
 import { Providers } from "./providers";
 import Footer from "@/components/Footer/Footer";
+import { Toaster } from "sonner";
+
 
 // Google Inter font
 const inter = Inter({
@@ -13,6 +15,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://singingbowlvillagenepal.com"),
   title: "Singing Bowl Nepal - Mindfulness & Healing",
   description:
     "Explore handcrafted singing bowls from Nepal. Enhance meditation, mindfulness, and healing with authentic Himalayan bowls.",
@@ -58,6 +61,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
         <Providers>
+          <Toaster richColors position="top-right" />
           <Navbar />
           {children}
           {auth}

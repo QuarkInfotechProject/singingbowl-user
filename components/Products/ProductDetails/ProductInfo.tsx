@@ -1,11 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Star, Heart } from "lucide-react";
-import { useState } from "react";
+import { Star, Heart, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import CartSheet from "../Cart/CartSlide";
 import { ProductDetail } from "@/app/(pages)/products/[slug]/page";
 import { useCart } from "@/context/CartContext";
+import { addToWishlist, fetchWishlist } from "@/lib/apiItems";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface ProductInfoProps {
   product: ProductDetail;
@@ -13,13 +17,44 @@ interface ProductInfoProps {
 
 const ProductInfo = ({ product }: ProductInfoProps) => {
   const [quantity, setQuantity] = useState(1);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
   const { addToCart, isLoading } = useCart();
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
+
+  // Check if product is in wishlist on mount
+  useEffect(() => {
+    const checkWishlist = async () => {
+      if (!isLoggedIn) {
+        console.log("Not logged in, skipping wishlist check");
+        return;
+      }
+      try {
+        console.log("Checking wishlist for product:", product.uuid);
+        const res = await fetchWishlist();
+        console.log("Wishlist API response:", res);
+        const items = res?.data || res || [];
+        console.log("Wishlist items:", items);
+        if (Array.isArray(items)) {
+          const inWishlist = items.some((item: any) => item.uuid === product.uuid);
+          console.log("Product in wishlist:", inWishlist);
+          setIsInWishlist(inWishlist);
+        }
+      } catch (error) {
+        console.error("Failed to check wishlist", error);
+      }
+    };
+    checkWishlist();
+  }, [isLoggedIn, product.uuid]);
+
 
   const incrementQuantity = () => setQuantity(quantity + 1);
   const decrementQuantity = () => quantity > 1 && setQuantity(quantity - 1);
 
   // Generate star rating
   const rating = product.average_rating || 0;
+
   const fullStars = Math.floor(rating);
 
   const handleAddToCart = async () => {
@@ -34,6 +69,28 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       discount: product.discountPercentage
     };
     await addToCart(cartItem);
+  };
+
+  const handleAddToWishlist = async () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+    if (isInWishlist) {
+      toast.info("Already in wishlist");
+      return;
+    }
+    try {
+      setWishlistLoading(true);
+      await addToWishlist(product.uuid);
+      setIsInWishlist(true);
+      toast.success("Added to wishlist!");
+    } catch (error) {
+      console.error("Failed to add to wishlist", error);
+      toast.error("Failed to add to wishlist");
+    } finally {
+      setWishlistLoading(false);
+    }
   };
 
   return (
@@ -84,7 +141,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           >
             More Details
           </Button>
-        </div>        
+        </div>
 
         <div className="flex items-center gap-4 mt-4">
           <Button className="flex-1 bg-transparent border border-[#A12717] hover:bg-transparent cursor-pointer text-[#A12717] rounded-full py-6 font-semibold text-base">
@@ -101,9 +158,21 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
 
         {/* Wishlist & Stock Status */}
         <div className="flex items-center gap-8 mt-2">
-          <button className="flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium">
-            <Heart size={20} />
-            Add to wishlist
+          <button
+            onClick={handleAddToWishlist}
+            disabled={wishlistLoading}
+            className={`flex items-center gap-2 font-medium cursor-pointer disabled:opacity-50 transition-colors ${isInWishlist ? "text-orange-500" : "text-gray-700 hover:text-gray-900"
+              }`}
+          >
+            {wishlistLoading ? (
+              <Loader2 size={20} className="animate-spin" />
+            ) : (
+              <Heart
+                size={20}
+                className={isInWishlist ? "fill-orange-500" : ""}
+              />
+            )}
+            {wishlistLoading ? "Adding..." : isInWishlist ? "In Wishlist" : "Add to wishlist"}
           </button>
           <span className="flex items-center gap-2 text-gray-700 font-medium ">
             <span className={`text-[#EB5930] ${product.inStock ? "bg-[#FAE8E3]" : "bg-gray-200"} p-1 w-6 h-6 rounded-full flex items-center justify-center`}>

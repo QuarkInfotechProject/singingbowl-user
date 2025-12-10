@@ -186,4 +186,108 @@ export const clearCart = async () => {
     }
 };
 
+// Add to Wishlist
+export const addToWishlist = async (productId: string) => {
+    try {
+        const response = await api.post("/user/wishlist/add", { productId });
+        return response.data;
+    } catch (error) {
+        console.error("addToWishlist error:", error);
+        throw error;
+    }
+};
+
+// Fetch Wishlist
+export const fetchWishlist = async () => {
+    try {
+        const response = await api.get("/user/wishlist");
+        return response.data;
+    } catch (error) {
+        console.error("fetchWishlist error:", error);
+        throw error;
+    }
+};
+
+// Remove from Wishlist
+export const removeFromWishlist = async (productId: string) => {
+    try {
+        const response = await api.post("/user/wishlist/remove", { productId });
+        return response.data;
+    } catch (error) {
+        console.error("removeFromWishlist error:", error);
+        throw error;
+    }
+};
+
+// Add Address
+export const addAddress = async (data: any) => {
+    try {
+        console.log("=== addAddress Request ===");
+        console.log("Request Body:", JSON.stringify(data, null, 2));
+        const response = await api.post("/user/address/add", data);
+        console.log("=== addAddress Success ===");
+        console.log("Response:", response.data);
+        return response.data;
+    } catch (error: any) {
+        console.log("=== addAddress Error ===");
+        console.log("Status:", error.response?.status);
+        console.log("Error Response Data:", JSON.stringify(error.response?.data, null, 2));
+        console.log("Error Message:", error.message);
+        throw error;
+    }
+};
+
+// Fetch all addresses
+export const fetchAddresses = async () => {
+    try {
+        const response = await api.get("/user/address");
+        console.log("=== fetchAddresses Response ===");
+        console.log("Full Response:", JSON.stringify(response.data, null, 2));
+        return response.data;
+    } catch (error) {
+        console.error("fetchAddresses error:", error);
+        throw error;
+    }
+};
+
+// Fetch address by UUID
+export const fetchAddressById = async (uuid: string) => {
+    try {
+        const response = await api.get(`/user/address/show/${uuid}`);
+        return response.data;
+    } catch (error) {
+        console.error("fetchAddressById error:", error);
+        throw error;
+    }
+};
+
+// Update Address
+export const updateAddress = async (data: any) => {
+    try {
+        const response = await api.post("/user/address/update", data);
+        return response.data;
+    } catch (error) {
+        console.error("updateAddress error:", error);
+        throw error;
+    }
+};
+
+// Create Order
+export const createOrder = async (data: {
+    addressId: string;
+    couponCodes: string[];
+    note: string;
+    paymentMethod: string;
+    termsAndConditions: string;
+}) => {
+    try {
+        const response = await api.post("/user/orders/create", data);
+        return response.data;
+    } catch (error) {
+        console.error("createOrder error:", error);
+        throw error;
+    }
+};
+
 export default api;
+

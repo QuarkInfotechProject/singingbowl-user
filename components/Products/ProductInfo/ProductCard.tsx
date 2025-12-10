@@ -8,6 +8,7 @@ export interface Product {
   url: string;
   name: string;
   price: string;
+  originalPrice?: string;
   image: string;
   rating?: number;
   reviews?: number;
@@ -21,6 +22,8 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+  const hasDiscount = product.originalPrice && product.price !== product.originalPrice;
+
   return (
     <div className="w-full">
       <Link href={`/products/${product.url}`}>
@@ -51,7 +54,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
               ({product.reviews || 0})
             </span>
             <b>{product.name}</b>
-            <b className="text-[#39B856]">{product.price}</b>
+            <div className="flex items-center gap-2">
+              <b className="text-[#39B856]">{product.price}</b>
+              {hasDiscount && (
+                <span className="text-gray-400 line-through text-sm">
+                  {product.originalPrice}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </Link>
@@ -59,3 +69,4 @@ const ProductCard = ({ product }: ProductCardProps) => {
   );
 };
 export default ProductCard;
+

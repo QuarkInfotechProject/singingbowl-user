@@ -28,6 +28,7 @@ interface CartContextType {
     toggleCart: () => void;
     isLoading: boolean;
     refreshCart: () => Promise<void>;
+    removingItemIds: string[];
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -36,15 +37,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [removingItemIds, setRemovingItemIds] = useState<string[]>([]);
 
     const { isLoggedIn } = useAuth();
     const router = useRouter();
 
-    const fetchCartItems = async () => {
+    const fetchCartItems = async (showLoading: boolean = true) => {
         if (!isLoggedIn) return;
 
         try {
-            setIsLoading(true);
+            if (showLoading) {
+                setIsLoading(true);
+            }
             const data = await apiFetchCart();
 
             // Check if data has 'data' property (if apiFetchCart returns full axios response) or if it IS the data object
@@ -70,7 +74,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         } catch (error) {
             console.error("Failed to fetch cart", error);
         } finally {
-            setIsLoading(false);
+            if (showLoading) {
+                setIsLoading(false);
+            }
         }
     };
 
@@ -114,15 +120,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     const removeFromCart = async (cartId: string, id: string) => {
         try {
-            setIsLoading(true);
+            setRemovingItemIds((prev) => [...prev, id]);
             await apiRemoveFromCart({ cartId, id });
-            await fetchCartItems();
-            // toast.success("Item removed");
+            await fetchCartItems(false);
         } catch (error) {
             console.error("Error removing from cart:", error);
-            // toast.error("Failed to remove item");
         } finally {
-            setIsLoading(false);
+            setRemovingItemIds((prev) => prev.filter((itemId) => itemId !== id));
         }
     };
 
@@ -145,7 +149,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const refreshCart = fetchCartItems;
 
     return (
-        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, isOpen, toggleCart, isLoading, refreshCart }}>
+        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, isOpen, toggleCart, isLoading, refreshCart, removingItemIds }}>
             {children}
         </CartContext.Provider>
     );
