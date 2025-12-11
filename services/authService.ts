@@ -51,9 +51,45 @@ export const authService = {
     }
   },
 
+  async forgotPassword(email: string): Promise<any> {
+    try {
+      const { data } = await axios.post("/api/user/forgot-password", { email });
+      return data;
+    } catch (error) {
+      console.error("forgotPassword error:", error);
+      throw error;
+    }
+  },
+
   async googleSignIn(): Promise<void> {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Google sign in initiated");
+    // Get the current URL to return to after authentication
+    const returnUrl = typeof window !== "undefined" ? window.location.href : "/";
+
+    try {
+      // Fetch the Google OAuth URL from our API
+      console.log("Fetching Google OAuth URL...");
+      const response = await axios.get(`/api/user/auth/google/redirect?returnUrl=${encodeURIComponent(returnUrl)}`);
+
+      console.log("Google OAuth response:", response.data);
+
+      // The API returns the redirect URL
+      const redirectUrl = response.data?.redirectUrl || response.data?.data;
+
+      console.log("Redirect URL:", redirectUrl);
+
+      if (redirectUrl) {
+        // Navigate to Google's OAuth page
+        console.log("Navigating to:", redirectUrl);
+        window.location.assign(redirectUrl);
+        // Return a promise that never resolves to prevent further execution
+        return new Promise(() => { });
+      } else {
+        console.error("No redirect URL in response:", response.data);
+        throw new Error("Failed to get Google sign in URL");
+      }
+    } catch (error: any) {
+      console.error("Google sign in error:", error);
+      throw error;
+    }
   },
 };

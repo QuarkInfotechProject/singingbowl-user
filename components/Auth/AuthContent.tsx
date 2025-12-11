@@ -185,6 +185,9 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
                         }
                         onSubmit={handleLoginSubmit}
                         onGoogleSignIn={handleGoogleSignIn}
+                        onForgotPassword={async (email: string) => {
+                            await authService.forgotPassword(email);
+                        }}
                     />
                 ) : (
                     <>

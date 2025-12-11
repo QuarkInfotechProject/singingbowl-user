@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmailInput } from "./EmailInput";
 import { PasswordInput } from "./PasswordInput";
@@ -11,6 +12,7 @@ interface LoginFormProps {
   onPasswordChange: (value: string) => void;
   onSubmit: () => void;
   onGoogleSignIn: () => void;
+  onForgotPassword: (email: string) => Promise<void>;
 }
 
 export const LoginForm = ({
@@ -21,7 +23,93 @@ export const LoginForm = ({
   onPasswordChange,
   onSubmit,
   onGoogleSignIn,
+  onForgotPassword,
 }: LoginFormProps) => {
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [forgotError, setForgotError] = useState("");
+
+  const handleForgotSubmit = async () => {
+    if (!forgotEmail) {
+      setForgotError("Please enter your email");
+      return;
+    }
+    setForgotError("");
+    setForgotLoading(true);
+    try {
+      await onForgotPassword(forgotEmail);
+      setForgotSuccess(true);
+    } catch (err) {
+      setForgotError("Failed to send reset email. Please try again.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false);
+    setForgotEmail("");
+    setForgotSuccess(false);
+    setForgotError("");
+  };
+
+  if (showForgotPassword) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Forgot Password</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Enter your email to receive a password reset link
+          </p>
+        </div>
+
+        {forgotSuccess ? (
+          <div className="text-center space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-green-700 text-sm">
+                Password reset instructions have been sent to your email.
+              </p>
+            </div>
+            <Button
+              onClick={handleBackToLogin}
+              variant="outline"
+              className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Back to Sign In
+            </Button>
+          </div>
+        ) : (
+          <>
+            {forgotError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-red-700 text-sm">{forgotError}</p>
+              </div>
+            )}
+
+            <EmailInput value={forgotEmail} onChange={setForgotEmail} />
+
+            <Button
+              onClick={handleForgotSubmit}
+              className="w-full bg-[#A12717] cursor-pointer hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 text-sm h-9"
+              disabled={forgotLoading}
+            >
+              {forgotLoading ? "Sending..." : "Send Reset Link"}
+            </Button>
+
+            <button
+              onClick={handleBackToLogin}
+              className="w-full text-sm text-gray-600 hover:text-[#A12717] transition-colors"
+            >
+              ← Back to Sign In
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
       <EmailInput value={email} onChange={onEmailChange} />
@@ -32,9 +120,19 @@ export const LoginForm = ({
         id="login-password"
       />
 
+      <div className="flex justify-end mt-1">
+        <button
+          type="button"
+          onClick={() => setShowForgotPassword(true)}
+          className="text-sm text-[#A12717] hover:text-amber-700 hover:underline transition-colors"
+        >
+          Forgot Password?
+        </button>
+      </div>
+
       <Button
         onClick={onSubmit}
-        className="w-full mt-4 bg-[#A12717] cursor-pointer hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 text-sm h-9"
+        className="w-full mt-3 bg-[#A12717] cursor-pointer hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 text-sm h-9"
         disabled={loading}
       >
         {loading ? "Loading..." : "Sign In"}
