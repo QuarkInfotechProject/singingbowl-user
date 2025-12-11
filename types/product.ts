@@ -1,6 +1,15 @@
 export interface Product {
   id: number;
-  name: string;
+  uuid: string;
+  productName: string;
+  url: string;
+  originalPrice: string;
+  specialPrice: string | null;
+  discountPercentage: number;
   description: string;
-  image: string;
+  inStock: boolean;
+  files: {
+    baseImage: { url: string } | null;
+    additionalImage: string[];
+  };
 }

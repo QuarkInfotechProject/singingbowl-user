@@ -38,7 +38,7 @@ const ArtisansSection: React.FC<ArtisansSectionProps> = ({ artisans }) => (
           className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center"
         >
           <div
-            className={`relative h-[500px] rounded-lg overflow-hidden shadow-xl ${
+            className={`relative h-[600px] rounded-lg overflow-hidden shadow-xl ${
               idx % 2 !== 0 ? "md:order-last" : ""
             }`}
           >
@@ -58,14 +58,14 @@ const ArtisansSection: React.FC<ArtisansSectionProps> = ({ artisans }) => (
               {artisan.role}
             </p>
             <blockquote
-              className={`text-2xl font-light italic text-stone-600 leading-relaxed mb-8 border-amber-600 relative py-4 px-6`}
+              className={`text-xl font-light italic text-stone-600 leading-relaxed mb-8 border-amber-600 relative py-4 px-6`}
             >
               <span className="absolute top-0 left-0 text-6xl text-amber-200 font-serif -z-10">
                 “
               </span>
               {artisan.quote}
             </blockquote>
-            <p className="font-semibold text-stone-700">
+            {/* <p className="font-semibold text-stone-700">
               Specialty:{" "}
               <span className="font-normal text-stone-600">
                 {artisan.specialty}
@@ -76,7 +76,7 @@ const ArtisansSection: React.FC<ArtisansSectionProps> = ({ artisans }) => (
               <span className="font-normal text-stone-600">
                 {artisan.experience}
               </span>
-            </p>
+            </p> */}
           </div>
         </div>
       ))}

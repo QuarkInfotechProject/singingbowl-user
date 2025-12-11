@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No code found" }, { status: 400 });
     }
     const siteURL = new URL(process.env.SITE_ORIGIN!);
-    const { data } = await server.get("/auth/google/callback", {
+    const { data } = await server.get("/user/auth/google/callback", {
       params: {
         code,
       },

@@ -8,7 +8,7 @@ const ChairmanMessage = () => (
         <img
           src="/assets/images/md/4.avif"
           alt="Chairman Ramesh Tamang"
-          className="w-48 h-48 md:w-64 md:h-64 object-cover rounded-full mx-auto shadow-xl border-4 border-white"
+          className="w-48 h-48 md:w-120 md:h-120 object-cover rounded-3xl mx-auto shadow-xl border-4 border-white"
         />
       </div>
       <div className="md:w-3/5 text-center md:text-left">
@@ -19,11 +19,9 @@ const ChairmanMessage = () => (
           Carrying the Flame Forward
         </h2>
         <p className="text-lg text-stone-600 leading-relaxed mb-6">
-          "My father didn't just build a business; he preserved a soul—the soul
-          of our culture, encapsulated in the resonant hum of a singing bowl. I
-          am humbled to carry that flame forward. Our commitment is to honor the
-          sacred traditions of our ancestors and share their healing power with
-          a world in need of peace. Thank you for being a part of our story."
+          "​Introducing Mr. Narendra Lama, the visionary chairman behind our esteemed singing bowl company. With a deep-rooted passion for preserving and sharing the rich cultural heritage of Himalayan singing bowls, Mr. Lama's journey began with a profound appreciation for these ancient instruments and their spiritual significance. Through his dedication and expertise, he has cultivated a company known for its commitment to craftsmanship, authenticity, and the transformative power of sound healing. Mr. Lama's leadership continues to inspire innovation in our approach to creating and curating singing bowls, ensuring that each bowl resonates with quality and spiritual depth. His vision drives us to uphold traditions while embracing new possibilities in the realm of holistic well-being.
+
+          "
         </p>
         <div className="mt-8 border-t border-amber-200 pt-6">
           <p className="text-2xl font-serif font-semibold text-stone-800">

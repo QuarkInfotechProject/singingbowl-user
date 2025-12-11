@@ -7,7 +7,11 @@ import {
 } from "@/components/ui/breadcrumb";
 import Link from "next/link";
 
-const DetailBreadCrumbs = () => {
+interface DetailBreadCrumbsProps {
+  productName?: string;
+}
+
+const DetailBreadCrumbs = ({ productName }: DetailBreadCrumbsProps) => {
   return (
     <div className="w-full">
       <div className="w-full flex flex-col gap-12 ">
@@ -26,7 +30,7 @@ const DetailBreadCrumbs = () => {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink>Jambati bowls</BreadcrumbLink>
+              <BreadcrumbLink>{productName || "Product"}</BreadcrumbLink>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>

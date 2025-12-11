@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef } from "react";
+import { useCart } from "@/context/CartContext";
 import {
   Trash2,
   Plus,
@@ -9,6 +10,7 @@ import {
   Truck,
   Lock,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -23,80 +25,10 @@ interface CartItem {
 }
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: "1",
-      name: "Tibetan Brass Singing Bowl 7 inch",
-      price: 89.99,
-      quantity: 1,
-      image: "/assets/images/product/1.jpg",
-      stock: 15,
-      discount: 10,
-    },
-    {
-      id: "2",
-      name: "Crystal Singing Bowl Set - Clear Quartz",
-      price: 149.99,
-      quantity: 1,
-      image: "/assets/images/product/2.jpg",
-      stock: 8,
-      discount: 15,
-    },
-    {
-      id: "3",
-      name: "Chakra Singing Bowl Set - 7 Chakra Bowls",
-      price: 199.99,
-      quantity: 1,
-      image: "/assets/images/product/3.jpg",
-      stock: 5,
-      discount: 20,
-    },
-    {
-      id: "4",
-      name: "Meditation Singing Bowl 5 inch",
-      price: 59.99,
-      quantity: 2,
-      image: "/assets/images/product/4.jpg",
-      stock: 25,
-    },
-    {
-      id: "5",
-      name: "Hand-Hammered Singing Bowl 8 inch",
-      price: 129.99,
-      quantity: 1,
-      image: "/assets/images/product/5.jpg",
-      stock: 12,
-      discount: 12,
-    },
-    {
-      id: "6",
-      name: "Frosted Quartz Singing Bowl - Rose Quartz",
-      price: 169.99,
-      quantity: 1,
-      image: "/assets/images/product/6.jpg",
-      stock: 6,
-    },
-  ]);
-
-  const updateQuantity = (id: string, change: number) => {
-    setCartItems((items) =>
-      items.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantity: Math.max(
-                1,
-                Math.min(item.quantity + change, item.stock)
-              ),
-            }
-          : item
-      )
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems((items) => items.filter((item) => item.id !== id));
-  };
+  // We already have CartContext for global cart state, but checking if we should use it here directly
+  // If the requirement is to "fetch using /cart route", CartContext ALREADY does that on mount.
+  // So we can just use the context.
+  const { cartItems, isLoading, removeFromCart, removingItemIds } = useCart();
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
@@ -107,8 +39,8 @@ const Cart = () => {
 
   const subtotal = calculateSubtotal();
   const shipping = subtotal > 100 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  // Tax removed
+  const total = subtotal + shipping;
 
   const totalSavings = cartItems.reduce((savings, item) => {
     if (item.discount) {
@@ -116,6 +48,10 @@ const Cart = () => {
     }
     return savings;
   }, 0);
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading cart...</div>
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -147,88 +83,96 @@ const Cart = () => {
             {/* Cart Items */}
             <div className="lg:col-span-2">
               <div className="space-y-4">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-lg transition-shadow"
-                  >
-                    <div className="flex gap-4">
-                      {/* Product Image */}
-                      <div className="relative flex-shrink-0 w-24 h-24 bg-slate-100 rounded-lg overflow-hidden">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                        {item.discount && (
-                          <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                            -{item.discount}%
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Product Details */}
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-semibold text-slate-900 text-lg">
-                              {item.name}
-                            </h3>
-                            <p className="text-sm text-slate-500">
-                              {item.stock > 0 ? (
-                                <span className="text-green-600 font-medium">
-                                  ✓ In Stock
-                                </span>
-                              ) : (
-                                <span className="text-red-600 font-medium">
-                                  Out of Stock
-                                </span>
-                              )}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="text-slate-400 hover:text-red-500 cursor-pointer transition-colors p-1"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
+                {cartItems.map((item) => {
+                  const isRemoving = removingItemIds.includes(item.id);
+                  return (
+                    <div
+                      key={item.id}
+                      className={`bg-white rounded-lg border border-slate-200 p-4 hover:shadow-lg transition-all relative ${isRemoving ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                      {isRemoving && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-lg z-10">
+                          <Loader2 className="w-6 h-6 text-[#A12717] animate-spin" />
                         </div>
-
-                        {/* Price and Quantity */}
-                        <div className="flex justify-between items-end">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold text-slate-900">
-                                $
-                                {(
-                                  item.price *
-                                  (1 - (item.discount || 0) / 100)
-                                ).toFixed(2)}
-                              </span>
-                              {item.discount && (
-                                <span className="text-sm text-slate-500 line-through">
-                                  ${item.price.toFixed(2)}
-                                </span>
-                              )}
+                      )}
+                      <div className="flex gap-4">
+                        {/* Product Image */}
+                        <Link href={item.url ? `/products/${item.url}` : "#"} className="relative flex-shrink-0 w-24 h-24 bg-slate-100 rounded-lg overflow-hidden block">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                          {item.discount && (
+                            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+                              -{item.discount}%
                             </div>
-                            <p className="text-xs text-slate-500 mt-1">
-                              Subtotal: $
-                              {(
-                                item.price *
-                                (1 - (item.discount || 0) / 100) *
-                                item.quantity
-                              ).toFixed(2)}
-                            </p>
+                          )}
+                        </Link>
+
+                        {/* Product Details */}
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <Link href={item.url ? `/products/${item.url}` : "#"}>
+                                <h3 className="font-semibold text-slate-900 text-lg hover:text-[#A12717] transition-colors">
+                                  {item.name}
+                                </h3>
+                              </Link>
+                              <p className="text-sm text-slate-500">
+                                {item.stock && item.stock > 0 ? (
+                                  <span className="text-green-600 font-medium">
+                                    ✓ In Stock
+                                  </span>
+                                ) : (
+                                  <span className="text-green-600 font-medium">
+                                    {/* Out of Stock - Logic needs check */}
+                                    ✓ In Stock
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                            {item.cartItemId && (
+                              <button
+                                onClick={() => removeFromCart(item.cartItemId!, item.id)}
+                                className="text-slate-400 hover:text-red-500 cursor-pointer transition-colors p-1"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Price and Quantity */}
+                          <div className="flex justify-between items-end">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg font-bold text-slate-900">
+                                  $
+                                  {(
+                                    item.price *
+                                    (1 - (item.discount || 0) / 100)
+                                  ).toFixed(2)}
+                                </span>
+                                {item.discount && (
+                                  <span className="text-sm text-slate-500 line-through">
+                                    ${item.price.toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-500 mt-1">
+                                Qty: {item.quantity}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Promo Code */}
-              <div className="mt-6 bg-white rounded-lg border border-slate-200 p-4">
+              {/* <div className="mt-6 bg-white rounded-lg border border-slate-200 p-4">
                 <label className="block text-sm font-semibold text-slate-900 mb-2">
                   Promo Code
                 </label>
@@ -242,18 +186,18 @@ const Cart = () => {
                     Apply
                   </button>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg border border-slate-200 sticky top-24">
                 <div className="p-6 border-b border-slate-200">
-                  <h2 className="text-xl font-bold text-slate-900 mb-4">
+                  <h2 className="text-xl font-bold text-slate-900">
                     Order Summary
                   </h2>
 
-                  <div className="space-y-3 text-sm">
+                  {/* <div className="space-y-3 text-sm">
                     <div className="flex justify-between text-slate-600">
                       <span>Subtotal</span>
                       <span className="font-medium">
@@ -275,17 +219,14 @@ const Cart = () => {
                       </span>
                       <span className="font-medium">
                         {shipping === 0 ? (
-                          <span className="text-green-600">FREE</span>
+                          <span className="text-green-600">$9.00</span>
                         ) : (
                           `$${shipping.toFixed(2)}`
                         )}
                       </span>
                     </div>
-                    <div className="flex justify-between text-slate-600">
-                      <span>Tax</span>
-                      <span className="font-medium">${tax.toFixed(2)}</span>
-                    </div>
-                  </div>
+
+                  </div> */}
                 </div>
 
                 <div className="p-6 bg-gradient-to-br from-[#A12717]to-indigo-50 border-t border-[#A12717]">
@@ -303,10 +244,11 @@ const Cart = () => {
                       <ArrowRight className="w-5 h-5" />
                     </button>
                   </Link>
-
+                  <Link href="/products">
                   <button className="w-full border-2 border-slate-300 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-50 transition-colors">
                     Continue Shopping
                   </button>
+                  </Link>
                 </div>
 
                 {/* Trust Badges */}
@@ -315,10 +257,10 @@ const Cart = () => {
                     <Lock className="w-4 h-4 text-green-600" />
                     <span>Secure checkout</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-600">
+                  {/* <div className="flex items-center gap-2 text-xs text-slate-600">
                     <Truck className="w-4 h-4 text-[#A12717]" />
                     <span>Free shipping over $100</span>
-                  </div>
+                  </div> */}
                   <div className="flex items-center gap-2 text-xs text-slate-600">
                     <span className="text-lg">✓</span>
                     <span>30-day money back guarantee</span>
