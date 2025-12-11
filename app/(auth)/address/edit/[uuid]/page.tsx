@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { ArrowLeft, Loader2, MapPin } from "lucide-react";
 import { fetchAddressById, updateAddress } from "@/lib/apiItems";
@@ -31,7 +31,7 @@ const initialFormData: AddressFormData = {
     zoneName: "Kumaripati",
 };
 
-export default function EditAddressPage() {
+function EditAddressContent() {
     const router = useRouter();
     const params = useParams();
     const searchParams = useSearchParams();
@@ -470,5 +470,17 @@ export default function EditAddressPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function EditAddressPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+        }>
+            <EditAddressContent />
+        </Suspense>
     );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuthForm } from "@/hooks/useAuthForm";
 import { authService } from "@/services/authService";
 import { useAuth } from "@/context/AuthContext";
@@ -20,7 +20,6 @@ interface AuthContentProps {
 
 export const AuthContent = ({ initialMode = "login", onClose, isModal = false }: AuthContentProps) => {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [isLogin, setIsLogin] = useState(initialMode === "login");
 
     const {

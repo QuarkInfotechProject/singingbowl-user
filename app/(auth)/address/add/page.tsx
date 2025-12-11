@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2, MapPin } from "lucide-react";
 import { addAddress } from "@/lib/apiItems";
@@ -31,7 +31,7 @@ const initialFormData: AddressFormData = {
     zoneName: "",
 };
 
-export default function AddAddressPage() {
+function AddAddressContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirect = searchParams.get("redirect") || "/profile";
@@ -426,5 +426,17 @@ export default function AddAddressPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function AddAddressPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
+            </div>
+        }>
+            <AddAddressContent />
+        </Suspense>
     );
 }
