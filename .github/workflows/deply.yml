@@ -26,7 +26,7 @@ jobs:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
           port: ${{ env.SSH_PORT }}
-          key: ${{ secrets.SERVER_SSH_KEY_QUARK }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
           script_stop: true
           envs: PROJECT_PATH,BRANCH
 
