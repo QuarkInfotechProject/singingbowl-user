@@ -22,7 +22,16 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
 
-  const { cartItems, isLoading, clearCart } = useCart();
+  const {
+    cartItems,
+    isLoading,
+    clearCart,
+    shippingCharge,
+    shippingType,
+    cartTotal,
+    grandTotal,
+    totalDiscount
+  } = useCart();
   const router = useRouter();
 
   const handleAddressSelect = (address: Address | null) => {
@@ -78,14 +87,6 @@ const Checkout = () => {
       setIsSubmitting(false);
     }
   };
-
-  // Calculate totals from cart items
-  const subtotal = cartItems.reduce((sum, item) => {
-    const price = item.price * (1 - (item.discount || 0) / 100);
-    return sum + price * item.quantity;
-  }, 0);
-  const shipping = subtotal > 100 ? 0 : 9.99;
-  const total = subtotal + shipping;
 
   if (isLoading) {
     return (
@@ -390,10 +391,18 @@ const Checkout = () => {
                         </p>
                         <p className="text-xs text-slate-500">
                           Qty: {item.quantity}
+                          {item.weight && (
+                            <span className="ml-2">• Weight: {item.weight}g</span>
+                          )}
                         </p>
+                        {item.originalPrice > item.price && (
+                          <p className="text-xs text-green-600">
+                            Save ${((item.originalPrice - item.price) * item.quantity).toFixed(2)}
+                          </p>
+                        )}
                       </div>
                       <p className="font-semibold text-slate-900">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ${item.lineTotal.toFixed(2)}
                       </p>
                     </div>
                   ))
@@ -405,16 +414,24 @@ const Checkout = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Subtotal</span>
                   <span className="text-slate-900 font-medium">
-                    ${subtotal.toFixed(2)}
+                    ${cartTotal.toFixed(2)}
                   </span>
                 </div>
+                {totalDiscount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600">Discount</span>
+                    <span className="text-green-600 font-medium">
+                      -${totalDiscount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Shipping</span>
+                  <span className="text-slate-600">{shippingType || 'Shipping'}</span>
                   <span className="text-slate-900 font-medium">
-                    {shipping === 0 ? (
+                    {shippingCharge === 0 ? (
                       <span className="text-green-600">Free</span>
                     ) : (
-                      `$${shipping.toFixed(2)}`
+                      `$${shippingCharge.toFixed(2)}`
                     )}
                   </span>
                 </div>
@@ -424,10 +441,10 @@ const Checkout = () => {
               <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 mb-6">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold text-slate-900">
-                    Total
+                    Grand Total
                   </span>
                   <span className="text-2xl font-bold text-[#A12717]">
-                    ${total.toFixed(2)}
+                    ${grandTotal.toFixed(2)}
                   </span>
                 </div>
               </div>

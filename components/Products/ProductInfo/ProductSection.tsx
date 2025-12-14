@@ -14,9 +14,10 @@ export interface CategoryData {
 interface ProductSectionProps {
   category?: CategoryData;
   isLoading?: boolean;
+  allProducts?: Product[];
 }
 
-const ProductSection = ({ category, isLoading }: ProductSectionProps) => {
+const ProductSection = ({ category, isLoading, allProducts = [] }: ProductSectionProps) => {
   if (isLoading) {
     return (
       <div className="w-full">
@@ -29,10 +30,17 @@ const ProductSection = ({ category, isLoading }: ProductSectionProps) => {
     );
   }
 
+  // Show all products when no category is selected
   if (!category) {
     return (
-      <div className="w-full h-96 flex items-center justify-center">
-        <p className="text-gray-500">Select a category to view products.</p>
+      <div className="w-full">
+        <div className="w-full flex flex-col gap-4 items-start justify-start text-start">
+          <p className="font-bold text-3xl">All Products</p>
+          <p>
+            Explore our complete collection of handcrafted singing bowls and meditation accessories.
+          </p>
+          <ProductGrid products={allProducts} />
+        </div>
       </div>
     );
   }

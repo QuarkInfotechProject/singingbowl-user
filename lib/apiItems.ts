@@ -41,6 +41,17 @@ export const fetchProductsByCategory = async () => {
     }
 };
 
+// Fetch products by specific category name/slug
+export const fetchProductsByCategoryName = async (categoryName: string) => {
+    try {
+        const response = await api.get(`/user/products/${categoryName}`);
+        return response.data;
+    } catch (error) {
+        console.error("fetchProductsByCategoryName error:", error);
+        throw error;
+    }
+};
+
 // Fetch products
 export const fetchProductBySlug = async (slug: string) => {
     try {

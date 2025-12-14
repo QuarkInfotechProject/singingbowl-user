@@ -1,11 +1,8 @@
 "use client";
 
-import { useRef } from "react";
 import { useCart } from "@/context/CartContext";
 import {
   Trash2,
-  Plus,
-  Minus,
   ShoppingBag,
   Truck,
   Lock,
@@ -14,37 +11,23 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  stock: number;
-  discount?: number;
-}
-
 const Cart = () => {
-  // We already have CartContext for global cart state, but checking if we should use it here directly
-  // If the requirement is to "fetch using /cart route", CartContext ALREADY does that on mount.
-  // So we can just use the context.
-  const { cartItems, isLoading, removeFromCart, removingItemIds } = useCart();
+  const {
+    cartItems,
+    isLoading,
+    removeFromCart,
+    removingItemIds,
+    cartTotal,
+    grandTotal,
+    shippingCharge,
+    shippingType,
+    totalDiscount
+  } = useCart();
 
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => {
-      const price = item.price * (1 - (item.discount || 0) / 100);
-      return total + price * item.quantity;
-    }, 0);
-  };
-
-  const subtotal = calculateSubtotal();
-  const shipping = subtotal > 100 ? 0 : 9.99;
-  // Tax removed
-  const total = subtotal + shipping;
-
+  // Calculate total savings from items where originalPrice > price
   const totalSavings = cartItems.reduce((savings, item) => {
-    if (item.discount) {
-      return savings + item.price * (item.discount / 100) * item.quantity;
+    if (item.originalPrice > item.price) {
+      return savings + (item.originalPrice - item.price) * item.quantity;
     }
     return savings;
   }, 0);
@@ -103,9 +86,9 @@ const Cart = () => {
                             alt={item.name}
                             className="w-full h-full object-cover"
                           />
-                          {item.discount && (
+                          {item.originalPrice > item.price && (
                             <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                              -{item.discount}%
+                              {Math.round((1 - item.price / item.originalPrice) * 100)}% OFF
                             </div>
                           )}
                         </Link>
@@ -147,20 +130,24 @@ const Cart = () => {
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="text-lg font-bold text-slate-900">
-                                  $
-                                  {(
-                                    item.price *
-                                    (1 - (item.discount || 0) / 100)
-                                  ).toFixed(2)}
+                                  ${item.price.toFixed(2)}
                                 </span>
-                                {item.discount && (
+                                {item.originalPrice > item.price && (
                                   <span className="text-sm text-slate-500 line-through">
-                                    ${item.price.toFixed(2)}
+                                    ${item.originalPrice.toFixed(2)}
                                   </span>
                                 )}
                               </div>
                               <p className="text-sm text-gray-500 mt-1">
                                 Qty: {item.quantity}
+                                {item.weight && (
+                                  <span className="ml-2 text-slate-500">
+                                    • Weight: {item.weight}g
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-sm font-medium text-slate-700 mt-1">
+                                Line Total: ${item.lineTotal.toFixed(2)}
                               </p>
                             </div>
                           </div>
@@ -197,11 +184,11 @@ const Cart = () => {
                     Order Summary
                   </h2>
 
-                  {/* <div className="space-y-3 text-sm">
+                  <div className="space-y-3 text-sm mt-4">
                     <div className="flex justify-between text-slate-600">
                       <span>Subtotal</span>
                       <span className="font-medium">
-                        ${subtotal.toFixed(2)}
+                        ${cartTotal.toFixed(2)}
                       </span>
                     </div>
                     {totalSavings > 0 && (
@@ -212,30 +199,37 @@ const Cart = () => {
                         </span>
                       </div>
                     )}
+                    {totalDiscount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount</span>
+                        <span className="font-medium">
+                          -${totalDiscount.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-slate-600">
                       <span className="flex items-center gap-1">
                         <Truck className="w-4 h-4" />
-                        Shipping
+                        {shippingType || 'Shipping'}
                       </span>
                       <span className="font-medium">
-                        {shipping === 0 ? (
-                          <span className="text-green-600">$9.00</span>
+                        {shippingCharge === 0 ? (
+                          <span className="text-green-600">Free</span>
                         ) : (
-                          `$${shipping.toFixed(2)}`
+                          `$${shippingCharge.toFixed(2)}`
                         )}
                       </span>
                     </div>
-
-                  </div> */}
+                  </div>
                 </div>
 
-                <div className="p-6 bg-gradient-to-br from-[#A12717]to-indigo-50 border-t border-[#A12717]">
+                <div className="p-6 bg-gradient-to-br from-[#A12717]/5 to-indigo-50 border-t border-[#A12717]">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-lg font-semibold text-slate-900">
-                      Total
+                      Grand Total
                     </span>
                     <span className="text-2xl font-bold text-[#A12717]">
-                      ${total.toFixed(2)}
+                      ${grandTotal.toFixed(2)}
                     </span>
                   </div>
                   <Link href="/checkout">
@@ -245,9 +239,9 @@ const Cart = () => {
                     </button>
                   </Link>
                   <Link href="/products">
-                  <button className="w-full border-2 border-slate-300 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-50 transition-colors">
-                    Continue Shopping
-                  </button>
+                    <button className="w-full border-2 border-slate-300 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-50 transition-colors">
+                      Continue Shopping
+                    </button>
                   </Link>
                 </div>
 

@@ -10,13 +10,17 @@ export interface CartItem {
     id: string; // Product ID
     cartItemId?: string;
     name: string;
-    price: number;
+    price: number; // unitPrice from API
+    originalPrice: number; // originalPrice from API
+    lineTotal: number; // lineTotal from API
     quantity: number;
     image: string;
     stock?: number;
     discount?: number;
     description?: string;
     url?: string;
+    weight?: number | null;
+    category?: string;
 }
 
 interface CartContextType {
@@ -29,6 +33,13 @@ interface CartContextType {
     isLoading: boolean;
     refreshCart: () => Promise<void>;
     removingItemIds: string[];
+    shippingCharge: number;
+    shippingType: string;
+    cartTotal: number;
+    grandTotal: number;
+    totalDiscount: number;
+    totalWeight: number;
+    cartUuid: string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -38,6 +49,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [removingItemIds, setRemovingItemIds] = useState<string[]>([]);
+    const [shippingCharge, setShippingCharge] = useState<number>(0);
+    const [shippingType, setShippingType] = useState<string>("");
+    const [cartTotal, setCartTotal] = useState<number>(0);
+    const [grandTotal, setGrandTotal] = useState<number>(0);
+    const [totalDiscount, setTotalDiscount] = useState<number>(0);
+    const [totalWeight, setTotalWeight] = useState<number>(0);
+    const [cartUuid, setCartUuid] = useState<string>("");
 
     const { isLoggedIn } = useAuth();
     const router = useRouter();
@@ -55,17 +73,30 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             const cartData = data.data || data;
 
             if (cartData && Array.isArray(cartData.items)) {
-                // Determine structure of item
+                // Map items with new API structure
                 const mappedItems = cartData.items.map((item: any) => ({
-                    id: item.id?.toString(), // Use id from item, not productId if inconsistent
+                    id: item.id?.toString(),
                     name: item.productName,
-                    price: parseFloat(item.unitPrice || item.price || "0"), // Use unitPrice
-                    quantity: item.quantity ? parseInt(item.quantity) : 1,
+                    price: parseFloat(item.unitPrice || "0"),
+                    originalPrice: parseFloat(item.originalPrice || item.unitPrice || "0"),
+                    lineTotal: item.lineTotal || 0,
+                    quantity: typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity) || 1,
                     image: item.baseImage || item.image || "/assets/images/product/1.jpg",
                     cartItemId: item.cartId?.toString(),
-                    url: item.slug
+                    url: item.slug,
+                    weight: item.weight,
+                    category: item.category
                 }));
+
+                // Set all cart-level data from API response
                 setCartItems(mappedItems);
+                setShippingCharge(cartData.shipping_charge || 0);
+                setShippingType(cartData.shipping_type || "");
+                setCartTotal(cartData.total || 0);
+                setGrandTotal(cartData.grand_total || 0);
+                setTotalDiscount(cartData.total_discount || 0);
+                setTotalWeight(cartData.total_weight || 0);
+                setCartUuid(cartData.cart_id || "");
             } else if (Array.isArray(cartData)) {
                 // Fallback
                 setCartItems(cartData);
@@ -149,7 +180,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const refreshCart = fetchCartItems;
 
     return (
-        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, isOpen, toggleCart, isLoading, refreshCart, removingItemIds }}>
+        <CartContext.Provider value={{
+            cartItems,
+            addToCart,
+            removeFromCart,
+            clearCart,
+            isOpen,
+            toggleCart,
+            isLoading,
+            refreshCart,
+            removingItemIds,
+            shippingCharge,
+            shippingType,
+            cartTotal,
+            grandTotal,
+            totalDiscount,
+            totalWeight,
+            cartUuid
+        }}>
             {children}
         </CartContext.Provider>
     );

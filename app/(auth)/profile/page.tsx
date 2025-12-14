@@ -13,6 +13,9 @@ import {
   Loader2,
   Heart,
   Trash2,
+  Star,
+  MessageSquare,
+  ImagePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchUserProfile, updateUserProfile, logoutUser, changeUserPassword, fetchWishlist, removeFromWishlist } from "@/lib/apiItems";
@@ -72,6 +75,25 @@ export default function ProfilePage() {
   }
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  // Review state
+  const [reviewData, setReviewData] = useState({
+    productId: "",
+    orderId: "",
+    rating: 0,
+    comment: "",
+  });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [reviewImages, setReviewImages] = useState<File[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+
+  // Static data for reviews (will be replaced with API data later)
+  const mockOrders = [
+    { id: "ORD-001", products: [{ id: "PROD-001", name: "Tibetan Singing Bowl - 7 inch" }, { id: "PROD-002", name: "Meditation Cushion" }] },
+    { id: "ORD-002", products: [{ id: "PROD-003", name: "Brass Bell" }] },
+    { id: "ORD-003", products: [{ id: "PROD-004", name: "Wooden Mallet" }, { id: "PROD-005", name: "Silk Cushion Cover" }] },
+  ];
   const [removingIds, setRemovingIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -332,6 +354,19 @@ export default function ProfilePage() {
                 >
                   <Heart size={18} />
                   <span className="text-sm">Wishlist</span>
+                </Button>
+                <Button
+                  onClick={() => {
+                    setActiveSection("reviews");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex justify-start p-0 hover:bg-gray-100 items-center bg-transparent cursor-pointer gap-3 rounded-lg transition-colors ${activeSection === "reviews"
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                >
+                  <MessageSquare size={18} />
+                  <span className="text-sm">Reviews</span>
                 </Button>
               </nav>
             </div>
@@ -650,6 +685,239 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Reviews */}
+            {activeSection === "reviews" && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
+                <h1 className="text-2xl font-bold text-gray-900 mb-6">
+                  Write a Review
+                </h1>
+                <p className="text-gray-600 mb-8">
+                  Share your experience with products you&apos;ve purchased. Your feedback helps other customers make informed decisions.
+                </p>
+
+                <div className="space-y-6 max-w-2xl">
+                  {/* Order Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Order
+                    </label>
+                    <select
+                      value={reviewData.orderId}
+                      onChange={(e) => {
+                        setReviewData({
+                          ...reviewData,
+                          orderId: e.target.value,
+                          productId: "", // Reset product when order changes
+                        });
+                      }}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+                    >
+                      <option value="">-- Select an order --</option>
+                      {mockOrders.map((order) => (
+                        <option key={order.id} value={order.id}>
+                          {order.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Product Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Product
+                    </label>
+                    <select
+                      value={reviewData.productId}
+                      onChange={(e) =>
+                        setReviewData({ ...reviewData, productId: e.target.value })
+                      }
+                      disabled={!reviewData.orderId}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">-- Select a product --</option>
+                      {reviewData.orderId &&
+                        mockOrders
+                          .find((o) => o.id === reviewData.orderId)
+                          ?.products.map((product) => (
+                            <option key={product.id} value={product.id}>
+                              {product.name}
+                            </option>
+                          ))}
+                    </select>
+                  </div>
+
+                  {/* Star Rating */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rating
+                    </label>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() =>
+                            setReviewData({ ...reviewData, rating: star })
+                          }
+                          onMouseEnter={() => setHoveredRating(star)}
+                          onMouseLeave={() => setHoveredRating(0)}
+                          className="p-1 transition-transform hover:scale-110 focus:outline-none"
+                        >
+                          <Star
+                            size={32}
+                            className={`transition-colors ${star <= (hoveredRating || reviewData.rating)
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-gray-300"
+                              }`}
+                          />
+                        </button>
+                      ))}
+                      <span className="ml-3 text-sm text-gray-600">
+                        {reviewData.rating > 0
+                          ? `${reviewData.rating} out of 5 stars`
+                          : "Click to rate"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Comment */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Your Review
+                    </label>
+                    <textarea
+                      value={reviewData.comment}
+                      onChange={(e) =>
+                        setReviewData({ ...reviewData, comment: e.target.value })
+                      }
+                      rows={5}
+                      placeholder="Share your experience with this product. What did you like or dislike? Would you recommend it to others?"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      {reviewData.comment.length}/500 characters
+                    </p>
+                  </div>
+
+                  {/* Image Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Add Photos (Optional)
+                    </label>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Upload up to 5 images to share with your review
+                    </p>
+
+                    <div className="flex flex-wrap gap-3">
+                      {/* Image Previews */}
+                      {imagePreviewUrls.map((url, index) => (
+                        <div
+                          key={index}
+                          className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 group"
+                        >
+                          <img
+                            src={url}
+                            alt={`Review image ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newImages = [...reviewImages];
+                              const newUrls = [...imagePreviewUrls];
+                              URL.revokeObjectURL(newUrls[index]);
+                              newImages.splice(index, 1);
+                              newUrls.splice(index, 1);
+                              setReviewImages(newImages);
+                              setImagePreviewUrls(newUrls);
+                            }}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+
+                      {/* Upload Button */}
+                      {reviewImages.length < 5 && (
+                        <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                          <ImagePlus size={24} className="text-gray-400 mb-1" />
+                          <span className="text-xs text-gray-500">Add Photo</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files || []);
+                              const remainingSlots = 5 - reviewImages.length;
+                              const filesToAdd = files.slice(0, remainingSlots);
+
+                              if (filesToAdd.length > 0) {
+                                const newUrls = filesToAdd.map((file) =>
+                                  URL.createObjectURL(file)
+                                );
+                                setReviewImages([...reviewImages, ...filesToAdd]);
+                                setImagePreviewUrls([...imagePreviewUrls, ...newUrls]);
+                              }
+
+                              // Reset input
+                              e.target.value = "";
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {reviewImages.length > 0 && (
+                      <p className="mt-2 text-xs text-gray-500">
+                        {reviewImages.length}/5 images uploaded
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button
+                    onClick={() => {
+                      // Static handler for now
+                      setReviewSubmitting(true);
+                      setTimeout(() => {
+                        alert("Review submitted successfully! (Static demo)");
+                        setReviewData({
+                          productId: "",
+                          orderId: "",
+                          rating: 0,
+                          comment: "",
+                        });
+                        // Clean up image URLs and reset
+                        imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+                        setReviewImages([]);
+                        setImagePreviewUrls([]);
+                        setReviewSubmitting(false);
+                      }, 1000);
+                    }}
+                    disabled={
+                      reviewSubmitting ||
+                      !reviewData.productId ||
+                      !reviewData.orderId ||
+                      reviewData.rating === 0 ||
+                      !reviewData.comment.trim()
+                    }
+                    className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {reviewSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin inline" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Review"
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </div>

@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, MapPin } from "lucide-react";
 import { addAddress } from "@/lib/apiItems";
 import { AddressFormData } from "@/types/address.types";
 import { toast } from "sonner";
+import countries from "@/data/countries.json";
 
 const initialFormData: AddressFormData = {
     firstName: "",
@@ -50,6 +51,18 @@ function AddAddressContent() {
         // Clear error when user types
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+    };
+
+    const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedCode = e.target.value;
+        const selectedCountry = countries.find((c) => c.code === selectedCode);
+        if (selectedCountry) {
+            setFormData((prev) => ({
+                ...prev,
+                countryId: selectedCountry.code,
+                countryName: selectedCountry.name,
+            }));
         }
     };
 
@@ -258,16 +271,25 @@ function AddAddressContent() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    Country
+                                    Country *
                                 </label>
-                                <input
-                                    type="text"
-                                    name="countryName"
-                                    value={formData.countryName}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                    placeholder="Nepal"
-                                />
+                                <select
+                                    name="countryId"
+                                    value={formData.countryId}
+                                    onChange={handleCountryChange}
+                                    className={`w-full px-4 py-3 rounded-lg border ${errors.countryId ? "border-red-500" : "border-slate-300"
+                                        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition`}
+                                >
+                                    <option value="">Select a country</option>
+                                    {countries.map((country) => (
+                                        <option key={country.code} value={country.code}>
+                                            {country.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.countryId && (
+                                    <p className="text-sm text-red-500 mt-1">{errors.countryId}</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">

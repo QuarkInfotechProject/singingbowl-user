@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchCategories } from "@/lib/apiItems";
 
@@ -14,7 +14,6 @@ interface Category {
 }
 
 const Categories = () => {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,7 +26,6 @@ const Categories = () => {
         if (response.data) {
           setCategories(response.data);
         }
-        console.log("data fetched for categories is:::::::", response.data);
       } catch (error) {
         console.error("Failed to fetch categories:", error);
       } finally {
@@ -37,28 +35,6 @@ const Categories = () => {
 
     loadCategories();
   }, []);
-
-  // Auto-scroll effect
-  useEffect(() => {
-    const scrollContainer = scrollRef.current;
-    if (!scrollContainer || categories.length === 0) return;
-
-    let scrollInterval: NodeJS.Timeout;
-
-    const scroll = () => {
-      if (!isPaused) {
-        if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth / 2) {
-          scrollContainer.scrollLeft = 0;
-        } else {
-          scrollContainer.scrollLeft += 1;
-        }
-      }
-    };
-
-    scrollInterval = setInterval(scroll, 30);
-
-    return () => clearInterval(scrollInterval);
-  }, [isPaused, categories]);
 
   if (isLoading) {
     return (
@@ -82,9 +58,7 @@ const Categories = () => {
   return (
     <div className="w-full bg-[#A12717] py-2 overflow-hidden">
       <div
-        ref={scrollRef}
-        className="flex gap-2 md:gap-4 overflow-x-hidden whitespace-nowrap"
-        style={{ scrollBehavior: "auto" }}
+        className={`flex gap-2 md:gap-4 whitespace-nowrap category-scroll ${isPaused ? "paused" : ""}`}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -93,13 +67,31 @@ const Categories = () => {
           <Button
             key={`${category.id}-${index}`}
             variant="ghost"
-            className="text-white hover:bg-[#8a2014] hover:text-white px-4 md:px-6 py-2 text-sm font-normal flex-shrink-0"
+            className="text-white hover:bg-[#8a2014] hover:text-white px-4 md:px-6 py-2 text-sm font-normal flex-shrink-0 transition-colors"
             asChild
           >
-            <Link href={`/category/${category.slug}`}>{category.name}</Link>
+            <Link href={`/products?category=${category.slug}`}>{category.name}</Link>
           </Button>
         ))}
       </div>
+
+      {/* CSS Animation for smooth scrolling */}
+      <style jsx>{`
+        .category-scroll {
+          animation: scroll 30s linear infinite;
+        }
+        .category-scroll.paused {
+          animation-play-state: paused;
+        }
+        @keyframes scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
     </div>
   );
 };
