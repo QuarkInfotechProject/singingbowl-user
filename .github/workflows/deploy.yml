@@ -1,0 +1,51 @@
+name: 🚀 Deploy QuarkInfotech Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  SSH_HOST: "202.51.71.55"
+  SSH_USER: "ubuntu"
+  SSH_PORT: "22"
+  PROJECT_PATH: "/var/www/frontend"
+  BRANCH: "main"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎 Checkout Code
+        uses: actions/checkout@v3
+
+      - name: 🔐 SSH + Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
+          port: ${{ env.SSH_PORT }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script_stop: true
+          envs: PROJECT_PATH,BRANCH
+
+          script: |
+            echo "🚀 Starting frontend deployment"
+
+            echo "📁 Switching to project directory"
+            cd $PROJECT_PATH || { echo "❌ Directory not found"; exit 1; }
+
+            echo "🔄 Pulling latest code"
+            git pull origin $BRANCH
+
+            echo "📦 Installing dependencies (pnpm)"
+            pnpm install --frozen-lockfile || pnpm install
+
+            echo "🔨 Building frontend"
+            pnpm build
+
+            echo "⚙️ Restarting PM2"
+            pm2 reload ecosystem.config.js --update-env || pm2 start ecosystem.config.js
+
+            echo "✅ Frontend deployment complete"
