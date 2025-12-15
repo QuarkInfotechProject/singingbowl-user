@@ -59,10 +59,14 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
 
   const handleAddToCart = async () => {
     // Map ProductDetail to CartItem
+    const price = parseFloat(product.specialPrice || product.originalPrice);
+    const originalPrice = parseFloat(product.originalPrice);
     const cartItem = {
       id: product.uuid, // used uuid instead of id
       name: product.productName,
-      price: parseFloat(product.specialPrice || product.originalPrice), // Parse string to number
+      price: price, // unitPrice
+      originalPrice: originalPrice, // originalPrice from product
+      lineTotal: price * quantity, // calculated lineTotal
       quantity: quantity,
       image: product.files.baseImage?.url || "/assets/images/product/1.jpg", // Correct image path
       stock: product.inStock ? 100 : 0,
