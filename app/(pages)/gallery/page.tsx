@@ -113,13 +113,13 @@ const Gallery = () => {
       src: "/assets/images/product/1.jpg",
       alt: "Product 16",
       height: "normal",
-    }, 
-     {
+    },
+    {
       id: 17,
       src: "/assets/images/product/1.jpg",
       alt: "Product 17",
       height: "normal",
-    },   
+    },
   ];
 
   const openImage = (index: number) => {
@@ -136,8 +136,8 @@ const Gallery = () => {
       prev === null
         ? images.length - 1
         : prev === 0
-        ? images.length - 1
-        : prev - 1
+          ? images.length - 1
+          : prev - 1
     );
   };
 
@@ -173,7 +173,7 @@ const Gallery = () => {
             className="text-4xl md:text-6xl font-bold mb-4"
             style={{ color: "#A12717" }}
           >
-            Product Gallery
+            Media Gallery
           </h1>
           <p className="text-gray-600 text-lg">
             Discover our curated collection

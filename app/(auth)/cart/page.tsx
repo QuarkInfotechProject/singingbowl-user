@@ -142,7 +142,7 @@ const Cart = () => {
                                 Qty: {item.quantity}
                                 {item.weight && (
                                   <span className="ml-2 text-slate-500">
-                                    • Weight: {item.weight}g
+                                    • Weight: {item.weight}kg
                                   </span>
                                 )}
                               </p>

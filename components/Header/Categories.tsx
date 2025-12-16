@@ -62,23 +62,27 @@ const Categories = () => {
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Duplicate categories for seamless loop */}
-        {[...categories, ...categories].map((category, index) => (
-          <Button
-            key={`${category.id}-${index}`}
-            variant="ghost"
-            className="text-white hover:bg-[#8a2014] hover:text-white px-4 md:px-6 py-2 text-sm font-normal flex-shrink-0 transition-colors"
-            asChild
-          >
-            <Link href={`/products?category=${category.slug}`}>{category.name}</Link>
-          </Button>
-        ))}
+        {/* Duplicate categories 4 times for seamless loop on all screens */}
+        {[...categories, ...categories, ...categories, ...categories].map(
+          (category, index) => (
+            <Button
+              key={`${category.id}-${index}`}
+              variant="ghost"
+              className="text-white hover:bg-[#8a2014] hover:text-white px-4 md:px-6 py-2 text-sm font-normal flex-shrink-0 transition-colors"
+              asChild
+            >
+              <Link href={`/products?category=${category.slug}`}>
+                {category.name}
+              </Link>
+            </Button>
+          )
+        )}
       </div>
 
       {/* CSS Animation for smooth scrolling */}
       <style jsx>{`
         .category-scroll {
-          animation: scroll 30s linear infinite;
+          animation: scroll 60s linear infinite;
         }
         .category-scroll.paused {
           animation-play-state: paused;
@@ -88,7 +92,7 @@ const Categories = () => {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-50%);
+            transform: translateX(-25%);
           }
         }
       `}</style>

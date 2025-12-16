@@ -50,7 +50,7 @@ const AboutUsPage = () => {
       experience: "45 years",
       specialty: "Hand-hammering & alloy mixing",
       quote:
-        "AS the MD of our singingbowl company, we have a team dedicated to preserving Himalayun traditions. We offer authentic bowls blending craftsmanship with spiritual resonance. Whether exploring our tours joining healing classes or discovering angtique treasures join us in this journey of trtanquility and wisdom and become a part of our family",
+        "AS the MD of our singingbowl company, we have a team dedicated to preserving Himalayan traditions. We offer authentic bowls blending craftsmanship with spiritual resonance. Whether exploring our tours joining healing classes or discovering angtique treasures join us in this journey of trtanquility and wisdom and become a part of our family",
       image: "/assets/images/md/3.avif",
     },
     {
@@ -173,7 +173,7 @@ const AboutUsPage = () => {
       <OriginStory />
       <SacredMetals sacredMetals={sacredMetals} />
       <ArtisansSection artisans={artisans} />
-      <TimelineSection milestones={milestones} />
+      {/* <TimelineSection milestones={milestones} /> */}
       <LegacyAndImpact values={values} faqItems={faqItems} />
     </div>
   );

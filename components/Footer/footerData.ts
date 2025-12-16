@@ -5,17 +5,17 @@ export const footerData: FooterData = {
     {
       icon: "/assets/images/icons/time.svg",
       title: "Opening Hours",
-      lines: ["Monday - Friday 09:00 - 18:00", "Saturday 09:00 - 14:00"],
+      lines: ["Sunday- Friday: 09:00AM - 8:00PM", "Saturday: Closed"],
     },
     {
       icon: "/assets/images/icons/phone.svg",
       title: "Call Us Anytime",
-      lines: ["+977 9841000000"],
+      lines: ["+977-9841422331", "+977-9843488252"],
     },
     {
       icon: "/assets/images/icons/plane.svg",
       title: "Mail Us",
-      lines: ["singingbowlvillage@gmail.com", "support@singingbowl.com"],
+      lines: ["singingbowlvillagenepal@gmail.com"],
     },
   ],
   about: {
@@ -28,7 +28,7 @@ export const footerData: FooterData = {
     details: [
       "Kwabahal chowk, Thamel-17,",
       "Kathmandu, Nepal,",
-      "+977 9841000000",
+      "+977-9841422331",
       "singingbowlvillagenepal@gmail.com",
     ],
   },
@@ -54,15 +54,22 @@ export const footerData: FooterData = {
     ],
   },
   socialLinks: [
-    { name: "TikTok", href: "https://tiktok.com" },
-    { name: "WhatsApp", href: "https://wa.me/" },
-    { name: "Facebook", href: "https://facebook.com" },
-    { name: "Instagram", href: "https://instagram.com" },
-    { name: "YouTube", href: "https://youtube.com" },
-    { name: "Pinterest", href: "https://pinterest.com" },
+    { name: "WhatsApp", href: "https://wa.me/+9779841422331" },
+    {
+      name: "Instagram",
+      href: "https://www.instagram.com/singingbowlvillage/?igsh=MTkxcDY0YzNvbWQyNg%3D%3D&utm_source=qr",
+    },
+    {
+      name: "Facebook",
+      href: "https://www.facebook.com/people/Singing-Bowl/61550698021090/",
+    },
+    {
+      name: "YouTube",
+      href: "https://www.youtube.com/@singingbowlvillage",
+    },
   ],
   copyright:
-    "Copyright @2025. All Right Reserved. Designed and developed by Quark Infotech",
+    "Copyright © 2025 Singing Bowl Village Nepal. All Rights Reserved.",
   bottomLinks: [
     { name: "Privacy Policy", href: "/privacy-policy" },
     { name: "Terms of use", href: "/terms-of-use" },

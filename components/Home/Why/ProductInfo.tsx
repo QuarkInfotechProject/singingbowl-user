@@ -1,4 +1,5 @@
 import { SingingBowlProps } from "@/types/SingingBowl.types";
+import Link from "next/link";
 
 type ProductInfoProps = Omit<SingingBowlProps, "images" | "discount">;
 
@@ -19,10 +20,11 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       </div>
 
       <div className="space-y-4">
-        {" "}
-        <button className="inline-block bg-[#802010] hover:bg-[#6b1a0e] text-white font-semibold py-3 px-8 rounded-full transition-colors duration-200 mt-2">
+       <Link href="/products">
+        <button className="inline-block bg-[#802010] cursor-pointer hover:bg-[#6b1a0e] text-white font-semibold py-3 px-8 rounded-full transition-colors duration-200 mt-2">
           {buttonText}
         </button>
+        </Link>
       </div>
     </div>
   );

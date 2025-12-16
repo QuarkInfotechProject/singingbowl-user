@@ -58,7 +58,7 @@ const ArtisansSection: React.FC<ArtisansSectionProps> = ({ artisans }) => (
               {artisan.role}
             </p>
             <blockquote
-              className={`text-xl font-light italic text-stone-600 leading-relaxed mb-8 border-amber-600 relative py-4 px-6`}
+              className={`text-lg font-light text-stone-600 leading-relaxed mb-8 border-amber-600 relative py-4`}
             >
               <span className="absolute top-0 left-0 text-6xl text-amber-200 font-serif -z-10">
                 “

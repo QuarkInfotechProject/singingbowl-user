@@ -301,5 +301,16 @@ export const createOrder = async (data: {
     }
 };
 
+// Fetch Guest Token
+export const fetchGuestToken = async () => {
+    try {
+        const response = await api.get("/token");
+        return response.data;
+    } catch (error) {
+        console.error("fetchGuestToken error:", error);
+        throw error;
+    }
+};
+
 export default api;
 

@@ -3,7 +3,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthContext";
-import { addToCart as apiAddToCart, fetchCart as apiFetchCart, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart } from "@/lib/apiItems";
+import { addToCart as apiAddToCart, fetchCart as apiFetchCart, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart, fetchGuestToken } from "@/lib/apiItems";
+import Cookies from "js-cookie";
 // import { toast } from "sonner"; // Removed as not installed
 
 export interface CartItem {
@@ -60,8 +61,34 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const { isLoggedIn } = useAuth();
     const router = useRouter();
 
+    const ensureGuestToken = async () => {
+        if (isLoggedIn) return true;
+
+        let token = Cookies.get("guest_token");
+        if (!token) {
+            try {
+                const response = await fetchGuestToken();
+                if (response?.data?.guest_token) {
+                    token = response.data.guest_token;
+                    Cookies.set("guest_token", token as string, { expires: 7 }); // Expires in 7 days
+                }
+            } catch (error) {
+                console.error("Failed to fetch guest token", error);
+                return false;
+            }
+        }
+        return !!token;
+    };
+
     const fetchCartItems = async (showLoading: boolean = true) => {
-        if (!isLoggedIn) return;
+        // Allow fetch if logged in OR if we have a guest session (which we will attempt to establish)
+        // If not logged in, we try to ensure a guest token exists. 
+        // If it doesn't and we can't get one, we probably shouldn't fetch cart yet or it will be empty default.
+
+        if (!isLoggedIn) {
+            const hasGuestToken = await ensureGuestToken();
+            if (!hasGuestToken) return;
+        }
 
         try {
             if (showLoading) {
@@ -112,17 +139,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     };
 
     useEffect(() => {
-        if (isLoggedIn) {
-            fetchCartItems();
-        } else {
-            setCartItems([]);
-        }
+        // Fetch cart on mount/auth change.
+        // If not logged in, ensureGuestToken will be called inside fetchCartItems
+        fetchCartItems();
     }, [isLoggedIn]);
 
     const addToCart = async (product: CartItem) => {
         if (!isLoggedIn) {
-            router.push("/login");
-            return;
+            const hasGuestToken = await ensureGuestToken();
+            if (!hasGuestToken) {
+                // Could not get guest token, maybe redirect to login or show error
+                // For now, let's try to proceed, likely will fail at API or be handled there
+                console.error("Could not establish guest session");
+                return;
+            }
         }
 
         try {

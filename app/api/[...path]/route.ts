@@ -83,6 +83,12 @@ export async function POST(
       headers["Authorization"] = `Bearer ${token}`;
     }
 
+    // Check for guest token
+    const guestToken = cookieStore.get("guest_token")?.value;
+    if (guestToken) {
+      headers["X-Guest-Token"] = guestToken;
+    }
+
     const response = await apiClient.post(endpoint, body, { headers });
 
     return Response.json(response.data);

@@ -36,7 +36,6 @@ const Middlebar = () => {
                   <p className="hidden sm:inline">{user?.name || "User"}</p>
                 </Button>
               </Link>
-              {/* Optional: Add logout button here or in profile dropdown */}
             </div>
           ) : (
             <Link href="/login">

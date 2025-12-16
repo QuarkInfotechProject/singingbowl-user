@@ -18,16 +18,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         <p className="text-gray-700 text-md leading-relaxed">{description}</p>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-gray-900">Size:</p>
-          <p className="text-gray-900 font-semibold text-sm">{size}</p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-gray-900">Materials:</p>
-          <p className="text-gray-900 font-semibold text-sm">{materials}</p>
-        </div>
+      <div className="space-y-4">        
 
         <button className="inline-block bg-[#802010] hover:bg-[#6b1a0e] text-white font-semibold py-3 px-8 rounded-full transition-colors duration-200 mt-2">
           {buttonText}

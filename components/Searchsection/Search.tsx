@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import SearchIcon from "@mui/icons-material/Search";
 import {
   Dialog,
@@ -13,8 +14,13 @@ const Search = () => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const router = useRouter();
+
   const handleSearch = () => {
-    console.log("Search:", searchQuery);
+    if (searchQuery.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+      setOpen(false); // Close dialog if it was open (for mobile)
+    }
   };
 
   return (
@@ -24,10 +30,13 @@ const Search = () => {
         <input
           type="text"
           placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           className="flex-grow px-4 py-2 outline-none text-gray-700"
         />
         <button
-          onClick={() => setOpen(true)}
+          onClick={handleSearch}
           className="bg-black text-white px-4 py-3 flex items-center justify-center"
         >
           <SearchIcon className="h-5 w-5" />

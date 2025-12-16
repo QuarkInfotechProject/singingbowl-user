@@ -1,15 +1,16 @@
 import Link from "next/link";
-import { Facebook, Instagram } from "@mui/icons-material";
+import { Facebook, Instagram, YouTube } from "@mui/icons-material";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 
 const iconMap: Record<string, React.ReactNode> = {
   WhatsApp: <WhatsAppIcon sx={{ fontSize: 18 }} />,
   Instagram: <Instagram sx={{ fontSize: 18 }} />,
   Facebook: <Facebook sx={{ fontSize: 18 }} />,
+  YouTube: <YouTube sx={{ fontSize: 18 }} />,
 };
 
 const defaultSocialLinks = [
-  { name: "WhatsApp", href: "https://wa.me/+9779851352794" },
+  { name: "WhatsApp", href: "https://wa.me/+9779841422331" },
   {
     name: "Instagram",
     href: "https://www.instagram.com/singingbowlvillage/?igsh=MTkxcDY0YzNvbWQyNg%3D%3D&utm_source=qr",
@@ -17,6 +18,10 @@ const defaultSocialLinks = [
   {
     name: "Facebook",
     href: "https://www.facebook.com/people/Singing-Bowl/61550698021090/",
+  },
+  {
+    name: "YouTube",
+    href: "https://www.youtube.com/@singingbowlvillage",
   },
 ];
 

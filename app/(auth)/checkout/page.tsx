@@ -12,8 +12,10 @@ import {
 import AddressList from "@/components/Address/AddressList";
 import { Address } from "@/types/address.types";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
@@ -32,6 +34,7 @@ const Checkout = () => {
     grandTotal,
     totalDiscount
   } = useCart();
+  const { isLoggedIn, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   const handleAddressSelect = (address: Address | null) => {
@@ -88,7 +91,13 @@ const Checkout = () => {
     }
   };
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      router.push("/login?redirect=/checkout");
+    }
+  }, [isLoggedIn, authLoading, router]);
+
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-[#A12717]" />
