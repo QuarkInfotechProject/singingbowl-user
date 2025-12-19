@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import {
   User,
   Package,
@@ -25,7 +25,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AddressList from "@/components/Address/AddressList";
 
-export default function ProfilePage() {
+function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { logout } = useAuth(); // Update context if available
@@ -1059,5 +1059,17 @@ export default function ProfilePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
   );
 }
