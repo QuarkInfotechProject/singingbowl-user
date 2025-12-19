@@ -26,7 +26,7 @@ export interface CartItem {
 
 interface CartContextType {
     cartItems: CartItem[];
-    addToCart: (product: CartItem) => Promise<void>;
+    addToCart: (product: CartItem, openCart?: boolean) => Promise<void>;
     removeFromCart: (cartId: string, id: string) => Promise<void>;
     clearCart: () => Promise<void>;
     isOpen: boolean;
@@ -112,7 +112,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                     cartItemId: item.cartId?.toString(),
                     url: item.slug,
                     weight: item.weight,
-                    category: item.category
+                    category: item.category,
+                    stock: item.stock ?? item.Product?.stock ?? 100 // Fallback to 100 if undefined, but try to get from item or relation
                 }));
 
                 // Set all cart-level data from API response
@@ -144,7 +145,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         fetchCartItems();
     }, [isLoggedIn]);
 
-    const addToCart = async (product: CartItem) => {
+    const addToCart = async (product: CartItem, openCart: boolean = true) => {
         if (!isLoggedIn) {
             const hasGuestToken = await ensureGuestToken();
             if (!hasGuestToken) {
@@ -168,7 +169,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             // Refresh cart to get updated backend state
             await fetchCartItems();
 
-            setIsOpen(true); // Open cart sidebar
+            if (openCart) {
+                setIsOpen(true); // Open cart sidebar
+            }
             // toast.success("Added to cart");
 
         } catch (error) {

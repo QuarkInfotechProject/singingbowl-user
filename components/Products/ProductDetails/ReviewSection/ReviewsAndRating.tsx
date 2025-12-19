@@ -87,10 +87,11 @@ const ReviewsAndRating = ({
         </h1>
 
         {/* Rating Section */}
-        <RatingSection
+        {/* <RatingSection
           productName={productName}
           onReviewClick={handleReviewClick}
-        />
+        /> */}
+        
       </header>
 
       {/* Reviews List */}

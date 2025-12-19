@@ -7,14 +7,21 @@ interface BlogCardProps {
   post: BlogPost;
 }
 
+// Helper function to strip HTML tags from a string
+const stripHtmlTags = (html: string): string => {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
+};
+
 const BlogCard = ({ post }: BlogCardProps) => {
   // Get desktop image URL from files array
   const imageUrl = post.files?.find(f => f.zone === "desktopImage")?.imageUrl || "/assets/images/home/why/history.png";
 
-  // Truncate description to ~100 characters
-  const truncatedDesc = post.description.length > 120
-    ? post.description.substring(0, 120) + "..."
-    : post.description;
+  // Strip HTML tags and truncate description to ~120 characters
+  const plainTextDesc = stripHtmlTags(post.description);
+  const truncatedDesc = plainTextDesc.length > 120
+    ? plainTextDesc.substring(0, 120) + "..."
+    : plainTextDesc;
 
   return (
     <Link href={`/blog/${post.slug}`} className="block group">

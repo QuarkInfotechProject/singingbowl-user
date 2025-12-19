@@ -15,28 +15,33 @@ interface DetailsSectionProps {
 
 export function DetailsSection({ description, additionalDescription }: DetailsSectionProps) {
   // Build dynamic items from props, falling back to defaults
+  // isHtml flag indicates content that may contain HTML from API
   const DETAIL_ITEMS = [
     {
       id: "description",
       title: "PRODUCT DESCRIPTION",
       content: description || "Premium singing bowl crafted from traditional bronze alloy. Hand-tuned for optimal resonance and therapeutic sound.",
+      isHtml: !!description, // Only render as HTML if it's from API
     },
     {
       id: "additional",
       title: "ADDITIONAL INFORMATION",
       content: additionalDescription || "Includes mallets for proper playing technique.",
+      isHtml: !!additionalDescription, // Only render as HTML if it's from API
     },
     {
       id: "how_to_use",
       title: "HOW TO USE",
       content:
         "To use a singing bowl, place it in the palm of your non-dominant hand or on a stable, non-touching surface, then gently strike the bowl with a mallet.",
+      isHtml: false,
     },
     {
       id: "quality",
       title: "QUALITY",
       content:
         "Handcrafted by master artisans with decades of experience. Each bowl is individually tested for acoustic quality and durability.",
+      isHtml: false,
     },
   ];
 
@@ -50,9 +55,16 @@ export function DetailsSection({ description, additionalDescription }: DetailsSe
             </span>
           </AccordionTrigger>
           <AccordionContent>
-            <p className="text-gray-600 text-sm leading-relaxed font-light">
-              {item.content}
-            </p>
+            {item.isHtml ? (
+              <div
+                className="text-gray-600 text-sm leading-relaxed font-light prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: item.content }}
+              />
+            ) : (
+              <p className="text-gray-600 text-sm leading-relaxed font-light">
+                {item.content}
+              </p>
+            )}
           </AccordionContent>
         </AccordionItem>
       ))}

@@ -57,7 +57,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
 
   const fullStars = Math.floor(rating);
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (openCart: boolean = true) => {
     // Map ProductDetail to CartItem
     const price = parseFloat(product.specialPrice || product.originalPrice);
     const originalPrice = parseFloat(product.originalPrice);
@@ -72,7 +72,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       stock: product.inStock ? 100 : 0,
       discount: product.discountPercentage
     };
-    await addToCart(cartItem);
+    await addToCart(cartItem, openCart);
   };
 
   const handleAddToWishlist = async () => {
@@ -136,27 +136,45 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         <hr className="border-gray-200" />
 
         <div className="space-y-3">
-          <p className="text-gray-700 leading-relaxed">
-            {product.description || "No description available."}
-          </p>
+          {product.description ? (
+            <div
+              className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
+          ) : (
+            <p className="text-gray-700 leading-relaxed">No description available.</p>
+          )}
           <Button
             variant="outline"
             className="bg-transparent hover:text-[#39B856] hover:bg-transparent border-none cursor-pointer p-0 h-auto font-normal underline"
+            onClick={() => {
+              const detailsSection = document.getElementById('product-details');
+              if (detailsSection) {
+                detailsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }}
           >
             More Details
           </Button>
         </div>
 
         <div className="flex items-center gap-4 mt-4">
-          <Button className="flex-1 bg-transparent border border-[#A12717] hover:bg-transparent cursor-pointer text-[#A12717] rounded-full py-6 font-semibold text-base">
+          <Button
+            onClick={async () => {
+              await handleAddToCart(false); // Add to cart without opening sidebar
+              router.push('/checkout');
+            }}
+            disabled={!product.inStock}
+            className="flex-1 bg-transparent border border-[#A12717] hover:bg-transparent cursor-pointer text-[#A12717] rounded-full py-6 font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Buy Now
           </Button>
           <Button
-            onClick={handleAddToCart}
-            disabled={isLoading}
-            className="flex-1 bg-[#A12717] hover:bg-[#A12717] cursor-pointer text-white rounded-full py-6 font-semibold text-base"
+            onClick={() => handleAddToCart()}
+            disabled={isLoading || !product.inStock}
+            className="flex-1 bg-[#A12717] hover:bg-[#A12717] cursor-pointer text-white rounded-full py-6 font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Adding..." : "Add to cart"}
+            {isLoading ? "Adding..." : !product.inStock ? "Out of Stock" : "Add to cart"}
           </Button>
         </div>
 

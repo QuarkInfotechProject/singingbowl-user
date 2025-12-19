@@ -14,6 +14,7 @@ export interface Address {
     isDefault: boolean;
     label: string;
     countryId: string;
+    countryCode: string;
     countryName: string;
     provinceId: string;
     provinceName: string;
@@ -38,6 +39,7 @@ export interface AddressFormData {
     isDefault: boolean;
     label: string;
     countryId: string;
+    countryCode: string;
     countryName: string;
     provinceId: string;
     provinceName: string;

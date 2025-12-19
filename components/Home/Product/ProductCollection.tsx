@@ -29,6 +29,7 @@ export default function ProductCollection() {
                   baseImage: prod.baseImage ? { url: prod.baseImage } : null,
                   additionalImage: prod.additionalImage || [],
                 },
+                inStock: prod.inStock,
               }));
               allProducts.push(...mappedProducts);
             }

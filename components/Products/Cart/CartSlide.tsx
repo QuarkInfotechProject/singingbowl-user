@@ -78,6 +78,11 @@ export default function CartSheet() {
                       </div>
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-sm text-gray-500">Qty: {item.quantity}</span>
+                        {(item.stock !== undefined && item.stock <= 0) && (
+                          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-medium">
+                            Out of Stock
+                          </span>
+                        )}
                       </div>
                     </div>
 

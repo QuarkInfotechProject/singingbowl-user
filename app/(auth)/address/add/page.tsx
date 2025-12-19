@@ -21,9 +21,10 @@ const initialFormData: AddressFormData = {
     addressType: "home",
     deliveryInstructions: "",
     isDefault: true,
-    label: "",
+    label: "Home",
     countryId: "1",
-    countryName: "",
+    countryCode: "NP",
+    countryName: "Nepal",
     provinceId: "1",
     provinceName: "",
     cityId: "1",
@@ -46,7 +47,16 @@ function AddAddressContent() {
     ) => {
         const { name, value, type } = e.target;
         const newValue = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-        setFormData((prev) => ({ ...prev, [name]: newValue }));
+
+        let newFormData = { ...formData, [name]: newValue };
+
+        // Automatically set label based on addressType
+        if (name === "addressType") {
+            const labelValue = newValue as string;
+            newFormData.label = labelValue.charAt(0).toUpperCase() + labelValue.slice(1);
+        }
+
+        setFormData(newFormData);
 
         // Clear error when user types
         if (errors[name]) {
@@ -61,6 +71,7 @@ function AddAddressContent() {
             setFormData((prev) => ({
                 ...prev,
                 countryId: selectedCountry.code,
+                countryCode: selectedCountry.code,
                 countryName: selectedCountry.name,
             }));
         }
@@ -389,17 +400,6 @@ function AddAddressContent() {
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    Label
-                                </label>
-                                <input
-                                    type="text"
-                                    name="label"
-                                    value={formData.label}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                    placeholder="Home, Office, etc."
-                                />
                             </div>
                         </div>
 

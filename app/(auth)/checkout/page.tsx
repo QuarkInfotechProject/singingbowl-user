@@ -9,6 +9,15 @@ import {
   Banknote,
   Loader2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import AddressList from "@/components/Address/AddressList";
 import { Address } from "@/types/address.types";
 import { useCart } from "@/context/CartContext";
@@ -23,6 +32,7 @@ const Checkout = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const {
     cartItems,
@@ -81,7 +91,8 @@ const Checkout = () => {
       await clearCart();
 
       // Redirect to success page or orders page
-      router.push("/profile?tab=orders");
+      // router.push("/profile?tab=orders");
+      setShowSuccessDialog(true);
 
     } catch (error: any) {
       console.error("Order submission failed:", error);
@@ -459,6 +470,7 @@ const Checkout = () => {
               </div>
 
               {/* Trust Badges */}
+              {/* Trust Badges */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-xs text-slate-600">
                   <Lock className="w-4 h-4 text-green-600" />
@@ -473,6 +485,28 @@ const Checkout = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={showSuccessDialog} onOpenChange={() => { }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <span className="text-2xl">🎉</span> Order Placed Successfully!
+            </DialogTitle>
+            <DialogDescription>
+              Your order has been placed successfully and is being processed. You can track your order status in the orders tab.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <Button
+              type="button"
+              className="bg-[#A12717] hover:bg-[#8a2113] text-white w-full sm:w-auto px-8"
+              onClick={() => router.push("/profile?tab=orders")}
+            >
+              OK, Go to Orders
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

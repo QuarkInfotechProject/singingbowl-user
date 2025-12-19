@@ -15,6 +15,7 @@ export interface Product {
   discount?: string;
   // Add backend fields if they differ
   description?: string;
+  inStock?: boolean;
 }
 
 interface ProductCardProps {
@@ -34,8 +35,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
               alt={product.name}
               width={200}
               height={200}
-              className="w-full h-auto object-cover rounded-xl"
+              className={`w-full h-auto object-cover rounded-xl ${product.inStock === false ? "opacity-50 grayscale" : ""}`}
             />
+            {product.inStock === false && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <Badge className="bg-gray-900 text-white hover:bg-gray-900">Out of Stock</Badge>
+              </div>
+            )}
             <div className="absolute top-2 flex w-full items-center justify-between px-3">
               {product.discount && (
                 <Badge className="bg-[#802010] text-white">

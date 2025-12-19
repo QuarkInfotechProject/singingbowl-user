@@ -11,8 +11,8 @@ const ProductGrid = ({ title, products = [] }: ProductGridProps) => {
       <div className="flex flex-col items-center justify-center gap-10">
         <h2 className="font-bold text-3xl">{title}</h2>
         <div className="w-full grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {products.length > 0 ? (
-            products.map((product) => (
+          {products.filter(p => p.inStock).length > 0 ? (
+            products.filter(p => p.inStock).map((product) => (
               <ProductCard key={product.id} product={product} />
             ))
           ) : (

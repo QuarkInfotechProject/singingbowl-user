@@ -30,30 +30,24 @@ function AccordionTrigger({
   children,
   ...props
 }: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
-  const [isOpen, setIsOpen] = React.useState(false);
-
   return (
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-center justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50",
+          "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-center justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>div>.plus-icon]:hidden [&[data-state=closed]>div>.minus-icon]:hidden",
           className
         )}
-        onClick={() => setIsOpen(!isOpen)}
         {...props}
       >
         {children}
         <div className="text-muted-foreground pointer-events-none shrink-0 translate-y-0.5">
-          {isOpen ? (
-            <div className="bg-[#A12717] w-6 h-6 rounded-full flex items-center justify-center">
-              <Minus className="size-4 transition-all duration-200 text-white" />
-            </div>
-          ) : (
-            <div className="border border-gray-600 w-6 h-6 rounded-full flex items-center justify-center">
-              <Plus className="size-4 transition-all duration-200 text-black" />
-            </div>
-          )}
+          <div className="border border-gray-600 w-6 h-6 rounded-full flex items-center justify-center plus-icon">
+            <Plus className="size-4 transition-all duration-200 text-black" />
+          </div>
+          <div className="bg-[#A12717] w-6 h-6 rounded-full flex items-center justify-center minus-icon">
+            <Minus className="size-4 transition-all duration-200 text-white" />
+          </div>
         </div>
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>

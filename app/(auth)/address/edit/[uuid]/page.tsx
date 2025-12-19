@@ -23,7 +23,8 @@ const initialFormData: AddressFormData = {
     isDefault: false,
     label: "Home",
     countryId: "1",
-    countryName: "NP",
+    countryCode: "NP",
+    countryName: "Nepal",
     provinceId: "1",
     provinceName: "Bagmati",
     cityId: "65",
@@ -71,6 +72,7 @@ function EditAddressContent() {
                     isDefault: data.isDefault || false,
                     label: data.label || "",
                     countryId: data.countryId || "1",
+                    countryCode: data.countryCode || "NP",
                     countryName: data.countryName || "",
                     provinceId: data.provinceId || "",
                     provinceName: data.provinceName || "",
@@ -93,7 +95,16 @@ function EditAddressContent() {
     ) => {
         const { name, value, type } = e.target;
         const newValue = type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-        setFormData((prev) => ({ ...prev, [name]: newValue }));
+
+        let newFormData = { ...formData, [name]: newValue };
+
+        // Automatically set label based on addressType
+        if (name === "addressType") {
+            const labelValue = newValue as string;
+            newFormData.label = labelValue.charAt(0).toUpperCase() + labelValue.slice(1);
+        }
+
+        setFormData(newFormData);
 
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -107,6 +118,7 @@ function EditAddressContent() {
             setFormData((prev) => ({
                 ...prev,
                 countryId: selectedCountry.code,
+                countryCode: selectedCountry.code,
                 countryName: selectedCountry.name,
             }));
         }
@@ -418,19 +430,6 @@ function EditAddressContent() {
                                     <option value="work">Work</option>
                                     <option value="other">Other</option>
                                 </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    Label
-                                </label>
-                                <input
-                                    type="text"
-                                    name="label"
-                                    value={formData.label}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                                    placeholder="Home, Office, etc."
-                                />
                             </div>
                         </div>
 

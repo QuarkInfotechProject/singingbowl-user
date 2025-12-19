@@ -312,5 +312,16 @@ export const fetchGuestToken = async () => {
     }
 };
 
+// Fetch Orders
+export const fetchOrders = async (page: number = 1) => {
+    try {
+        const response = await api.get(`/user/orders?page=${page}`);
+        return response.data;
+    } catch (error) {
+        console.error("fetchOrders error:", error);
+        throw error;
+    }
+};
+
 export default api;
 

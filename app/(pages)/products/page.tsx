@@ -107,6 +107,7 @@ const ProductContent = () => {
             rating: prod.rating || 0,
             reviews: prod.reviewCount || 0,
             discount: prod.specialPrice ? "On Sale" : undefined,
+            inStock: prod.inStock,
           })) : [],
         }));
 
