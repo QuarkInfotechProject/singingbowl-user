@@ -16,6 +16,7 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    contactNumber: "",
     subject: "",
     message: "",
   });
@@ -35,7 +36,7 @@ export default function ContactPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
-    setFormData({ name: "", email: "", subject: "", message: "" });
+    setFormData({ name: "", email: "", contactNumber: "", subject: "", message: "" });
     setTimeout(() => setSubmitted(false), 3000);
   };
 
@@ -196,23 +197,43 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="subject"
-                    className="block text-sm font-medium text-slate-700 mb-2"
-                  >
-                    Subject
-                  </label>
-                  <input
-                    type="text"
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#72479C] focus:border-transparent transition-all"
-                    placeholder="What's this about?"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label
+                      htmlFor="contactNumber"
+                      className="block text-sm font-medium text-slate-700 mb-2"
+                    >
+                      Contact Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="contactNumber"
+                      name="contactNumber"
+                      value={formData.contactNumber}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#72479C] focus:border-transparent transition-all"
+                      placeholder="+977 9800000000"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="subject"
+                      className="block text-sm font-medium text-slate-700 mb-2"
+                    >
+                      Subject
+                    </label>
+                    <input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#72479C] focus:border-transparent transition-all"
+                      placeholder="What's this about?"
+                    />
+                  </div>
                 </div>
 
                 <div>
