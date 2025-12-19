@@ -336,7 +336,7 @@ const TermsOfUse = () => {
                 Email: singingbowlvillagenepal@gmail.com
               </p>
               <p className="text-slate-700">
-                Phone: +977 9851352794, 9841422331 01-5353501
+                Phone: +977 9851352794, 9851352794 01-5353501
               </p>
               <p className="text-slate-700">
                 Address: Kwabahal Chowk & Jyatha Street Thamel-17 Kathmandu,

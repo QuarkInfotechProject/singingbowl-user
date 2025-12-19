@@ -56,13 +56,14 @@ const Categories = () => {
   }
 
   return (
-    <div className="w-full bg-[#A12717] py-2 overflow-hidden">
+    <div className="w-full bg-[#A12717] py-2 overflow-x-auto md:overflow-hidden no-scrollbar">
       <div
         className={`flex gap-2 md:gap-4 whitespace-nowrap category-scroll ${isPaused ? "paused" : ""}`}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
+        onTouchStart={() => setIsPaused(true)}
+        onTouchEnd={() => setIsPaused(false)}
       >
-        {/* Duplicate categories 4 times for seamless loop on all screens */}
         {[...categories, ...categories, ...categories, ...categories].map(
           (category, index) => (
             <Button
@@ -82,7 +83,12 @@ const Categories = () => {
       {/* CSS Animation for smooth scrolling */}
       <style jsx>{`
         .category-scroll {
-          animation: scroll 60s linear infinite;
+          animation: scroll 30s linear infinite;
+        }
+        @media (max-width: 768px) {
+          .category-scroll {
+            animation-duration: 5s;
+          }
         }
         .category-scroll.paused {
           animation-play-state: paused;

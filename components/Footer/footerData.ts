@@ -10,7 +10,7 @@ export const footerData: FooterData = {
     {
       icon: "/assets/images/icons/phone.svg",
       title: "Call Us Anytime",
-      lines: ["+977-9841422331", "+977-9843488252"],
+      lines: ["+977-9851352794", "+977-9843488252"],
     },
     {
       icon: "/assets/images/icons/plane.svg",
@@ -28,7 +28,7 @@ export const footerData: FooterData = {
     details: [
       "Kwabahal chowk, Thamel-17,",
       "Kathmandu, Nepal,",
-      "+977-9841422331",
+      "+977-9851352794",
       "singingbowlvillagenepal@gmail.com",
     ],
   },
@@ -54,7 +54,7 @@ export const footerData: FooterData = {
     ],
   },
   socialLinks: [
-    { name: "WhatsApp", href: "https://wa.me/+9779841422331" },
+    { name: "WhatsApp", href: "https://wa.me/+9779851352794" },
     {
       name: "Instagram",
       href: "https://www.instagram.com/singingbowlvillage/?igsh=MTkxcDY0YzNvbWQyNg%3D%3D&utm_source=qr",

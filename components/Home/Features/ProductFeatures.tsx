@@ -11,7 +11,7 @@ const productData = {
 
 const ProductFeatures = () => {
   return (
-    <div className="w-full px-2 sm:px-6 lg:px-0 py-8 lg:pr-20">
+    <div className="w-full  py-8">
       {/* Title - Visible on all screens */}
       {/* <div className="mb-8 lg:mb-0">
         <h2 className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-black text-center lg:hidden tracking-tight">
@@ -19,9 +19,9 @@ const ProductFeatures = () => {
         </h2>
       </div> */}
 
-      <div className="flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-20 items-center justify-center">
+      <div className="flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-20 items-center justify-start">
         {/* Image Section */}
-        <div className="w-full lg:w-2/5 flex justify-center lg:justify-start">
+        <div className="w-full lg:w-2/5 flex justify-start lg:justify-start">
           <img
             src={productData.image.src}
             alt={productData.image.alt}
@@ -30,12 +30,12 @@ const ProductFeatures = () => {
         </div>
 
         {/* Content Section */}
-        <div className="w-full lg:w-3/5 flex flex-col gap-6 sm:gap-8">
+        <div className="w-full lg:w-3/5 flex flex-col gap-6 sm:gap-8 px-2 sm:px-6 lg:px-0 py-8 lg:pr-20">
           <div className="text-center lg:text-left flex flex-col gap-6 sm:gap-8">
             {/* <h2 className="hidden lg:flex font-bold text-4xl md:text-5xl text-black tracking-tight">
               <SectionTitle title="Product Features" />
             </h2> */}
-            <h3 className="text-xl sm:text-3xl md:text-4xl lg:text-4xl font-bold text-gray-800 leading-tight">
+            <h3 className="text-xl sm:text-3xl md:text-4xl text-start lg:text-4xl font-bold text-gray-800 leading-tight">
               <span className="text-[#A12717]">
                 {productData.highlightedText}
               </span>
@@ -43,7 +43,7 @@ const ProductFeatures = () => {
             </h3>
           </div>
 
-          <div className="flex flex-col gap-6 sm:gap-8 w-full text-center lg:text-left">
+          <div className="flex flex-col gap-6 sm:gap-8 w-full text-justify">
             <p className="w-full text-base sm:text-lg text-gray-600 leading-relaxed px-2 sm:px-0">
               What if your greatest healing came not from a pill, but from a
               frequency? Welcome to the future of wellness, where ancient sonic

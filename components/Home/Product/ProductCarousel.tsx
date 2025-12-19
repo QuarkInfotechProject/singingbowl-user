@@ -30,7 +30,7 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
           {products.map((product) => (
             <CarouselItem
               key={product.uuid}
-              className="basis-1/2 sm:basis-1/3 md:basis-1/3 lg:basis-1/4 pl-2 sm:pl-3 md:pl-4 lg:pl-6"
+              className="basis-[40%] sm:basis-1/3 md:basis-1/3 lg:basis-1/4 pl-2 sm:pl-3 md:pl-4 lg:pl-6"
             >
               <ProductCard
                 product={product}

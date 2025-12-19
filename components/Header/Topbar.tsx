@@ -9,7 +9,7 @@ const Topbar = () => {
           <div className="flex items-center gap-1 text-xs">
             <LocalPhoneIcon sx={{ fontSize: 16 }} />
             <span>Contact number:</span>
-            <span>+977-9841422331</span>
+            <span>+977-9851352794</span>
           </div>
 
           <div>

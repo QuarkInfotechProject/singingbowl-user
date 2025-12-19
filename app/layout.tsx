@@ -16,6 +16,9 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://singingbowlvillagenepal.com"),
+  alternates: {
+    canonical: "/",
+  },
   title: "Singing Bowl Nepal - Mindfulness & Healing",
   description:
     "Explore handcrafted singing bowls from Nepal. Enhance meditation, mindfulness, and healing with authentic Himalayan bowls.",

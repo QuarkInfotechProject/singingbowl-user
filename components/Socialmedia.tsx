@@ -10,7 +10,7 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 const defaultSocialLinks = [
-  { name: "WhatsApp", href: "https://wa.me/+9779841422331" },
+  { name: "WhatsApp", href: "https://wa.me/+9779851352794" },
   {
     name: "Instagram",
     href: "https://www.instagram.com/singingbowlvillage/?igsh=MTkxcDY0YzNvbWQyNg%3D%3D&utm_source=qr",

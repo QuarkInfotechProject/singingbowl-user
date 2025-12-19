@@ -34,7 +34,7 @@ const BlogCard = ({ post }: BlogCardProps) => {
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>
-        <div className="flex flex-col gap-3 p-4 flex-1">
+        <div className="flex flex-col gap-3 p-4 flex-1 items-start text-start justify-start">
           <h3 className="font-bold text-lg line-clamp-2 group-hover:text-[#A12717] transition-colors">
             {post.title}
           </h3>

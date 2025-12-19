@@ -18,10 +18,10 @@ const ChairmanMessage = () => (
         <h2 className="text-4xl font-serif font-bold text-stone-900 mb-6">
           Carrying the Flame Forward
         </h2>
-        <p className="text-lg text-stone-600 leading-relaxed mb-6">
+        <p className="text-lg text-stone-600 leading-relaxed ">
           Introducing Mr. Narendra Lama, the visionary chairman behind our esteemed singing bowl company. With a deep-rooted passion for preserving and sharing the rich cultural heritage of Himalayan singing bowls, Mr. Lama's journey began with a profound appreciation for these ancient instruments and their spiritual significance. Through his dedication and expertise, he has cultivated a company known for its commitment to craftsmanship, authenticity, and the transformative power of sound healing. Mr. Lama's leadership continues to inspire innovation in our approach to creating and curating singing bowls, ensuring that each bowl resonates with quality and spiritual depth. His vision drives us to uphold traditions while embracing new possibilities in the realm of holistic well-being.
         </p>
-        <div className="mt-8 border-t border-amber-200 pt-6">
+        <div className="mt-8 border-t border-amber-200 pt-6 inline-flex flex-col items-center">
           <p className="text-2xl font-serif font-semibold text-stone-800">
             Mr. Narendra Lama
           </p>
