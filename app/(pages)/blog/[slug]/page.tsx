@@ -92,30 +92,36 @@ const BlogDetailPage = () => {
     useEffect(() => {
         if (!post?.description) return;
 
-        // Parse description for h1, h2, h3 tags
+        // Parse description for h2 tags only (for TOC)
         const parser = new DOMParser();
         const doc = parser.parseFromString(post.description, "text/html");
-        const headings = doc.querySelectorAll("h1, h2, h3");
+        const headings = doc.querySelectorAll("h3");
 
         const items: TOCItem[] = [];
-        headings.forEach((heading, index) => {
-            const id = `heading-${index}`;
-            const text = heading.textContent || "";
-            const level = parseInt(heading.tagName.charAt(1));
-            items.push({ id, text, level });
+        let h2Index = 0;
+        headings.forEach((heading) => {
+            const text = heading.textContent?.trim() || "";
+            // Skip if this heading matches the post title (to avoid duplicate)
+            if (text && post.title && text.toLowerCase().includes(post.title.toLowerCase().substring(0, 20))) {
+                return;
+            }
+            const id = `heading-${h2Index}`;
+            h2Index++;
+            items.push({ id, text, level: 2 });
         });
 
+        console.log("TOC Items (h2 only, excluding title):", items);
         setTocItems(items);
         if (items.length > 0) {
             setActiveId(items[0].id);
         }
-    }, [post?.description]);
+    }, [post?.description, post?.title]);
 
     // Track scroll position for active TOC item
     const handleScroll = useCallback(() => {
         if (!contentRef.current || tocItems.length === 0) return;
 
-        const headings = contentRef.current.querySelectorAll("h1, h2, h3");
+        const headings = contentRef.current.querySelectorAll("h3");
         let currentActive = tocItems[0]?.id || "";
 
         headings.forEach((heading, index) => {
@@ -136,7 +142,7 @@ const BlogDetailPage = () => {
     // Scroll to heading
     const scrollToHeading = (id: string) => {
         const index = parseInt(id.split("-")[1]);
-        const headings = contentRef.current?.querySelectorAll("h1, h2, h3");
+        const headings = contentRef.current?.querySelectorAll("h3");
         if (headings && headings[index]) {
             headings[index].scrollIntoView({ behavior: "smooth", block: "start" });
         }
@@ -146,16 +152,29 @@ const BlogDetailPage = () => {
     const renderContent = () => {
         if (!post?.description) return null;
 
-        // Add IDs to headings for scroll targeting
+        // Add IDs to h3 headings for scroll targeting and add styling
         let headingIndex = 0;
-        const contentWithIds = post.description.replace(
-            /<(h[1-3])([^>]*)>([^<]*)<\/h[1-3]>/gi,
-            (match, tag, attrs, text) => {
-                const id = `heading-${headingIndex}`;
-                headingIndex++;
-                return `<${tag}${attrs} id="${id}" class="scroll-mt-24">${text}</${tag}>`;
-            }
-        );
+        const contentWithIds = post.description
+            .replace(
+                /<h1([^>]*)>([\s\S]*?)<\/h1>/gi,
+                (match, attrs, text) => {
+                    return `<h1${attrs} style="font-size: 2.25rem; font-weight: 700; color: #111827; margin-top: 2rem; margin-bottom: 1rem;">${text}</h1>`;
+                }
+            )
+            .replace(
+                /<h2([^>]*)>([\s\S]*?)<\/h2>/gi,
+                (match, attrs, text) => {
+                    return `<h2${attrs} style="font-size: 1.75rem; font-weight: 600; color: #1f2937; margin-top: 1.5rem; margin-bottom: 0.75rem;">${text}</h2>`;
+                }
+            )
+            .replace(
+                /<h3([^>]*)>([\s\S]*?)<\/h3>/gi,
+                (match, attrs, text) => {
+                    const id = `heading-${headingIndex}`;
+                    headingIndex++;
+                    return `<h3${attrs} id="${id}" style="font-size: 1.5rem; font-weight: 500; color: #374151; margin-top: 1rem; margin-bottom: 0.5rem; scroll-margin-top: 6rem;">${text}</h3>`;
+                }
+            );
 
         return (
             <div
@@ -231,7 +250,7 @@ const BlogDetailPage = () => {
                                             className={`block text-left text-sm transition-colors w-full ${activeId === item.id
                                                 ? "text-[#A12717] font-medium border-l-2 border-[#A12717] -ml-[18px] pl-4"
                                                 : "text-gray-600 hover:text-[#A12717]"
-                                                } ${item.level === 2 ? "pl-2" : ""} ${item.level === 3 ? "pl-4" : ""}`}
+                                                }`}
                                         >
                                             {item.text}
                                         </button>

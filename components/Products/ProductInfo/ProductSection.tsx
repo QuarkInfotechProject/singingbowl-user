@@ -49,9 +49,11 @@ const ProductSection = ({ category, isLoading, allProducts = [] }: ProductSectio
     <div className="w-full">
       <div className="w-full flex flex-col gap-4 items-start justify-start text-start">
         <p className="font-bold text-3xl">{category.name}</p>
-        <p>
-          {category.description || `Explore our exclusive collection of ${category.name}. Crafted with precision and care, these items represent the finest quality and tradition.`}
-        </p>
+        {category.description ? (
+          <div dangerouslySetInnerHTML={{ __html: category.description }} />
+        ) : (
+          <p>Explore our exclusive collection of {category.name}. Crafted with precision and care, these items represent the finest quality and tradition.</p>
+        )}
 
         <ProductGrid products={category.products || []} />
       </div>

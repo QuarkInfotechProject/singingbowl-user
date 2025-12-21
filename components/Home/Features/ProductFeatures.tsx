@@ -1,3 +1,4 @@
+import Image from "next/image";
 
 const productData = {
   title: "Product Features",
@@ -32,10 +33,11 @@ const ProductFeatures = () => {
         {/* Content Section */}
         <div className="w-full lg:w-3/5 flex flex-col gap-6 sm:gap-8 px-2 sm:px-6 lg:px-0 py-8 lg:pr-20">
           <div className="text-center lg:text-left flex flex-col gap-6 sm:gap-8">
-            {/* <h2 className="hidden lg:flex font-bold text-4xl md:text-5xl text-black tracking-tight">
-              <SectionTitle title="Product Features" />
-            </h2> */}
+            <div className="w-full mb-4">
+              <Image src="/assets/images/logo1.png" width={650} height={500} alt="Singing Bowl" className="w-full h-auto"/>
+            </div>
             <h3 className="text-xl sm:text-3xl md:text-4xl text-start lg:text-4xl font-bold text-gray-800 leading-tight">
+              
               <span className="text-[#A12717]">
                 {productData.highlightedText}
               </span>

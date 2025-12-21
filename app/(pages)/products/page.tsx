@@ -96,7 +96,8 @@ const ProductContent = () => {
           id: cat.id,
           url: cat.url,
           name: cat.name,
-          image: cat.products?.[0]?.baseImage || "/assets/images/product/1.jpg",
+          image: cat.logo,
+          description: cat.description,
           products: Array.isArray(cat.products) ? cat.products.map((prod: any) => ({
             id: prod.id,
             url: prod.url,
