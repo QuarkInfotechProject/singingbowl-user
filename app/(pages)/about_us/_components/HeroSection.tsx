@@ -6,7 +6,7 @@ const HeroSection = () => (
     <div
       className="absolute inset-0 bg-cover bg-center opacity-80"
       style={{
-        backgroundImage: "url('/assets/images/md/bg.webp')",
+        backgroundImage: "url('/assets/images/md/bg.jpeg')",
       }}
     ></div>
     <div className="absolute inset-0 bg-gradient-to-t from-stone-50 via-stone-50/20 to-transparent"></div>
@@ -14,10 +14,10 @@ const HeroSection = () => (
       <Badge className="mb-6 bg-white/80 border-stone-200 text-stone-700 px-4 py-2 text-sm font-medium tracking-widest backdrop-blur-sm">
         A 600-YEAR TRADITION
       </Badge>
-      <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 max-w-4xl leading-tight tracking-tight">
-        Echoes of the Himalayas
+      <h1 className="text35xl md:text-5xl font-serif font-bold mb-6 max-w-4xl leading-tight tracking-tight">
+        Welcome to our family
       </h1>
-      <p className="text-xl md:text-2xl font-light max-w-3xl text-stone-800">
+      <p className="text-md md:text-lg font-light max-w-3xl text-stone-800">
         A Sanctuary of Sacred Craftsmanship and Ancestral Healing Wisdom
       </p>
     </div>
