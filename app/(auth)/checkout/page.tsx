@@ -1,8 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   CreditCard,
-  Landmark,
   ChevronRight,
   Lock,
   Truck,
@@ -26,6 +25,67 @@ import { createOrder } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+// GetPay SDK URL
+const GETPAY_SDK_URL = "https://minio.finpos.global/getpay-cdn/webcheckout/v5/bundle.js";
+
+// Function to load GetPay SDK dynamically
+const loadGetPaySDK = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    // Check if already loaded
+    if ((window as any).GetPay) {
+      console.log("GetPay SDK already loaded");
+      resolve();
+      return;
+    }
+
+    // Check if script is already in DOM
+    const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
+    if (existingScript) {
+      // Script exists but SDK might still be loading
+      const checkLoaded = setInterval(() => {
+        if ((window as any).GetPay) {
+          clearInterval(checkLoaded);
+          console.log("GetPay SDK loaded (waiting)");
+          resolve();
+        }
+      }, 100);
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkLoaded);
+        if (!(window as any).GetPay) {
+          reject(new Error("GetPay SDK failed to load"));
+        }
+      }, 10000);
+      return;
+    }
+
+    // Create and load script
+    const script = document.createElement("script");
+    script.src = GETPAY_SDK_URL;
+    script.async = true;
+
+    script.onload = () => {
+      console.log("GetPay SDK script loaded");
+      // Give it a moment to initialize
+      setTimeout(() => {
+        if ((window as any).GetPay) {
+          console.log("GetPay SDK initialized successfully");
+          resolve();
+        } else {
+          reject(new Error("GetPay SDK loaded but not initialized"));
+        }
+      }, 100);
+    };
+
+    script.onerror = () => {
+      reject(new Error("Failed to load GetPay SDK script"));
+    };
+
+    document.head.appendChild(script);
+  });
+};
+
 const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
@@ -33,6 +93,7 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [isLoadingSDK, setIsLoadingSDK] = useState(false);
 
   const {
     cartItems,
@@ -46,6 +107,22 @@ const Checkout = () => {
   } = useCart();
   const { isLoggedIn, isLoading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Pre-load GetPay SDK when card payment is selected
+  useEffect(() => {
+    if (paymentMethod === "card") {
+      setIsLoadingSDK(true);
+      loadGetPaySDK()
+        .then(() => {
+          console.log("GetPay SDK ready for use");
+          setIsLoadingSDK(false);
+        })
+        .catch((err) => {
+          console.error("Failed to pre-load GetPay SDK:", err);
+          setIsLoadingSDK(false);
+        });
+    }
+  }, [paymentMethod]);
 
   const handleAddressSelect = (address: Address | null) => {
     setSelectedAddress(address);
@@ -77,7 +154,7 @@ const Checkout = () => {
         addressId: selectedAddress.uuid,
         couponCodes: [] as string[],
         note: "",
-        paymentMethod: paymentMethod === "cod" ? "cod" : paymentMethod,
+        paymentMethod: paymentMethod === "cod" ? "cod" : "getPay",
         termsAndConditions: "true"
       };
 
@@ -85,20 +162,94 @@ const Checkout = () => {
       console.log(JSON.stringify(orderData, null, 2));
       console.log("Address UUID:", selectedAddress.uuid);
 
-      await createOrder(orderData);
+      const response = await createOrder(orderData);
 
-      // Clear cart after successful order
+      console.log("=== Order Response from Backend ===");
+      console.log(JSON.stringify(response, null, 2));
+
+      // Extract data from response (backend wraps in { code, message, data })
+      const orderResponse = response.data || response;
+
+      console.log("=== Debug Info ===");
+      console.log("paymentMethod state:", paymentMethod);
+      console.log("orderResponse:", orderResponse);
+      console.log("orderResponse.paymentMethod:", orderResponse.paymentMethod);
+      console.log("orderResponse.getPayOptions exists:", !!orderResponse.getPayOptions);
+
+      // Handle GetPay payment for card payments
+      if (paymentMethod === "card") {
+        console.log("Entered card payment block");
+
+        // Check if backend returned GetPay options
+        if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
+          console.log("GetPay options check passed");
+
+          // Ensure GetPay SDK is loaded
+          try {
+            await loadGetPaySDK();
+          } catch (sdkError) {
+            console.error("Failed to load GetPay SDK:", sdkError);
+            setOrderError("Payment gateway failed to load. Please refresh the page and try again.");
+            setIsSubmitting(false);
+            return;
+          }
+
+          const GetPay = (window as any).GetPay;
+          console.log("GetPay SDK from window:", GetPay);
+          console.log("typeof GetPay:", typeof GetPay);
+
+          if (!GetPay) {
+            console.error("GetPay SDK not found on window object!");
+            setOrderError("Payment gateway is not available. Please refresh the page and try again.");
+            setIsSubmitting(false);
+            return;
+          }
+
+          console.log("=== Initializing GetPay SDK ===");
+          console.log("GetPay Options:", JSON.stringify(orderResponse.getPayOptions, null, 2));
+
+          const options = {
+            ...orderResponse.getPayOptions,
+            onSuccess: () => {
+              console.log("GetPay payment initiated successfully");
+            },
+            onError: (err: any) => {
+              console.error("GetPay error:", err);
+              setOrderError("Payment initialization failed. Please try again.");
+              setIsSubmitting(false);
+            },
+          };
+
+          console.log("Creating GetPay instance...");
+          const getpay = new GetPay(options);
+          console.log("GetPay instance created:", getpay);
+          console.log("Calling initialize...");
+          getpay.initialize();
+          console.log("Initialize called");
+
+          // Don't set isSubmitting to false here - GetPay will handle the redirect
+          return;
+        } else {
+          // Card was selected but backend didn't return GetPay options
+          console.error("GetPay options not received from backend. Response:", response);
+          setOrderError("Payment gateway configuration error. Please try again or contact support.");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // For COD orders only, clear cart and show success
       await clearCart();
-
-      // Redirect to success page or orders page
-      // router.push("/profile?tab=orders");
       setShowSuccessDialog(true);
 
     } catch (error: any) {
       console.error("Order submission failed:", error);
       setOrderError(error.response?.data?.message || "Failed to place order. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      // Only set isSubmitting to false if it's not a GetPay redirect
+      if (paymentMethod === "cod") {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -179,7 +330,7 @@ const Checkout = () => {
                       </div>
                     </div>
 
-                    {/* Credit Card */}
+                    {/* GetPay Card Payment */}
                     <div
                       onClick={() => setPaymentMethod("card")}
                       className={`p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === "card"
@@ -198,119 +349,25 @@ const Checkout = () => {
                         <CreditCard className="w-5 h-5 text-slate-700" />
                         <div>
                           <div className="font-semibold text-slate-900">
-                            Credit / Debit Card
+                            Pay with Card (GetPay)
                           </div>
                           <div className="text-sm text-slate-600">
-                            Visa, Mastercard, American Express
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* PayPal */}
-                    <div
-                      onClick={() => setPaymentMethod("paypal")}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === "paypal"
-                        ? "border-green-500 bg-blue-50"
-                        : "border-slate-200 bg-white hover:border-slate-300"
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="payment"
-                          checked={paymentMethod === "paypal"}
-                          onChange={() => setPaymentMethod("paypal")}
-                          className="w-5 h-5 text-blue-500"
-                        />
-                        <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                          P
-                        </div>
-                        <div>
-                          <div className="font-semibold text-slate-900">
-                            PayPal
-                          </div>
-                          <div className="text-sm text-slate-600">
-                            Fast and secure PayPal checkout
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bank Transfer */}
-                    <div
-                      onClick={() => setPaymentMethod("bank")}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === "bank"
-                        ? "border-green-500 bg-blue-50"
-                        : "border-slate-200 bg-white hover:border-slate-300"
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="payment"
-                          checked={paymentMethod === "bank"}
-                          onChange={() => setPaymentMethod("bank")}
-                          className="w-5 h-5 text-blue-500"
-                        />
-                        <Landmark className="w-5 h-5 text-slate-700" />
-                        <div>
-                          <div className="font-semibold text-slate-900">
-                            Bank Transfer
-                          </div>
-                          <div className="text-sm text-slate-600">
-                            Direct bank transfer (ACH/SEPA)
+                            Secure payment via GetPay - Visa, Mastercard, and more
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Payment Details */}
-                  {paymentMethod === "card" && (
-                    <div className="pt-6 border-t border-slate-200 space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Card Number
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="4532 1234 5678 9010"
-                          className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Expiry
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="MM/YY"
-                            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-2">
-                            CVV
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="123"
-                            className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {/* GetPay checkout container - SDK will render payment form here */}
+                  <div id="checkout" hidden></div>
 
-                  {paymentMethod === "bank" && (
+                  {/* Payment Method Info */}
+                  {paymentMethod === "card" && (
                     <div className="pt-6 border-t border-slate-200">
-                      <div className="bg-slate-50 rounded-lg p-4">
-                        <p className="text-sm text-slate-600">
-                          Bank transfer details will be provided after you
-                          complete this checkout. Please allow 2-3 business days
-                          for payment processing.
+                      <div className="bg-blue-50 rounded-lg p-4">
+                        <p className="text-sm text-blue-700">
+                          💳 You will be redirected to GetPay&apos;s secure payment page to complete your payment with credit/debit card.
                         </p>
                       </div>
                     </div>
