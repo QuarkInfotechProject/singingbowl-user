@@ -146,7 +146,7 @@ const PaymentPage = () => {
 
                 const options = {
                     ...paymentConfig.getPayOptions,
-                    containerId: "checkout", // Tell GetPay where to render the form
+                    containerId: "#getpay-payment-container", // # prefix for querySelector, unique ID
                     callbackUrl: {
                         successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${paymentConfig.orderId}&`,
                         failUrl: `${origin}/api/user/orders/payment-fail?orderId=${paymentConfig.orderId}&amount=${paymentConfig.getPayOptions.price}&uuid=${paymentConfig.addressUuid}`
@@ -184,18 +184,21 @@ const PaymentPage = () => {
                 const getpay = new GetPay(options, paymentConfig.getPayOptions.baseUrl);
                 safeLog("Step 5.1: GetPay instance created");
 
-                safeLog("Step 6: Calling initialize()...");
-                getpay.initialize();
-                safeLog("Step 6.1: initialize() called successfully");
+                safeLog("Step 6: Calling initialize() with setTimeout for render safety...");
+                // Use setTimeout(0) to ensure DOM is fully painted before SDK queries it
+                setTimeout(() => {
+                    getpay.initialize();
+                    safeLog("Step 6.1: initialize() called successfully");
 
-                setIsLoading(false);
-                setSdkInitialized(true);
-                safeLog("Step 7: React state updated (isLoading=false, sdkInitialized=true)");
+                    setIsLoading(false);
+                    setSdkInitialized(true);
+                    safeLog("Step 7: React state updated (isLoading=false, sdkInitialized=true)");
+                }, 0);
 
                 // Track container content at multiple intervals
                 [100, 500, 1000, 2000, 3000, 5000, 10000].forEach((ms) => {
                     setTimeout(() => {
-                        const c = document.getElementById("checkout");
+                        const c = document.getElementById("getpay-payment-container");
                         const len = c?.innerHTML.length || 0;
                         safeLog(`[${ms}ms] Container innerHTML length: ${len}`);
                         if (len === 0) {
@@ -282,7 +285,7 @@ const PaymentPage = () => {
                         </div>
                     )}
                     <div
-                        id="checkout"
+                        id="getpay-payment-container"
                         ref={containerRef}
                         className="w-full min-h-[500px] p-4"
                     />
