@@ -84,12 +84,23 @@ const Checkout = () => {
     const sdkUrl = GETPAY_SDK_URL;
 
     // Build the options for GetPay - use backend-provided callbackUrl
+    // Backend returns callbackUrl as: { successUrl: "...", failUrl: "..." }
+    const backendCallbackUrl = paymentConfig.getPayOptions.callbackUrl;
     const getPayOptions = {
       ...paymentConfig.getPayOptions,
       containerId: "#checkout",
-      // Use the backend-generated URLs exactly as they are
-      callbackUrl: paymentConfig.getPayOptions.callbackUrl
+      // Extract successUrl and failUrl from the nested object
+      successUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.successUrl : backendCallbackUrl,
+      failUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.failUrl : undefined,
+      // Also keep callbackUrl for backward compatibility
+      callbackUrl: backendCallbackUrl
     };
+
+    // Debug: Log the callback URLs being used
+    safeLog("GetPay callbackUrl from backend:", backendCallbackUrl);
+    safeLog("Extracted successUrl:", getPayOptions.successUrl);
+    safeLog("Extracted failUrl:", getPayOptions.failUrl);
+    safeLog("Full getPayOptions:", JSON.stringify(getPayOptions, null, 2));
 
     // Create iframe HTML that loads GetPay SDK in isolation
     const iframeHtml = `
