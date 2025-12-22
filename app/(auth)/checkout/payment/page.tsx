@@ -269,19 +269,16 @@ const PaymentPage = () => {
                     </div>
                 )}
 
-                {/* Loading State */}
-                {isLoading && !error && (
-                    <div className="bg-white rounded-2xl p-12 shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-                        <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
-                        <p className="text-slate-600 font-medium">Loading payment form...</p>
-                        <p className="text-slate-400 text-sm mt-2">Please wait while we connect to the payment gateway</p>
-                    </div>
-                )}
-
-                {/* Payment Container */}
-                <div
-                    className={`bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden ${isLoading || error ? 'hidden' : ''}`}
-                >
+                {/* Payment Container - MUST be visible for SDK to find it */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
+                    {/* Loading overlay - shows on top of container while SDK initializes */}
+                    {isLoading && !error && (
+                        <div className="absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-10">
+                            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
+                            <p className="text-slate-600 font-medium">Loading payment form...</p>
+                            <p className="text-slate-400 text-sm mt-2">Please wait while we connect to the payment gateway</p>
+                        </div>
+                    )}
                     <div
                         id="checkout"
                         ref={containerRef}
