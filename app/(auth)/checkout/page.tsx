@@ -81,17 +81,14 @@ const Checkout = () => {
     // Clear container
     container.innerHTML = "";
 
-    const origin = "https://www.singingbowlvillagenepal.com";
     const sdkUrl = GETPAY_SDK_URL;
 
-    // Build the options for GetPay
+    // Build the options for GetPay - use backend-provided callbackUrl
     const getPayOptions = {
       ...paymentConfig.getPayOptions,
       containerId: "#checkout",
-      callbackUrl: {
-        successUrl: `${origin}/api/user/orders/success/${paymentConfig.orderId}`,
-        failUrl: `${origin}/api/user/orders/payment-fail/${paymentConfig.orderId}/${paymentConfig.getPayOptions.price}/${paymentConfig.addressUuid}`
-      }
+      // Use the backend-generated URLs exactly as they are
+      callbackUrl: paymentConfig.getPayOptions.callbackUrl
     };
 
     // Create iframe HTML that loads GetPay SDK in isolation
@@ -106,20 +103,27 @@ const Checkout = () => {
           html, body { height: 100%; width: 100%; }
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
           #checkout { width: 100%; min-height: 600px; padding: 16px; }
-          .loading { display: flex; align-items: center; justify-content: center; height: 400px; color: #666; font-size: 14px; }
         </style>
       </head>
       <body>
-        <div id="checkout"><div class="loading">Initializing payment...</div></div>
-        <script src="${sdkUrl}"><\/script>
+        <div id="checkout"></div>
+        <script src="${sdkUrl}"><\\/script>
         <script>
           (function() {
             console.log('[GetPayIframe] Starting initialization');
+            var retryCount = 0;
+            var maxRetries = 50;
             
             function initGetPay() {
+              retryCount++;
               if (typeof GetPay === 'undefined') {
-                console.log('[GetPayIframe] GetPay not ready, retrying...');
-                setTimeout(initGetPay, 100);
+                console.log('[GetPayIframe] GetPay not ready, retry ' + retryCount + '/' + maxRetries);
+                if (retryCount < maxRetries) {
+                  setTimeout(initGetPay, 200);
+                } else {
+                  console.error('[GetPayIframe] GetPay SDK failed to load after max retries');
+                  window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'SDK failed to load' } }, '*');
+                }
                 return;
               }
               
@@ -129,7 +133,6 @@ const Checkout = () => {
               var options = ${JSON.stringify(getPayOptions)};
               options.onSuccess = function(data) {
                 console.log('[GetPayIframe] onSuccess:', data);
-                // Only treat as success if we have a transactionId (real payment)
                 if (data && data.transactionId) {
                   window.parent.postMessage({ type: 'GETPAY_SUCCESS', data: data }, '*');
                 } else {
@@ -147,27 +150,29 @@ const Checkout = () => {
                 var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
                 getpay.initialize();
                 console.log('[GetPayIframe] GetPay initialized successfully');
-                window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
                 
-                // Log what the SDK rendered after a short delay
-                setTimeout(function() {
+                // Wait for content to render before signaling ready
+                function checkContentReady() {
                   var container = document.getElementById('checkout');
-                  console.log('[GetPayIframe] Container innerHTML length:', container ? container.innerHTML.length : 0);
-                }, 1000);
+                  var contentLength = container ? container.innerHTML.length : 0;
+                  console.log('[GetPayIframe] Container innerHTML length:', contentLength);
+                  if (contentLength > 1000) {
+                    window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
+                  } else {
+                    setTimeout(checkContentReady, 500);
+                  }
+                }
+                setTimeout(checkContentReady, 1000);
               } catch (e) {
                 console.error('[GetPayIframe] Init error:', e);
                 window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
               }
             }
             
-            // Start initialization after DOM is ready
-            if (document.readyState === 'complete') {
-              setTimeout(initGetPay, 500);
-            } else {
-              window.onload = function() { setTimeout(initGetPay, 500); };
-            }
+            // Start initialization after a delay for SDK to load
+            setTimeout(initGetPay, 1000);
           })();
-        <\/script>
+        <\\/script>
       </body>
       </html>
     `;
