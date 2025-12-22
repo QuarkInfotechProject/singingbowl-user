@@ -204,24 +204,39 @@ const Checkout = () => {
               const origin = "https://www.singingbowlvillagenepal.com";
 
               // IMPORTANT: GetPay SDK requires onSuccess and onError to be functions
-              // The SDK internally calls e.onSuccess() and e.onError() - will crash if not functions
+              // BUT: These callbacks are triggered during INITIALIZATION, NOT after payment completion!
+              // The actual payment result comes via the callbackUrl redirects (successUrl/failUrl)
+              // So we should NOT close the dialog or show success here
               const handlePaymentSuccess = function (data: any) {
-                safeLog("GetPay Callback: onSuccess triggered!", data);
-                // Success callback - handle successful payment
-                if (mounted) {
-                  clearCart();
-                  setIsPaymentDialogOpen(false);
-                  setShowSuccessDialog(true);
-                  setIsSubmitting(false);
+                safeLog("GetPay Callback: onSuccess triggered (SDK init callback, NOT payment completion)!", data);
+                // DO NOT close dialog or clear cart here - this runs during SDK init, not after payment
+                // Check if this looks like actual payment data vs just init options
+                if (data && data.transactionId) {
+                  // This looks like real payment confirmation (has transaction ID)
+                  safeLog("Real payment confirmation received with transactionId:", data.transactionId);
+                  if (mounted) {
+                    clearCart();
+                    setIsPaymentDialogOpen(false);
+                    setShowSuccessDialog(true);
+                    setIsSubmitting(false);
+                  }
+                } else {
+                  // This is just initialization callback - do nothing, let user complete payment
+                  safeLog("SDK init callback received, waiting for user to complete payment form...");
                 }
               };
 
               const handlePaymentError = function (err: any) {
                 safeLog("GetPay Callback: onError triggered!", err);
-                // Error callback - handle payment failure
-                if (mounted) {
-                  setOrderError(`Payment Gateway Error: ${err?.message || JSON.stringify(err)}`);
-                  setIsSubmitting(false);
+                // Only show error if it's a real error, not just init noise
+                if (err && (err.code || err.message)) {
+                  safeLog("Real payment error received:", err);
+                  if (mounted) {
+                    setOrderError(`Payment Gateway Error: ${err?.message || JSON.stringify(err)}`);
+                    setIsSubmitting(false);
+                  }
+                } else {
+                  safeLog("SDK callback received (may be init related), continuing...");
                 }
               };
 
