@@ -98,9 +98,9 @@ const Checkout = () => {
       safeLog("Order Created Response:", orderResponse);
 
       if (paymentMethod === "card") {
-        // CARD FLOW: Redirect to dedicated payment page
+        // CARD FLOW: Open payment in new tab (SDK needs isolated environment)
         if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
-          safeLog("Redirecting to payment page...");
+          safeLog("Opening payment page in new tab...");
 
           // Encode payment config for URL
           const paymentConfig = {
@@ -109,8 +109,13 @@ const Checkout = () => {
           };
           const configBase64 = btoa(JSON.stringify(paymentConfig));
 
-          // Redirect to payment page
-          router.push(`/checkout/payment?config=${encodeURIComponent(configBase64)}`);
+          // Open payment page in new tab for isolated SDK environment
+          const paymentUrl = `/checkout/payment?config=${encodeURIComponent(configBase64)}`;
+          window.open(paymentUrl, '_blank');
+
+          // Reset submitting state and show message
+          setIsSubmitting(false);
+          setOrderError("Payment page opened in a new tab. Complete payment there and check your orders.");
         } else {
           throw new Error("Invalid payment configuration from server - Missing GetPay options");
         }
