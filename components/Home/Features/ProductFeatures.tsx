@@ -12,7 +12,7 @@ const productData = {
 
 const ProductFeatures = () => {
   return (
-    <div className="w-full  py-8">
+    <div className="w-full">
       {/* Title - Visible on all screens */}
       {/* <div className="mb-8 lg:mb-0">
         <h2 className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-black text-center lg:hidden tracking-tight">
@@ -61,10 +61,12 @@ const ProductFeatures = () => {
               We craft immersive soundscapes that do more than just relax-they
               recalibrate. Feel the profound resonance of bowls and sacred
               instruments guide your brainwaves from chaos to coherence,
-              releasing stored anxiety, mental fog, and emotional weight. This
-              is a homecoming for your soul. It's time to remember what it feels
+              releasing stored anxiety, mental fog, and emotional weight.
+              <br />
+              <br />
+              This is a homecoming for your soul. It's time to remember what it feels
               like to be vibrantly, authentically you. Your journey back to
-              balance starts with a single, powerful note.
+              balance starts with a single, powerful note.              
             </p>
           </div>
         </div>

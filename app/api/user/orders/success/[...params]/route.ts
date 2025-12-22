@@ -36,63 +36,67 @@ export async function GET(
         }
 
         // Get token from query params (added by GetPay after 3DS/payment)
-        const token = request.nextUrl.searchParams.get("token");
+        const getPayToken = request.nextUrl.searchParams.get("token");
 
         console.log("=== Payment Success Callback ===");
         console.log("Full URL:", request.nextUrl.toString());
         console.log("Payment Method:", paymentMethod);
         console.log("Order ID:", orderId);
-        console.log("Token present:", !!token);
+        console.log("GetPay Token present:", !!getPayToken);
         console.log("Raw params:", paramsArray);
 
-        // Decode the token if present to extract transaction info
-        let decodedToken: { id?: string; oprSecret?: string } | null = null;
-        if (token) {
+        // Decode the GetPay token to extract transaction info
+        // The token is base64 encoded JSON: {"id": "transactionId", "oprSecret": "..."}
+        let transactionId: string | null = null;
+        if (getPayToken) {
             try {
-                const decoded = Buffer.from(token, 'base64').toString('utf-8');
-                decodedToken = JSON.parse(decoded);
-                console.log("Decoded token:", decodedToken);
+                const decoded = Buffer.from(getPayToken, 'base64').toString('utf-8');
+                const decodedData = JSON.parse(decoded);
+                transactionId = decodedData.id || null;
+                console.log("Decoded GetPay token:", decodedData);
+                console.log("Transaction ID extracted:", transactionId);
             } catch (e) {
-                console.log("Token decode error:", e);
+                console.log("Token decode error (may not be base64):", e);
+                // If not base64, the token itself might be the transaction ID
+                transactionId = getPayToken;
             }
         }
 
-        // Forward to backend with the correct query params format
+        // Get auth token from cookies
         const cookieStore = await cookies();
         const authToken = cookieStore.get("token")?.value;
+
+        // Log cookies for debugging
+        const allCookies = cookieStore.getAll();
+        console.log("All cookies names:", allCookies.map(c => c.name));
+        console.log("Auth token found:", !!authToken);
+        if (authToken) {
+            console.log("Auth token (first 50 chars):", authToken.substring(0, 50) + "...");
+        }
 
         const headers: Record<string, string> = {};
         if (authToken) {
             headers["Authorization"] = `Bearer ${authToken}`;
+            console.log("Authorization header set");
+        } else {
+            console.error("WARNING: No auth token found in cookies!");
         }
 
-        // Build backend URL with all necessary parameters
-        // Backend expects: paymentMethod, orderId, and token for verification
-        const backendParams = new URLSearchParams({
-            paymentMethod,
-            orderId,
-        });
+        // Backend expects POST with JSON body:
+        // {
+        //     "orderId": "9",
+        //     "paymentMethod": "getPay",
+        //     "token": "transactionId"  <- This is the transaction ID from GetPay
+        // }
+        const requestBody = {
+            orderId: orderId,
+            paymentMethod: paymentMethod,
+            token: transactionId || getPayToken, // Use transaction ID, fallback to raw token
+        };
 
-        // Add token if present
-        if (token) {
-            backendParams.append("token", token);
-        }
+        console.log("Sending POST to /user/orders/success with body:", JSON.stringify(requestBody));
 
-        // Add transaction ID if decoded from token
-        if (decodedToken?.id) {
-            backendParams.append("transactionId", decodedToken.id);
-        }
-
-        // Add oprSecret if decoded from token
-        if (decodedToken?.oprSecret) {
-            backendParams.append("oprSecret", decodedToken.oprSecret);
-        }
-
-        const backendUrl = `/user/orders/success?${backendParams.toString()}`;
-        console.log("Backend URL:", backendUrl);
-        console.log("Auth token present:", !!authToken);
-
-        const response = await apiClient.get(backendUrl, { headers });
+        const response = await apiClient.post("/user/orders/success", requestBody, { headers });
         console.log("Backend response:", response.data);
 
         // Redirect to profile orders page on success
@@ -100,12 +104,17 @@ export async function GET(
             new URL("/profile?tab=orders&payment=success", prodOrigin)
         );
     } catch (error: any) {
-        console.error("Payment success callback error:", error.response?.data || error.message);
+        console.error("=== Payment Success Callback ERROR ===");
+        console.error("Error message:", error.message);
 
-        // Log more details for debugging
         if (error.response) {
-            console.error("Error response status:", error.response.status);
-            console.error("Error response data:", JSON.stringify(error.response.data));
+            console.error("Response status:", error.response.status);
+            console.error("Response data:", JSON.stringify(error.response.data));
+        }
+        if (error.config) {
+            console.error("Request URL:", error.config.baseURL + error.config.url);
+            console.error("Request method:", error.config.method);
+            console.error("Request body:", JSON.stringify(error.config.data));
         }
 
         // Redirect to checkout with error

@@ -55,7 +55,7 @@ export default function ProductCollection() {
   }
 
   return (
-    <div className="flex flex-col gap-10 sm:gap-10 md:gap-12 lg:gap-18 items-center text-center justify-center px-2 sm:px-6 md:px-10 lg:px-20 py-8 md:py-12 w-full max-w-[100vw] overflow-hidden">
+    <div className="flex flex-col gap-10 sm:gap-10 md:gap-12 lg:gap-18 items-center text-center justify-center px-2 sm:px-6 md:px-10 lg:px-20 pb-8 md:pb-12 w-full max-w-[100vw] overflow-hidden">
       <SectionTitle title="Our Collections" />
       <Carousel
         opts={{
