@@ -21,8 +21,8 @@ const CategoryFilter = ({ categories, selectedCategoryId, onCategorySelect }: Ca
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="px-4 py-3 border-b border-gray-200">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden max-h-[90vh] overflow-y-auto category-filter-scroll">
+      <div className="px-4 py-3 border-b border-gray-200 sticky top-0 bg-white z-10">
         <span className="font-semibold text-gray-900">Filters</span>
       </div>
 
@@ -67,6 +67,24 @@ const CategoryFilter = ({ categories, selectedCategoryId, onCategorySelect }: Ca
           </div>
         )}
       </div>
+
+      {/* Sleek scrollbar styles */}
+      <style jsx>{`
+        .category-filter-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .category-filter-scroll::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+        .category-filter-scroll::-webkit-scrollbar-thumb {
+          background: #c1c1c1;
+          border-radius: 3px;
+        }
+        .category-filter-scroll::-webkit-scrollbar-thumb:hover {
+          background: #a1a1a1;
+        }
+      `}</style>
     </div>
   );
 };
@@ -94,7 +112,8 @@ const ProductContent = () => {
         // Map API data to UI interfaces
         const mappedCategories: CategoryData[] = categoryListRaw.map((cat: any) => ({
           id: cat.id,
-          url: cat.url,
+          url: cat.url || cat.slug,
+          slug: cat.slug,
           name: cat.name,
           image: cat.logo,
           description: cat.description,
@@ -119,6 +138,8 @@ const ProductContent = () => {
           const categoryFromUrlLower = categoryFromUrl.toLowerCase();
           const matchingCategory = mappedCategories.find(
             (cat) =>
+              cat.slug === categoryFromUrl ||
+              cat.slug?.toLowerCase() === categoryFromUrlLower ||
               cat.url === categoryFromUrl ||
               cat.url?.toLowerCase() === categoryFromUrlLower ||
               cat.name?.toLowerCase() === categoryFromUrlLower ||
@@ -193,7 +214,7 @@ const ProductContent = () => {
         </div>
 
         <Find />
-        <ProductGrid title="Our Best Sellers Product" products={productsToDisplay.slice(0, 5)} />
+        <ProductGrid title="Our Best Sellers" products={productsToDisplay.slice(0, 5)} />
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ const HeroSection = () => (
         backgroundImage: "url('/assets/images/md/bg.jpeg')",
       }}
     ></div>
-    <div className="absolute inset-0 bg-gradient-to-t from-stone-50 via-stone-50/20 to-transparent"></div>
+    {/* <div className="absolute inset-0 bg-gradient-to-t from-stone-50 via-stone-50/20 to-transparent"></div>
     <div className="relative h-full flex flex-col items-center justify-end pb-24 md:pb-32 text-stone-900 px-6 text-center">
       <Badge className="mb-6 bg-white/80 border-stone-200 text-stone-700 px-4 py-2 text-sm font-medium tracking-widest backdrop-blur-sm">
         A 600-YEAR TRADITION
@@ -20,7 +20,7 @@ const HeroSection = () => (
       <p className="text-md md:text-lg font-light max-w-3xl text-stone-800">
         A Sanctuary of Sacred Craftsmanship and Ancestral Healing Wisdom
       </p>
-    </div>
+    </div> */}
   </section>
 );
 

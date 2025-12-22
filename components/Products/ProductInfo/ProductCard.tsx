@@ -35,7 +35,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
               alt={product.name}
               width={200}
               height={200}
-              className={`w-full h-auto object-cover rounded-xl ${product.inStock === false ? "opacity-50 grayscale" : ""}`}
+              className={`w-full h-[200px] object-cover rounded-xl ${product.inStock === false ? "opacity-50 grayscale" : ""}`}
             />
             {product.inStock === false && (
               <div className="absolute inset-0 flex items-center justify-center z-10">

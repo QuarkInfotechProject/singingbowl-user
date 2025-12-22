@@ -1,5 +1,6 @@
 import Image from "next/image"
 import { Button } from "../ui/button";
+import Link from "next/link";
 
 const Find = () => {
   return (
@@ -20,18 +21,14 @@ const Find = () => {
               Find the right product for your needs
             </h2>
             <p className="text-base text-gray-600">
-              The Enigmatic Jambati Bowls: A Deep Dive into History and
-              Craftsmanship Jambati bowls, cherished for their deep, resonant
-              tones and exquisite craftsmanship, hail from the Himalayan regions
-              of Nepal and Tibet. Historically used in spiritual rituals by
-              Tibetan Buddhist monks, these bowls feature wide rims, gently
-              sloping sides, and flat bottoms, producing harmonious tones that
-              enhance meditation and promote healing.
+              At Singing Bowl Village, we proudly present a curated collection of antique and investment-grade art pieces from families across Nepal. Each masterpiece reflects exceptional craftsmanship, timeless elegance, and rare cultural value, making it a must-have for discerning collectors and art enthusiasts. Explore our collection today and bring home a unique Himalayan treasure that elevates any collection
             </p>
             <div className=" flex items-start justify-start text-start">
-              <Button className="mx-auto bg-[#802010] rounded-full flex items-start justify-start text-start">
-                Visit Store
-              </Button>
+              <Link href="https://singingbowlvillagenepal.com/products?category=investment-pieces">
+                <Button className="mx-auto bg-[#802010] rounded-full flex items-start justify-start text-start">
+                  Visit Store
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

@@ -113,9 +113,9 @@ export default function ContactPage() {
                         href="tel:+1234567890"
                         className="text-slate-900 hover:text-[#39B856] transition-colors font-medium"
                       >
-                        +977 9851352794, 9851352794
+                        +977-9851352794, 
                         <br />
-                        01-5353501
+                        +977-9843488252
                       </a>
                     </div>
                   </div>

@@ -8,6 +8,8 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
 } from "@/components/ui/carousel";
 import Link from "next/link";
 import Image from "next/image";
@@ -74,22 +76,24 @@ export default function ProductCollection() {
                 href={`/products?category=${category.slug}`}
                 className="group block"
               >
-                <div className="relative aspect-square w-full overflow-hidden rounded-full bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 mb-3 transition-all duration-300 group-hover:shadow-lg group-hover:border-[#A12717]/30 group-hover:scale-[1.02]">
-                  {category.logo ? (
-                    <Image
-                      src={category.logo}
-                      alt={category.name}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-110"
-                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#A12717]/5 to-[#A12717]/15">
-                      <span className="text-5xl md:text-6xl opacity-40">🎵</span>
-                    </div>
-                  )}
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="flex justify-center mb-3">
+                  <div className="relative aspect-square w-full max-w-[150px] md:max-w-[160px] lg:max-w-[180px] overflow-hidden rounded-full bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 transition-all duration-300 group-hover:shadow-lg group-hover:border-[#A12717]/30 group-hover:scale-[1.02]">
+                    {category.logo ? (
+                      <Image
+                        src={category.logo}
+                        alt={category.name}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-110"
+                        sizes="(max-width: 640px) 150px, (max-width: 768px) 160px, 180px"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#A12717]/5 to-[#A12717]/15">
+                        <span className="text-4xl md:text-5xl opacity-40">🎵</span>
+                      </div>
+                    )}
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </div>
                 </div>
                 <h3 className="text-sm md:text-base font-medium text-slate-800 group-hover:text-[#A12717] transition-colors duration-200 line-clamp-2 text-center">
                   {category.name}
@@ -98,6 +102,9 @@ export default function ProductCollection() {
             </CarouselItem>
           ))}
         </CarouselContent>
+        {/* Navigation buttons - visible only on PC view */}
+        <CarouselPrevious className="hidden md:flex -left-4 lg:-left-6 bg-white/90 hover:bg-white border-slate-200 hover:border-[#A12717]/30 shadow-md" />
+        <CarouselNext className="hidden md:flex -right-4 lg:-right-6 bg-white/90 hover:bg-white border-slate-200 hover:border-[#A12717]/30 shadow-md" />
       </Carousel>
     </div>
   );

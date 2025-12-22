@@ -5,6 +5,7 @@ import { ProductGridSkeleton } from "@/components/ui/skeletons";
 export interface CategoryData {
   id: number;
   url: string;
+  slug?: string;
   name: string;
   image?: string;
   description?: string;
