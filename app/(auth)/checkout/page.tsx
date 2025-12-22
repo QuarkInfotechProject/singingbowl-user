@@ -124,9 +124,7 @@ const Checkout = () => {
               }
               
               console.log('[GetPayIframe] GetPay available, initializing...');
-              
-              // Clear the container before SDK takes over
-              document.getElementById('checkout').innerHTML = '';
+              console.log('[GetPayIframe] Container exists:', !!document.getElementById('checkout'));
               
               var options = ${JSON.stringify(getPayOptions)};
               options.onSuccess = function(data) {
