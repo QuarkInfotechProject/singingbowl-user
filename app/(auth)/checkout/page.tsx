@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CreditCard,
   ChevronRight,
@@ -24,101 +24,9 @@ import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
 
-// GetPay SDK URL
-const GETPAY_SDK_URL = "https://minio.finpos.global/getpay-cdn/webcheckout/v5/bundle.js";
-
 // Utility for safe logging
 const safeLog = (label: string, data?: any) => {
-  console.log(`[CheckoutDebug] ${label}`, data ? data : "");
-};
-
-// Function to load GetPay SDK dynamically with robust state tracking
-const loadGetPaySDK = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    // 1. Check if global is already available
-    if ((window as any).GetPay) {
-      safeLog("GetPay SDK global found immediately");
-      resolve();
-      return;
-    }
-
-    // 2. Check for existing script tag
-    let script = document.getElementById("getpay-sdk") as HTMLScriptElement;
-
-    if (script) {
-      const status = script.getAttribute("data-status");
-      safeLog(`GetPay script tag found. Status: ${status}`);
-
-      // If previously errored, remove and retry
-      if (status === "error") {
-        safeLog("Removing failed GetPay script and retrying...");
-        script.remove();
-      }
-      // If loaded but global missing (rare), verify again or fall through to poll
-      else if (status === "loaded") {
-        if ((window as any).GetPay) {
-          resolve();
-          return;
-        }
-        safeLog("Script marked loaded but global missing. Polling...");
-        // Fall through to polling
-      }
-      else {
-        // Poll for existing script to finish
-        const checkInterval = setInterval(() => {
-          if ((window as any).GetPay) {
-            clearInterval(checkInterval);
-            resolve();
-          } else if (script.getAttribute("data-status") === "error") {
-            clearInterval(checkInterval);
-            reject(new Error("GetPay script failed to load (async check)"));
-          }
-        }, 100);
-
-        // Timeout this polling after 10s
-        setTimeout(() => {
-          clearInterval(checkInterval);
-          if (!(window as any).GetPay) reject(new Error("GetPay load timeout"));
-        }, 10000);
-        return;
-      }
-    }
-
-    // 3. Create new script if not exists or was removed
-    if (!document.getElementById("getpay-sdk")) {
-      safeLog("Creating new GetPay script tag...");
-      const newScript = document.createElement("script");
-      newScript.id = "getpay-sdk";
-      newScript.src = GETPAY_SDK_URL;
-      newScript.async = true;
-      newScript.defer = true; // Add defer to be safe
-      newScript.setAttribute("data-status", "loading");
-
-      newScript.onload = () => {
-        newScript.setAttribute("data-status", "loaded");
-        safeLog("GetPay Script onload triggered");
-        // Give it a tick to execute
-        setTimeout(() => {
-          if ((window as any).GetPay) {
-            safeLog("GetPay global confirmed available");
-            resolve();
-          } else {
-            reject(new Error("GetPay script loaded but 'GetPay' global not found"));
-          }
-        }, 100);
-      };
-
-      newScript.onerror = () => {
-        newScript.setAttribute("data-status", "error");
-        safeLog("GetPay Script onerror triggered");
-        reject(new Error("Failed to load GetPay SDK (Network Error)"));
-      };
-
-      // APPEND TO BODY INSTEAD OF HEAD
-      // Some libraries require document.body to exist on load
-      document.body.appendChild(newScript);
-    }
-  });
+  console.log(`[CheckoutDebug] ${label}`, data !== undefined ? data : "");
 };
 
 const Checkout = () => {
@@ -129,18 +37,9 @@ const Checkout = () => {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-  // Removed isLoadingSDK as we no longer preload
-
-  // Payment Dialog State
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [paymentConfig, setPaymentConfig] = useState<any>(null);
-
-  // DEBUG: Track state updates
+  // DEBUG: Track key state updates
   useEffect(() => { safeLog("State Update: paymentMethod", paymentMethod); }, [paymentMethod]);
   useEffect(() => { safeLog("State Update: isSubmitting", isSubmitting); }, [isSubmitting]);
-  useEffect(() => { safeLog("State Update: isPaymentDialogOpen", isPaymentDialogOpen); }, [isPaymentDialogOpen]);
-  useEffect(() => { safeLog("State Update: paymentConfig present?", !!paymentConfig); if (paymentConfig) safeLog("paymentConfig data", paymentConfig); }, [paymentConfig]);
-  useEffect(() => { if (orderError) safeLog("State Update: orderError", orderError); }, [orderError]);
 
 
   const {
@@ -156,172 +55,7 @@ const Checkout = () => {
   const { isLoggedIn, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
-  // Removed Pre-load useEffect
 
-  // Handle GetPay Initialization logic when dialog opens
-  useEffect(() => {
-    let mounted = true;
-
-    if (isPaymentDialogOpen && paymentConfig) {
-      safeLog("Starting Payment Initialization Sequence...");
-
-      const initializePayment = async () => {
-        try {
-          // 1. Ensure SDK is loaded (retrying if necessary)
-          safeLog("Step 1: Ensuring SDK loaded...");
-          await loadGetPaySDK();
-
-          if (!mounted) {
-            safeLog("Component unmounted during SDK load");
-            return;
-          }
-
-          const GetPay = (window as any).GetPay;
-          if (!GetPay) throw new Error("GetPay SDK not found after loading");
-          safeLog("SDK Global found. Constructor type:", typeof GetPay);
-
-          // 2. Ensure Container is Ready
-          // Poll for container in case Dialog animation delays it
-          let containerAttempts = 0;
-          const waitForContainer = setInterval(() => {
-            const container = document.getElementById("checkout");
-            containerAttempts++;
-
-            if (container) {
-              clearInterval(waitForContainer);
-
-              // Clear previous content
-              container.innerHTML = "";
-              container.style.width = "100%";
-              container.style.minHeight = "600px";
-              container.style.display = "block";
-              // DEBUG: visual aid
-              container.style.border = "2px solid red";
-
-              safeLog("Step 2: Container found and reset. ID: #checkout. Added red border.");
-
-              // Force live site origin
-              const origin = "https://www.singingbowlvillagenepal.com";
-
-              // IMPORTANT: GetPay SDK requires onSuccess and onError to be functions
-              // BUT: These callbacks are triggered during INITIALIZATION, NOT after payment completion!
-              // The actual payment result comes via the callbackUrl redirects (successUrl/failUrl)
-              // So we should NOT close the dialog or show success here
-              const handlePaymentSuccess = function (data: any) {
-                safeLog("GetPay Callback: onSuccess triggered (SDK init callback, NOT payment completion)!", data);
-                // DO NOT close dialog or clear cart here - this runs during SDK init, not after payment
-                // Check if this looks like actual payment data vs just init options
-                if (data && data.transactionId) {
-                  // This looks like real payment confirmation (has transaction ID)
-                  safeLog("Real payment confirmation received with transactionId:", data.transactionId);
-                  if (mounted) {
-                    clearCart();
-                    setIsPaymentDialogOpen(false);
-                    setShowSuccessDialog(true);
-                    setIsSubmitting(false);
-                  }
-                } else {
-                  // This is just initialization callback - do nothing, let user complete payment
-                  safeLog("SDK init callback received, waiting for user to complete payment form...");
-                }
-              };
-
-              const handlePaymentError = function (err: any) {
-                safeLog("GetPay Callback: onError triggered!", err);
-                // Only show error if it's a real error, not just init noise
-                if (err && (err.code || err.message)) {
-                  safeLog("Real payment error received:", err);
-                  if (mounted) {
-                    setOrderError(`Payment Gateway Error: ${err?.message || JSON.stringify(err)}`);
-                    setIsSubmitting(false);
-                  }
-                } else {
-                  safeLog("SDK callback received (may be init related), continuing...");
-                }
-              };
-
-              const options = {
-                ...paymentConfig.getPayOptions,
-                callbackUrl: {
-                  successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${paymentConfig.orderId}&`,
-                  failUrl: `${origin}/api/user/orders/payment-fail?orderId=${paymentConfig.orderId}&amount=${paymentConfig.getPayOptions.price}&uuid=${selectedAddress?.uuid}`
-                },
-                // SDK REQUIRES these to be functions - will throw "e.onError is not a function" if missing
-                onSuccess: handlePaymentSuccess,
-                onError: handlePaymentError
-              };
-
-              safeLog("Step 3: Instantiating GetPay with options (with required callbacks):", options);
-              safeLog("onSuccess type:", typeof options.onSuccess);
-              safeLog("onError type:", typeof options.onError);
-              safeLog("Base URL:", paymentConfig.getPayOptions.baseUrl);
-
-              try {
-                const getpay = new GetPay(options, paymentConfig.getPayOptions.baseUrl);
-                safeLog("Instance created. Calling initialize()...");
-                getpay.initialize();
-                safeLog("GetPay.initialize() called successfully");
-
-                // Debug: Track container changes with MutationObserver
-                const observer = new MutationObserver((mutations) => {
-                  mutations.forEach((mutation) => {
-                    if (mutation.type === 'childList') {
-                      const c = document.getElementById("checkout");
-                      safeLog("MutationObserver: Container child changed. Current innerHTML length:", c?.innerHTML.length);
-                      if (mutation.removedNodes.length > 0) {
-                        safeLog("MutationObserver: Nodes REMOVED from container:", mutation.removedNodes.length);
-                      }
-                      if (mutation.addedNodes.length > 0) {
-                        safeLog("MutationObserver: Nodes ADDED to container:", mutation.addedNodes.length);
-                      }
-                    }
-                  });
-                });
-                observer.observe(container, { childList: true, subtree: true });
-
-                // Debug: Check content at multiple intervals
-                [500, 1000, 2000, 3000, 5000].forEach((ms) => {
-                  setTimeout(() => {
-                    const c = document.getElementById("checkout");
-                    if (c) {
-                      safeLog(`Container InnerHTML Length after ${ms}ms:`, c.innerHTML.length);
-                      if (c.innerHTML.length === 0) {
-                        safeLog(`Container is EMPTY at ${ms}ms! Something cleared it.`);
-                      }
-                    } else {
-                      safeLog(`Container #checkout NOT FOUND at ${ms}ms!`);
-                    }
-                  }, ms);
-                });
-
-              } catch (initErr) {
-                console.error("CRITICAL EXCEPTION during GetPay.initialize:", initErr);
-                if (mounted) setOrderError("Payment Gateway Error: Please try again or contact support.");
-              }
-
-            } else if (containerAttempts > 20) { // 2 seconds timeout
-              clearInterval(waitForContainer);
-              safeLog("CRITICAL: Container #checkout not found within 2s timeout");
-              if (mounted) setOrderError("Payment form container failed to load.");
-            }
-          }, 100);
-
-        } catch (error) {
-          console.error("Payment Init Error:", error);
-          if (mounted) {
-            setOrderError("Failed to load payment gateway. Please check your internet connection and try again.");
-            setIsPaymentDialogOpen(false);
-          }
-        }
-      };
-
-      initializePayment();
-    }
-
-    return () => {
-      mounted = false;
-    };
-  }, [isPaymentDialogOpen, paymentConfig]);
 
 
   const handleAddressSelect = (address: Address | null) => {
@@ -364,11 +98,19 @@ const Checkout = () => {
       safeLog("Order Created Response:", orderResponse);
 
       if (paymentMethod === "card") {
-        // CARD FLOW: Open Dialog with GetPay
+        // CARD FLOW: Redirect to dedicated payment page
         if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
-          setPaymentConfig(orderResponse);
-          setIsPaymentDialogOpen(true);
-          safeLog("Opening Dialog...");
+          safeLog("Redirecting to payment page...");
+
+          // Encode payment config for URL
+          const paymentConfig = {
+            ...orderResponse,
+            addressUuid: selectedAddress?.uuid
+          };
+          const configBase64 = btoa(JSON.stringify(paymentConfig));
+
+          // Redirect to payment page
+          router.push(`/checkout/payment?config=${encodeURIComponent(configBase64)}`);
         } else {
           throw new Error("Invalid payment configuration from server - Missing GetPay options");
         }
@@ -637,43 +379,6 @@ const Checkout = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Payment Processing Dialog */}
-      <Dialog
-        open={isPaymentDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            // User closed the payment dialog manually
-            safeLog("User closed payment dialog");
-            setIsSubmitting(false);
-            setIsPaymentDialogOpen(false);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-xl md:max-w-2xl bg-white p-0 overflow-hidden min-h-[650px] flex flex-col">
-          <DialogHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
-            <DialogTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
-              <CreditCard className="w-6 h-6 text-blue-600" />
-              Secure Payment
-            </DialogTitle>
-            <DialogDescription className="text-slate-500">
-              Please complete your payment below. Do not close this window.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex-1 w-full bg-slate-50 relative p-4" >
-            {/* The Container for GetPay */}
-            <div id="checkout" className="w-full h-full min-h-[500px]"></div>
-            {/* Placeholder loader in case SDK takes time and container is empty */}
-            {!paymentConfig && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-20">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
     </div>
   );
 };
