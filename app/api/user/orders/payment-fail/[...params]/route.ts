@@ -49,15 +49,17 @@ export async function GET(
         }
 
         // Redirect to checkout with error
+        const prodOrigin = "https://www.singingbowlvillagenepal.com";
         return NextResponse.redirect(
-            new URL(`/checkout?error=payment_failed&orderId=${orderId}`, request.url)
+            new URL(`/checkout?error=payment_failed&orderId=${orderId}`, prodOrigin)
         );
     } catch (error: any) {
         console.error("Payment fail callback error:", error.message);
 
         // Redirect to checkout with generic error
+        const prodOrigin = "https://www.singingbowlvillagenepal.com";
         return NextResponse.redirect(
-            new URL("/checkout?error=payment_failed", request.url)
+            new URL("/checkout?error=payment_failed", prodOrigin)
         );
     }
 }

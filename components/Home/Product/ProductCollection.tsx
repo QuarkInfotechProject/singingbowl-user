@@ -74,7 +74,7 @@ export default function ProductCollection() {
                 href={`/products?category=${category.slug}`}
                 className="group block"
               >
-                <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 mb-3 transition-all duration-300 group-hover:shadow-lg group-hover:border-[#A12717]/30 group-hover:scale-[1.02]">
+                <div className="relative aspect-square w-full overflow-hidden rounded-full bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 mb-3 transition-all duration-300 group-hover:shadow-lg group-hover:border-[#A12717]/30 group-hover:scale-[1.02]">
                   {category.logo ? (
                     <Image
                       src={category.logo}
