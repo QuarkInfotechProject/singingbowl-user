@@ -131,6 +131,8 @@ const Checkout = () => {
               console.log('[GetPayIframe] Container exists:', !!document.getElementById('checkout'));
               
               var options = ${JSON.stringify(getPayOptions)};
+              // Set baseUrl in options as per SDK documentation
+              options.baseUrl = '${paymentConfig.getPayOptions.baseUrl}';
               options.onSuccess = function(data) {
                 console.log('[GetPayIframe] onSuccess:', data);
                 if (data && data.transactionId) {
@@ -146,23 +148,20 @@ const Checkout = () => {
                 }
               };
               
+              console.log('[GetPayIframe] Options:', JSON.stringify(options, null, 2));
+              
               try {
-                var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
+                // Create GetPay with options only (no second parameter)
+                var getpay = new GetPay(options);
                 getpay.initialize();
                 console.log('[GetPayIframe] GetPay initialized successfully');
                 
-                // Wait for content to render before signaling ready
-                function checkContentReady() {
+                // Signal ready after a delay to allow form to render
+                setTimeout(function() {
+                  window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
                   var container = document.getElementById('checkout');
-                  var contentLength = container ? container.innerHTML.length : 0;
-                  console.log('[GetPayIframe] Container innerHTML length:', contentLength);
-                  if (contentLength > 1000) {
-                    window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
-                  } else {
-                    setTimeout(checkContentReady, 500);
-                  }
-                }
-                setTimeout(checkContentReady, 1000);
+                  console.log('[GetPayIframe] Container innerHTML length:', container ? container.innerHTML.length : 0);
+                }, 2000);
               } catch (e) {
                 console.error('[GetPayIframe] Init error:', e);
                 window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
