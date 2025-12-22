@@ -89,8 +89,8 @@ const Checkout = () => {
       ...paymentConfig.getPayOptions,
       containerId: "#checkout",
       callbackUrl: {
-        successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${paymentConfig.orderId}`,
-        failUrl: `${origin}/api/user/orders/payment-fail?orderId=${paymentConfig.orderId}&amount=${paymentConfig.getPayOptions.price}&uuid=${paymentConfig.addressUuid}`
+        successUrl: `${origin}/api/user/orders/success/${paymentConfig.orderId}`,
+        failUrl: `${origin}/api/user/orders/payment-fail/${paymentConfig.orderId}/${paymentConfig.getPayOptions.price}/${paymentConfig.addressUuid}`
       }
     };
 
@@ -103,13 +103,14 @@ const Checkout = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-          #checkout { width: 100%; min-height: 450px; }
-          .loading { display: flex; align-items: center; justify-content: center; height: 300px; color: #666; }
+          html, body { height: 100%; width: 100%; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
+          #checkout { width: 100%; min-height: 600px; padding: 16px; }
+          .loading { display: flex; align-items: center; justify-content: center; height: 400px; color: #666; font-size: 14px; }
         </style>
       </head>
       <body>
-        <div id="checkout"><div class="loading">Loading payment form...</div></div>
+        <div id="checkout"><div class="loading">Initializing payment...</div></div>
         <script src="${sdkUrl}"><\/script>
         <script>
           (function() {
@@ -124,11 +125,17 @@ const Checkout = () => {
               
               console.log('[GetPayIframe] GetPay available, initializing...');
               
+              // Clear the container before SDK takes over
+              document.getElementById('checkout').innerHTML = '';
+              
               var options = ${JSON.stringify(getPayOptions)};
               options.onSuccess = function(data) {
                 console.log('[GetPayIframe] onSuccess:', data);
+                // Only treat as success if we have a transactionId (real payment)
                 if (data && data.transactionId) {
                   window.parent.postMessage({ type: 'GETPAY_SUCCESS', data: data }, '*');
+                } else {
+                  console.log('[GetPayIframe] Init callback (no transactionId), ignoring...');
                 }
               };
               options.onError = function(err) {
@@ -143,6 +150,12 @@ const Checkout = () => {
                 getpay.initialize();
                 console.log('[GetPayIframe] GetPay initialized successfully');
                 window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
+                
+                // Log what the SDK rendered after a short delay
+                setTimeout(function() {
+                  var container = document.getElementById('checkout');
+                  console.log('[GetPayIframe] Container innerHTML length:', container ? container.innerHTML.length : 0);
+                }, 1000);
               } catch (e) {
                 console.error('[GetPayIframe] Init error:', e);
                 window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
