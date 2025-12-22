@@ -258,20 +258,22 @@ const Checkout = () => {
 
           console.log("Final GetPay Options prepared:", JSON.stringify(options, null, 2));
 
-          console.log("Creating new GetPay instance...");
-          const getpay = new GetPay(options);
+          const baseUrl = orderResponse.getPayOptions.baseUrl;
+          console.log("Initializing GetPay with BaseURL:", baseUrl);
 
-          // Small delay to ensure container render
-          console.log("Setting timeout for initialize()...");
-          setTimeout(() => {
-            console.log("Timeout fired. Calling getpay.initialize()...");
-            try {
-              getpay.initialize();
-              console.log("getpay.initialize() called successfully");
-            } catch (e) {
-              console.error("CRITICAL: Error during getpay.initialize():", e);
-            }
-          }, 100);
+          console.log("Creating new GetPay instance...");
+          // Pass baseUrl as second argument as per SDK signature constructor(r,e)
+          const getpay = new GetPay(options, baseUrl);
+
+          console.log("Calling getpay.initialize() synchronously...");
+          try {
+            getpay.initialize();
+            console.log("getpay.initialize() called successfully");
+          } catch (e) {
+            console.error("CRITICAL: Error during getpay.initialize():", e);
+            setOrderError("Payment gateway initialization failed.");
+            setIsSubmitting(false);
+          }
 
           // Don't set isSubmitting to false here - GetPay will handle the redirect
           console.log("Waiting for GetPay redirect...");
