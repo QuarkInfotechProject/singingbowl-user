@@ -262,13 +262,37 @@ const Checkout = () => {
                 getpay.initialize();
                 safeLog("GetPay.initialize() called successfully");
 
-                // Debug: Check if content renders
-                setTimeout(() => {
-                  const c = document.getElementById("checkout");
-                  if (c) {
-                    safeLog("Container InnerHTML Length after 3s:", c.innerHTML.length);
-                  }
-                }, 3000);
+                // Debug: Track container changes with MutationObserver
+                const observer = new MutationObserver((mutations) => {
+                  mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList') {
+                      const c = document.getElementById("checkout");
+                      safeLog("MutationObserver: Container child changed. Current innerHTML length:", c?.innerHTML.length);
+                      if (mutation.removedNodes.length > 0) {
+                        safeLog("MutationObserver: Nodes REMOVED from container:", mutation.removedNodes.length);
+                      }
+                      if (mutation.addedNodes.length > 0) {
+                        safeLog("MutationObserver: Nodes ADDED to container:", mutation.addedNodes.length);
+                      }
+                    }
+                  });
+                });
+                observer.observe(container, { childList: true, subtree: true });
+
+                // Debug: Check content at multiple intervals
+                [500, 1000, 2000, 3000, 5000].forEach((ms) => {
+                  setTimeout(() => {
+                    const c = document.getElementById("checkout");
+                    if (c) {
+                      safeLog(`Container InnerHTML Length after ${ms}ms:`, c.innerHTML.length);
+                      if (c.innerHTML.length === 0) {
+                        safeLog(`Container is EMPTY at ${ms}ms! Something cleared it.`);
+                      }
+                    } else {
+                      safeLog(`Container #checkout NOT FOUND at ${ms}ms!`);
+                    }
+                  }, ms);
+                });
 
               } catch (initErr) {
                 console.error("CRITICAL EXCEPTION during GetPay.initialize:", initErr);
