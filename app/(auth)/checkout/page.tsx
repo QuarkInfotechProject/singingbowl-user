@@ -206,20 +206,26 @@ const Checkout = () => {
           }
 
 
+
+
           // 1. Cleanup: Ensure fresh mount by clearing container
           const checkoutContainer = document.getElementById("checkout");
           if (checkoutContainer) {
+            console.log("Found #checkout container. resetting innerHTML and styles...");
             checkoutContainer.innerHTML = "";
-            // 2. Fix Width: Ensure container takes full width
             checkoutContainer.style.width = "100%";
-            checkoutContainer.style.minHeight = "400px";
-            checkoutContainer.style.display = "block"; // Ensure it's visible
+            checkoutContainer.style.minHeight = "600px"; // Increased height for better visibility
+            checkoutContainer.style.display = "block";
+          } else {
+            console.error("CRITICAL: #checkout container NOT found in DOM");
           }
 
-          console.log("=== Initializing GetPay SDK ===");
-          console.log("GetPay Options:", JSON.stringify(orderResponse.getPayOptions, null, 2));
+          console.log("=== Initializing GetPay SDK Flow ===");
+          console.log("Backend Response Options:", JSON.stringify(orderResponse.getPayOptions, null, 2));
 
-          const origin = process.env.NEXT_PUBLIC_USER_ORIGIN || "https://www.singingbowlvillagenepal.com";
+          // Force live site origin as requested to prevent localhost redirects
+          const origin = "https://www.singingbowlvillagenepal.com";
+          console.log("Using Origin for Redirects:", origin);
 
           // 3. Override Configuration
           const options = {
@@ -240,27 +246,39 @@ const Checkout = () => {
               country: true
             },
             onSuccess: () => {
-              console.log("GetPay payment initiated successfully");
+              console.log("GetPay SDK: onSuccess callback triggered");
+              console.log("Payment initiated successfully, redirect expected...");
             },
             onError: (err: any) => {
-              console.error("GetPay error:", err);
+              console.error("GetPay SDK: onError callback triggered", err);
               setOrderError("Payment initialization failed. Please try again.");
               setIsSubmitting(false);
             },
           };
 
-          console.log("Creating GetPay instance...");
+          console.log("Final GetPay Options prepared:", JSON.stringify(options, null, 2));
+
+          console.log("Creating new GetPay instance...");
           const getpay = new GetPay(options);
-          console.log("GetPay instance created:", getpay);
-          console.log("Calling initialize...");
-          getpay.initialize();
-          console.log("Initialize called");
+
+          // Small delay to ensure container render
+          console.log("Setting timeout for initialize()...");
+          setTimeout(() => {
+            console.log("Timeout fired. Calling getpay.initialize()...");
+            try {
+              getpay.initialize();
+              console.log("getpay.initialize() called successfully");
+            } catch (e) {
+              console.error("CRITICAL: Error during getpay.initialize():", e);
+            }
+          }, 100);
 
           // Don't set isSubmitting to false here - GetPay will handle the redirect
+          console.log("Waiting for GetPay redirect...");
           return;
         } else {
           // Card was selected but backend didn't return GetPay options
-          console.error("GetPay options not received from backend. Response:", response);
+          console.error("CRITICAL: GetPay options MISSING in backend response", orderResponse);
           setOrderError("Payment gateway configuration error. Please try again or contact support.");
           setIsSubmitting(false);
           return;
