@@ -195,7 +195,7 @@ const Checkout = () => {
               container.style.width = "100%";
               container.style.minHeight = "600px";
               container.style.display = "block";
-              // DEBUG: Add border to see container
+              // DEBUG: visual aid
               container.style.border = "2px solid red";
 
               safeLog("Step 2: Container found and reset. ID: #checkout. Added red border.");
@@ -203,16 +203,42 @@ const Checkout = () => {
               // Force live site origin
               const origin = "https://www.singingbowlvillagenepal.com";
 
+              // IMPORTANT: GetPay SDK requires onSuccess and onError to be functions
+              // The SDK internally calls e.onSuccess() and e.onError() - will crash if not functions
+              const handlePaymentSuccess = function (data: any) {
+                safeLog("GetPay Callback: onSuccess triggered!", data);
+                // Success callback - handle successful payment
+                if (mounted) {
+                  clearCart();
+                  setIsPaymentDialogOpen(false);
+                  setShowSuccessDialog(true);
+                  setIsSubmitting(false);
+                }
+              };
+
+              const handlePaymentError = function (err: any) {
+                safeLog("GetPay Callback: onError triggered!", err);
+                // Error callback - handle payment failure
+                if (mounted) {
+                  setOrderError(`Payment Gateway Error: ${err?.message || JSON.stringify(err)}`);
+                  setIsSubmitting(false);
+                }
+              };
+
               const options = {
                 ...paymentConfig.getPayOptions,
                 callbackUrl: {
                   successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${paymentConfig.orderId}&`,
                   failUrl: `${origin}/api/user/orders/payment-fail?orderId=${paymentConfig.orderId}&amount=${paymentConfig.getPayOptions.price}&uuid=${selectedAddress?.uuid}`
-                }
-                // REMOVED prefill and callbacks to test immediate success issue
+                },
+                // SDK REQUIRES these to be functions - will throw "e.onError is not a function" if missing
+                onSuccess: handlePaymentSuccess,
+                onError: handlePaymentError
               };
 
-              safeLog("Step 3: Instantiating GetPay with options (NO PREFILL/CALLBACKS):", options);
+              safeLog("Step 3: Instantiating GetPay with options (with required callbacks):", options);
+              safeLog("onSuccess type:", typeof options.onSuccess);
+              safeLog("onError type:", typeof options.onError);
               safeLog("Base URL:", paymentConfig.getPayOptions.baseUrl);
 
               try {
@@ -226,9 +252,6 @@ const Checkout = () => {
                   const c = document.getElementById("checkout");
                   if (c) {
                     safeLog("Container InnerHTML Length after 3s:", c.innerHTML.length);
-                    // safeLog("Container HTML:", c.innerHTML); 
-                  } else {
-                    safeLog("Container gone after 3s?");
                   }
                 }, 3000);
 
