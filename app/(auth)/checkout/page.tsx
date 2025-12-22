@@ -107,7 +107,7 @@ const Checkout = () => {
       </head>
       <body>
         <div id="checkout"></div>
-        <script src="${sdkUrl}"><\\/script>
+        <script src="${sdkUrl}"><\/script>
         <script>
           (function() {
             console.log('[GetPayIframe] Starting initialization');
@@ -131,7 +131,7 @@ const Checkout = () => {
               console.log('[GetPayIframe] Container exists:', !!document.getElementById('checkout'));
               
               var options = ${JSON.stringify(getPayOptions)};
-              // Set baseUrl in options as per SDK documentation
+              // Set baseUrl in options cleas per SDK documentation
               options.baseUrl = '${paymentConfig.getPayOptions.baseUrl}';
               options.onSuccess = function(data) {
                 console.log('[GetPayIframe] onSuccess:', data);
@@ -148,20 +148,11 @@ const Checkout = () => {
                 }
               };
               
-              console.log('[GetPayIframe] Options:', JSON.stringify(options, null, 2));
-              
               try {
-                // Create GetPay with options only (no second parameter)
-                var getpay = new GetPay(options);
+                var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
                 getpay.initialize();
                 console.log('[GetPayIframe] GetPay initialized successfully');
-                
-                // Signal ready after a delay to allow form to render
-                setTimeout(function() {
-                  window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
-                  var container = document.getElementById('checkout');
-                  console.log('[GetPayIframe] Container innerHTML length:', container ? container.innerHTML.length : 0);
-                }, 2000);
+                window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
               } catch (e) {
                 console.error('[GetPayIframe] Init error:', e);
                 window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
@@ -171,7 +162,7 @@ const Checkout = () => {
             // Start initialization after a delay for SDK to load
             setTimeout(initGetPay, 1000);
           })();
-        <\\/script>
+        <\/script>
       </body>
       </html>
     `;
