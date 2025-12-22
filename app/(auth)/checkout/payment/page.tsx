@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { CreditCard, Loader2, ArrowLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -303,4 +303,20 @@ const PaymentPage = () => {
     );
 };
 
-export default PaymentPage;
+// Wrap in Suspense for useSearchParams (required by Next.js 16)
+const PaymentPageWrapper = () => {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50 flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+                    <p className="text-slate-600">Loading payment page...</p>
+                </div>
+            </div>
+        }>
+            <PaymentPage />
+        </Suspense>
+    );
+};
+
+export default PaymentPageWrapper;
