@@ -146,6 +146,7 @@ const PaymentPage = () => {
 
                 const options = {
                     ...paymentConfig.getPayOptions,
+                    containerId: "checkout", // Tell GetPay where to render the form
                     callbackUrl: {
                         successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${paymentConfig.orderId}&`,
                         failUrl: `${origin}/api/user/orders/payment-fail?orderId=${paymentConfig.orderId}&amount=${paymentConfig.getPayOptions.price}&uuid=${paymentConfig.addressUuid}`
@@ -174,6 +175,7 @@ const PaymentPage = () => {
                 };
 
                 safeLog("Step 4.1: Options built");
+                safeLog("containerId:", options.containerId);
                 safeLog("Callback URLs:", options.callbackUrl);
                 safeLog("onSuccess type:", typeof options.onSuccess);
                 safeLog("onError type:", typeof options.onError);
