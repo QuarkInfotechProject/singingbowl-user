@@ -82,21 +82,18 @@ export async function GET(
             console.error("WARNING: No auth token found in cookies!");
         }
 
-        // Backend expects POST with JSON body:
-        // {
-        //     "orderId": "9",
-        //     "paymentMethod": "getPay",
-        //     "token": "transactionId"  <- This is the transaction ID from GetPay
-        // }
+        // Backend expects path parameters: /user/orders/success/{paymentMethod}/{orderId}
+        // And token in the request body/query
         const requestBody = {
-            orderId: orderId,
-            paymentMethod: paymentMethod,
             token: transactionId || getPayToken, // Use transaction ID, fallback to raw token
         };
 
-        console.log("Sending POST to /user/orders/success with body:", JSON.stringify(requestBody));
+        // Build the correct backend URL with path parameters
+        const backendUrl = `/user/orders/success/${paymentMethod}/${orderId}`;
+        console.log("Sending POST to backend:", backendUrl);
+        console.log("Request body:", JSON.stringify(requestBody));
 
-        const response = await apiClient.post("/user/orders/success", requestBody, { headers });
+        const response = await apiClient.post(backendUrl, requestBody, { headers });
         console.log("Backend response:", response.data);
 
         // Redirect to profile orders page on success
