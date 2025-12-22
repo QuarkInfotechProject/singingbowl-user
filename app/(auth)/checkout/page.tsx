@@ -23,6 +23,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 
 // Utility for safe logging
 const safeLog = (label: string, data?: any) => {
@@ -87,17 +88,22 @@ const Checkout = () => {
 
         // Load SDK if not already loaded
         if (!(window as any).GetPay) {
-          safeLog("Loading GetPay SDK...");
+          safeLog("GetPay SDK not yet loaded, waiting...");
+          // SDK will be loaded via Script component, wait for it
+          let attempts = 0;
           await new Promise<void>((resolve, reject) => {
-            const script = document.createElement("script");
-            script.src = GETPAY_SDK_URL;
-            script.async = true;
-            script.onload = () => {
-              safeLog("GetPay SDK loaded");
-              setTimeout(() => resolve(), 100);
+            const checkSdk = () => {
+              attempts++;
+              if ((window as any).GetPay) {
+                safeLog(`GetPay SDK available after ${attempts} checks`);
+                resolve();
+              } else if (attempts > 100) {
+                reject(new Error("GetPay SDK failed to load after 10 seconds"));
+              } else {
+                setTimeout(checkSdk, 100);
+              }
             };
-            script.onerror = () => reject(new Error("Failed to load GetPay SDK"));
-            document.body.appendChild(script);
+            checkSdk();
           });
         }
 
@@ -240,6 +246,14 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50">
+      {/* Load GetPay SDK via Next.js Script component */}
+      <Script
+        src={GETPAY_SDK_URL}
+        strategy="afterInteractive"
+        onLoad={() => safeLog("GetPay SDK Script onLoad event")}
+        onError={() => safeLog("GetPay SDK Script onError event")}
+      />
+
       {/* Main Content - Expanded Width */}
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-8 md:py-12">
 
