@@ -23,7 +23,6 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
-import Script from "next/script";
 
 // Utility for safe logging
 const safeLog = (label: string, data?: any) => {
@@ -64,99 +63,141 @@ const Checkout = () => {
   // GetPay SDK URL
   const GETPAY_SDK_URL = "https://minio.finpos.global/getpay-cdn/webcheckout/v5/bundle.js";
 
-  // Initialize GetPay when payment tab becomes active
+  // Initialize GetPay when payment tab becomes active using iframe
   useEffect(() => {
     if (activeTab !== 'payment' || !paymentConfig) return;
 
-    safeLog("=== PAYMENT TAB ACTIVE - Initializing GetPay ===");
+    safeLog("=== PAYMENT TAB ACTIVE - Creating iframe for GetPay ===");
     setSdkLoading(true);
 
-    const loadAndInitialize = async () => {
-      try {
-        // Wait for container to exist
-        const container = document.getElementById("getpay-payment-container");
-        if (!container) {
-          safeLog("ERROR: Container not found!");
-          setOrderError("Payment container not found. Please try again.");
-          setSdkLoading(false);
-          return;
-        }
-        safeLog("Container found:", container.id);
+    const container = document.getElementById("getpay-payment-container");
+    if (!container) {
+      safeLog("ERROR: Container not found!");
+      setOrderError("Payment container not found. Please try again.");
+      setSdkLoading(false);
+      return;
+    }
 
-        // Clear container
-        container.innerHTML = "";
+    // Clear container
+    container.innerHTML = "";
 
-        // Load SDK if not already loaded
-        if (!(window as any).GetPay) {
-          safeLog("GetPay SDK not yet loaded, waiting...");
-          // SDK will be loaded via Script component, wait for it
-          let attempts = 0;
-          await new Promise<void>((resolve, reject) => {
-            const checkSdk = () => {
-              attempts++;
-              if ((window as any).GetPay) {
-                safeLog(`GetPay SDK available after ${attempts} checks`);
-                resolve();
-              } else if (attempts > 100) {
-                reject(new Error("GetPay SDK failed to load after 10 seconds"));
-              } else {
-                setTimeout(checkSdk, 100);
-              }
-            };
-            checkSdk();
-          });
-        }
+    const origin = "https://www.singingbowlvillagenepal.com";
+    const sdkUrl = GETPAY_SDK_URL;
 
-        const GetPay = (window as any).GetPay;
-        if (!GetPay) {
-          throw new Error("GetPay global not available");
-        }
-        safeLog("GetPay global available");
-
-        const origin = "https://www.singingbowlvillagenepal.com";
-
-        const options = {
-          ...paymentConfig.getPayOptions,
-          containerId: "#getpay-payment-container",
-          callbackUrl: {
-            successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${paymentConfig.orderId}&`,
-            failUrl: `${origin}/api/user/orders/payment-fail?orderId=${paymentConfig.orderId}&amount=${paymentConfig.getPayOptions.price}&uuid=${paymentConfig.addressUuid}`
-          },
-          onSuccess: function (data: any) {
-            safeLog("GetPay onSuccess:", data);
-            if (data && data.transactionId) {
-              safeLog("Payment successful! Redirecting...");
-              clearCart();
-              setShowSuccessDialog(true);
-            }
-          },
-          onError: function (err: any) {
-            safeLog("GetPay onError:", err);
-            if (err && (err.code || err.message)) {
-              setOrderError(`Payment failed: ${err.message || JSON.stringify(err)}`);
-            }
-          }
-        };
-
-        safeLog("Initializing GetPay with options:", options);
-
-        // Use setTimeout(0) to ensure DOM is painted
-        setTimeout(() => {
-          const getpay = new GetPay(options, paymentConfig.getPayOptions.baseUrl);
-          getpay.initialize();
-          safeLog("GetPay initialized successfully");
-          setSdkLoading(false);
-        }, 0);
-
-      } catch (error: any) {
-        safeLog("GetPay initialization error:", error);
-        setOrderError(error.message || "Failed to initialize payment. Please try again.");
-        setSdkLoading(false);
+    // Build the options for GetPay
+    const getPayOptions = {
+      ...paymentConfig.getPayOptions,
+      containerId: "#checkout",
+      callbackUrl: {
+        successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${paymentConfig.orderId}&`,
+        failUrl: `${origin}/api/user/orders/payment-fail?orderId=${paymentConfig.orderId}&amount=${paymentConfig.getPayOptions.price}&uuid=${paymentConfig.addressUuid}`
       }
     };
 
-    // Small delay to ensure component has rendered
-    setTimeout(loadAndInitialize, 100);
+    // Create iframe HTML that loads GetPay SDK in isolation
+    const iframeHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+          #checkout { width: 100%; min-height: 450px; }
+          .loading { display: flex; align-items: center; justify-content: center; height: 300px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div id="checkout"><div class="loading">Loading payment form...</div></div>
+        <script src="${sdkUrl}"><\/script>
+        <script>
+          (function() {
+            console.log('[GetPayIframe] Starting initialization');
+            
+            function initGetPay() {
+              if (typeof GetPay === 'undefined') {
+                console.log('[GetPayIframe] GetPay not ready, retrying...');
+                setTimeout(initGetPay, 100);
+                return;
+              }
+              
+              console.log('[GetPayIframe] GetPay available, initializing...');
+              
+              var options = ${JSON.stringify(getPayOptions)};
+              options.onSuccess = function(data) {
+                console.log('[GetPayIframe] onSuccess:', data);
+                if (data && data.transactionId) {
+                  window.parent.postMessage({ type: 'GETPAY_SUCCESS', data: data }, '*');
+                }
+              };
+              options.onError = function(err) {
+                console.log('[GetPayIframe] onError:', err);
+                if (err && (err.code || err.message)) {
+                  window.parent.postMessage({ type: 'GETPAY_ERROR', error: err }, '*');
+                }
+              };
+              
+              try {
+                var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
+                getpay.initialize();
+                console.log('[GetPayIframe] GetPay initialized successfully');
+                window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
+              } catch (e) {
+                console.error('[GetPayIframe] Init error:', e);
+                window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
+              }
+            }
+            
+            // Start initialization after DOM is ready
+            if (document.readyState === 'complete') {
+              setTimeout(initGetPay, 500);
+            } else {
+              window.onload = function() { setTimeout(initGetPay, 500); };
+            }
+          })();
+        <\/script>
+      </body>
+      </html>
+    `;
+
+    // Create iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.width = '100%';
+    iframe.style.minHeight = '500px';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '12px';
+
+    container.appendChild(iframe);
+
+    // Write content to iframe
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (iframeDoc) {
+      iframeDoc.open();
+      iframeDoc.write(iframeHtml);
+      iframeDoc.close();
+    }
+
+    // Listen for messages from iframe
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'GETPAY_READY') {
+        safeLog("GetPay iframe ready");
+        setSdkLoading(false);
+      } else if (event.data?.type === 'GETPAY_SUCCESS') {
+        safeLog("GetPay payment success:", event.data.data);
+        clearCart();
+        setShowSuccessDialog(true);
+      } else if (event.data?.type === 'GETPAY_ERROR') {
+        safeLog("GetPay payment error:", event.data.error);
+        setOrderError(`Payment failed: ${event.data.error?.message || 'Unknown error'}`);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
 
   }, [activeTab, paymentConfig, clearCart]);
 
@@ -246,14 +287,6 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50">
-      {/* Load GetPay SDK via Next.js Script component */}
-      <Script
-        src={GETPAY_SDK_URL}
-        strategy="afterInteractive"
-        onLoad={() => safeLog("GetPay SDK Script onLoad event")}
-        onError={() => safeLog("GetPay SDK Script onError event")}
-      />
-
       {/* Main Content - Expanded Width */}
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-8 md:py-12">
 
