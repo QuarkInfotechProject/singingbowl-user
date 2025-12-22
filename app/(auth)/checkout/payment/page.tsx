@@ -116,32 +116,52 @@ const PaymentPage = () => {
 
         const initializePayment = async () => {
             try {
-                safeLog("Step 2: Loading GetPay SDK...");
+                // Step 2: Wait for container to exist in DOM BEFORE loading SDK
+                // The SDK auto-initializes on load and looks for container immediately
+                safeLog("Step 2: Waiting for container to exist in DOM...");
+
+                const waitForContainer = (): Promise<HTMLElement> => {
+                    return new Promise((resolve, reject) => {
+                        let attempts = 0;
+                        const check = () => {
+                            attempts++;
+                            const container = document.getElementById("getpay-payment-container");
+                            if (container) {
+                                safeLog(`Step 2.1: Container found in DOM after ${attempts} attempts`);
+                                resolve(container);
+                            } else if (attempts > 50) {
+                                reject(new Error("Container not found in DOM after 5 seconds"));
+                            } else {
+                                setTimeout(check, 100);
+                            }
+                        };
+                        check();
+                    });
+                };
+
+                const container = await waitForContainer();
+
+                // Prepare container
+                container.innerHTML = "";
+                container.style.width = "100%";
+                container.style.minHeight = "500px";
+                safeLog("Step 2.2: Container prepared");
+
+                // Step 3: Now load the SDK
+                safeLog("Step 3: Loading GetPay SDK...");
                 const sdkLoadStart = Date.now();
                 await loadGetPaySDK();
-                safeLog(`Step 2.1: SDK loaded in ${Date.now() - sdkLoadStart}ms`);
+                safeLog(`Step 3.1: SDK loaded in ${Date.now() - sdkLoadStart}ms`);
 
                 const GetPay = (window as any).GetPay;
                 if (!GetPay) {
                     throw new Error("GetPay SDK not available after load");
                 }
-                safeLog("Step 2.2: GetPay global confirmed. Type:", typeof GetPay);
+                safeLog("Step 3.2: GetPay global confirmed. Type:", typeof GetPay);
 
-                safeLog("Step 3: Checking container...");
-                const container = containerRef.current;
-                if (!container) {
-                    throw new Error("Payment container ref not found");
-                }
-                safeLog("Step 3.1: Container ref found:", container.id);
-
-                // Clear and prepare container
-                container.innerHTML = "";
-                container.style.width = "100%";
-                container.style.minHeight = "500px";
-                safeLog("Step 3.2: Container cleared and sized");
+                safeLog("Step 4: Building options...");
 
                 const origin = "https://www.singingbowlvillagenepal.com";
-                safeLog("Step 4: Building GetPay options...");
                 safeLog("Origin:", origin);
 
                 const options = {
