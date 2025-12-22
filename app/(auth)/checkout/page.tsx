@@ -89,7 +89,7 @@ const Checkout = () => {
       ...paymentConfig.getPayOptions,
       containerId: "#checkout",
       callbackUrl: {
-        successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${paymentConfig.orderId}&`,
+        successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${paymentConfig.orderId}`,
         failUrl: `${origin}/api/user/orders/payment-fail?orderId=${paymentConfig.orderId}&amount=${paymentConfig.getPayOptions.price}&uuid=${paymentConfig.addressUuid}`
       }
     };
