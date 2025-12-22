@@ -61,8 +61,8 @@ const loadGetPaySDK = (): Promise<void> => {
           return;
         }
         safeLog("Script marked loaded but global missing. Polling...");
+        // Fall through to polling
       }
-      // If loading, attach to it (via polling)
       else {
         // Poll for existing script to finish
         const checkInterval = setInterval(() => {
@@ -91,6 +91,7 @@ const loadGetPaySDK = (): Promise<void> => {
       newScript.id = "getpay-sdk";
       newScript.src = GETPAY_SDK_URL;
       newScript.async = true;
+      newScript.defer = true; // Add defer to be safe
       newScript.setAttribute("data-status", "loading");
 
       newScript.onload = () => {
@@ -113,7 +114,9 @@ const loadGetPaySDK = (): Promise<void> => {
         reject(new Error("Failed to load GetPay SDK (Network Error)"));
       };
 
-      document.head.appendChild(newScript);
+      // APPEND TO BODY INSTEAD OF HEAD
+      // Some libraries require document.body to exist on load
+      document.body.appendChild(newScript);
     }
   });
 };
@@ -125,7 +128,8 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [isLoadingSDK, setIsLoadingSDK] = useState(false);
+
+  // Removed isLoadingSDK as we no longer preload
 
   // Payment Dialog State
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -152,21 +156,7 @@ const Checkout = () => {
   const { isLoggedIn, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
-  // Pre-load GetPay SDK when card payment is selected
-  useEffect(() => {
-    if (paymentMethod === "card") {
-      setIsLoadingSDK(true);
-      loadGetPaySDK()
-        .then(() => {
-          safeLog("Pre-load success");
-          setIsLoadingSDK(false);
-        })
-        .catch((err) => {
-          safeLog("Pre-load failed", err);
-          setIsLoadingSDK(false);
-        });
-    }
-  }, [paymentMethod]);
+  // Removed Pre-load useEffect
 
   // Handle GetPay Initialization logic when dialog opens
   useEffect(() => {
@@ -235,7 +225,6 @@ const Checkout = () => {
                 safeLog("GetPay.initialize() called successfully");
               } catch (initErr) {
                 console.error("CRITICAL EXCEPTION during GetPay.initialize:", initErr);
-                // If this is the $$ error, it often means options or internal SDK state issues
                 if (mounted) setOrderError("Payment Gateway Error: Please try again or contact support.");
               }
 
@@ -261,7 +250,7 @@ const Checkout = () => {
     return () => {
       mounted = false;
     };
-  }, [isPaymentDialogOpen, paymentConfig]); // validation: relying on paymentConfig triggering this
+  }, [isPaymentDialogOpen, paymentConfig]);
 
 
   const handleAddressSelect = (address: Address | null) => {
@@ -309,7 +298,6 @@ const Checkout = () => {
           setPaymentConfig(orderResponse);
           setIsPaymentDialogOpen(true);
           safeLog("Opening Dialog...");
-          // Keep submitting state true until dialog closes or completes
         } else {
           throw new Error("Invalid payment configuration from server - Missing GetPay options");
         }
