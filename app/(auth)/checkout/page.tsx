@@ -255,6 +255,22 @@ const Checkout = () => {
 
       // Handle response wrapping
       const orderResponse = response.data || response;
+
+      // PERSISTENT LOG: Show full order response in console
+      console.log("%c=== ORDER CREATION RESPONSE ===", "background: #4CAF50; color: white; font-size: 14px; padding: 5px;");
+      console.log("Full Response:", response);
+      console.log("Order Response (data):", orderResponse);
+      console.log("Payment Method:", orderResponse.paymentMethod);
+      console.log("Order ID:", orderResponse.orderId);
+      if (orderResponse.getPayOptions) {
+        console.log("%c=== GETPAY OPTIONS ===", "background: #2196F3; color: white; font-size: 12px; padding: 3px;");
+        console.log("GetPay Options:", JSON.stringify(orderResponse.getPayOptions, null, 2));
+        console.log("Callback URL Object:", orderResponse.getPayOptions.callbackUrl);
+        console.log("Success URL:", orderResponse.getPayOptions.callbackUrl?.successUrl);
+        console.log("Fail URL:", orderResponse.getPayOptions.callbackUrl?.failUrl);
+      }
+      console.log("%c=== END ORDER RESPONSE ===", "background: #4CAF50; color: white; font-size: 14px; padding: 5px;");
+
       safeLog("Order Created Response:", orderResponse);
 
       if (paymentMethod === "card") {
