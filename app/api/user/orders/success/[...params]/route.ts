@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 const apiClient = axios.create({
-    baseURL: process.env.BASE_URL,
+    baseURL: process.env.BASE_URL || "https://api.singingbowlvillagenepal.com/api",
     timeout: 60000,
     headers: {
         "Content-Type": "application/json",
@@ -39,6 +39,7 @@ export async function GET(
         const token = request.nextUrl.searchParams.get("token");
 
         console.log("=== Payment Success Callback ===");
+        console.log("Full URL:", request.nextUrl.toString());
         console.log("Payment Method:", paymentMethod);
         console.log("Order ID:", orderId);
         console.log("Token present:", !!token);
@@ -82,8 +83,14 @@ export async function GET(
             backendParams.append("transactionId", decodedToken.id);
         }
 
+        // Add oprSecret if decoded from token
+        if (decodedToken?.oprSecret) {
+            backendParams.append("oprSecret", decodedToken.oprSecret);
+        }
+
         const backendUrl = `/user/orders/success?${backendParams.toString()}`;
         console.log("Backend URL:", backendUrl);
+        console.log("Auth token present:", !!authToken);
 
         const response = await apiClient.get(backendUrl, { headers });
         console.log("Backend response:", response.data);
