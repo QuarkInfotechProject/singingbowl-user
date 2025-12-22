@@ -195,8 +195,10 @@ const Checkout = () => {
               container.style.width = "100%";
               container.style.minHeight = "600px";
               container.style.display = "block";
+              // DEBUG: Add border to see container
+              container.style.border = "2px solid red";
 
-              safeLog("Step 2: Container found and reset. ID: #checkout");
+              safeLog("Step 2: Container found and reset. ID: #checkout. Added red border.");
 
               // Force live site origin
               const origin = "https://www.singingbowlvillagenepal.com";
@@ -206,16 +208,11 @@ const Checkout = () => {
                 callbackUrl: {
                   successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${paymentConfig.orderId}&`,
                   failUrl: `${origin}/api/user/orders/payment-fail?orderId=${paymentConfig.orderId}&amount=${paymentConfig.getPayOptions.price}&uuid=${selectedAddress?.uuid}`
-                },
-                prefill: {
-                  name: true, email: true, state: true, city: true,
-                  address: true, zipcode: true, country: true
-                },
-                onSuccess: () => safeLog("GetPay Callback: onSuccess"),
-                onError: (err: any) => safeLog("GetPay Callback: onError", err),
+                }
+                // REMOVED prefill and callbacks to test immediate success issue
               };
 
-              safeLog("Step 3: Instantiating GetPay with options:", options);
+              safeLog("Step 3: Instantiating GetPay with options (NO PREFILL/CALLBACKS):", options);
               safeLog("Base URL:", paymentConfig.getPayOptions.baseUrl);
 
               try {
@@ -223,6 +220,18 @@ const Checkout = () => {
                 safeLog("Instance created. Calling initialize()...");
                 getpay.initialize();
                 safeLog("GetPay.initialize() called successfully");
+
+                // Debug: Check if content renders
+                setTimeout(() => {
+                  const c = document.getElementById("checkout");
+                  if (c) {
+                    safeLog("Container InnerHTML Length after 3s:", c.innerHTML.length);
+                    // safeLog("Container HTML:", c.innerHTML); 
+                  } else {
+                    safeLog("Container gone after 3s?");
+                  }
+                }, 3000);
+
               } catch (initErr) {
                 console.error("CRITICAL EXCEPTION during GetPay.initialize:", initErr);
                 if (mounted) setOrderError("Payment Gateway Error: Please try again or contact support.");
