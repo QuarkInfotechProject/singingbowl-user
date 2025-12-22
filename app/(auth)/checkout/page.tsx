@@ -205,11 +205,40 @@ const Checkout = () => {
             return;
           }
 
+
+          // 1. Cleanup: Ensure fresh mount by clearing container
+          const checkoutContainer = document.getElementById("checkout");
+          if (checkoutContainer) {
+            checkoutContainer.innerHTML = "";
+            // 2. Fix Width: Ensure container takes full width
+            checkoutContainer.style.width = "100%";
+            checkoutContainer.style.minHeight = "400px";
+            checkoutContainer.style.display = "block"; // Ensure it's visible
+          }
+
           console.log("=== Initializing GetPay SDK ===");
           console.log("GetPay Options:", JSON.stringify(orderResponse.getPayOptions, null, 2));
 
+          const origin = process.env.NEXT_PUBLIC_USER_ORIGIN || "https://www.singingbowlvillagenepal.com";
+
+          // 3. Override Configuration
           const options = {
             ...orderResponse.getPayOptions,
+            // Override redirect URLs to use live site
+            callbackUrl: {
+              successUrl: `${origin}/api/user/orders/success?paymentMethod=getPay&orderId=${orderResponse.orderId}&`,
+              failUrl: `${origin}/api/user/orders/payment-fail?orderId=${orderResponse.orderId}&amount=${orderResponse.getPayOptions.price}&uuid=${selectedAddress.uuid}`
+            },
+            // Prefill billing address
+            prefill: {
+              name: true,
+              email: true,
+              state: true,
+              city: true,
+              address: true,
+              zipcode: true,
+              country: true
+            },
             onSuccess: () => {
               console.log("GetPay payment initiated successfully");
             },
