@@ -360,7 +360,7 @@ const Checkout = () => {
                   </div>
 
                   {/* GetPay checkout container - SDK will render payment form here */}
-                  <div id="checkout" hidden></div>
+                  <div id="checkout"></div>
 
                   {/* Payment Method Info */}
                   {paymentMethod === "card" && (

@@ -18,32 +18,30 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
-    <div className="w-full">
-      <Carousel
-        opts={{
-          align: "start",
-          loop: true,
-        }}
-        className="w-full"
-      >
-        <CarouselContent className="-ml-2 sm:-ml-3 md:-ml-4 lg:-ml-6">
-          {products.map((product) => (
-            <CarouselItem
-              key={product.uuid}
-              className="basis-[40%] sm:basis-1/3 md:basis-1/3 lg:basis-1/4 pl-2 sm:pl-3 md:pl-4 lg:pl-6"
-            >
-              <ProductCard
-                product={product}
-                isHovered={hoveredId === product.uuid}
-                onMouseEnter={() => setHoveredId(product.uuid)}
-                onMouseLeave={() => setHoveredId(null)}
-              />
-            </CarouselItem>
-          ))}
-        </CarouselContent>
+    <Carousel
+      opts={{
+        align: "start",
+        loop: true,
+      }}
+      className="w-full"
+    >
+      <CarouselContent>
+        {products.map((product) => (
+          <CarouselItem
+            key={product.uuid}
+            className="basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5 pl-4"
+          >
+            <ProductCard
+              product={product}
+              isHovered={hoveredId === product.uuid}
+              onMouseEnter={() => setHoveredId(product.uuid)}
+              onMouseLeave={() => setHoveredId(null)}
+            />
+          </CarouselItem>
+        ))}
+      </CarouselContent>
 
-        <CarouselNavigation />
-      </Carousel>
-    </div>
+      <CarouselNavigation />
+    </Carousel>
   );
 }

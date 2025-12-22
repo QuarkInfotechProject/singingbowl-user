@@ -15,7 +15,6 @@ export default function ProductCollection() {
     const loadProducts = async () => {
       try {
         const response = await fetchProducts();
-        // Get all products from all categories, limit to 10
         const allProducts: Product[] = [];
         if (response.data && Array.isArray(response.data)) {
           response.data.forEach((category: any) => {
@@ -61,7 +60,7 @@ export default function ProductCollection() {
   }
 
   return (
-    <div className="flex flex-col gap-10 sm:gap-10 md:gap-12 lg:gap-18 items-center text-center justify-center px-2 sm:px-6 md:px-10 lg:px-20 py-8 md:py-12 w-full">
+    <div className="flex flex-col gap-10 sm:gap-10 md:gap-12 lg:gap-18 items-center text-center justify-center px-2 sm:px-6 md:px-10 lg:px-20 py-8 md:py-12 w-full max-w-[100vw] overflow-hidden">
       <SectionTitle title="Our Collections" />
       <ProductCarousel products={products} />
     </div>

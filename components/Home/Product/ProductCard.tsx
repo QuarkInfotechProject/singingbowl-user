@@ -21,7 +21,7 @@ export default function ProductCard({
   const imageUrl = product.files?.baseImage?.url || "/assets/images/product/1.jpg";
 
   return (
-    <div className="flex flex-col gap-1 sm:gap-2 md:gap-3 items-center justify-start w-full">
+    <div className="flex flex-col gap-1 sm:gap-2 md:gap-3 items-center justify-start">
       <Link href={`/products/${product.url}`} className="w-full">
         <ProductImage
           src={imageUrl}

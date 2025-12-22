@@ -21,7 +21,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
       <div className="space-y-4">
 
-        <Link href="/about_us">
+        <Link href="https://www.singingbowlvillagenepal.com/blog/asthadhatusingingbowlvillage">
           <button className="inline-block bg-[#802010] hover:bg-[#6b1a0e] cursor-pointer text-white font-semibold py-3 px-8 rounded-full transition-colors duration-200 mt-2">
             {buttonText}
           </button>

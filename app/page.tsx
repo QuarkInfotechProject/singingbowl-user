@@ -11,7 +11,7 @@ const Home = () => {
     <div className="w-full">
       <div className="flex flex-col items-center gap-12 ">
         <HeroSection />
-        <div className="flex flex-col gap-8 md:gap-1 items-center overflow-hidden">
+        <div className="flex flex-col gap-8 md:gap-1 items-center">
           <ProductFeatures />
           <ProductCollection />
           <SingingBowlComponent />
