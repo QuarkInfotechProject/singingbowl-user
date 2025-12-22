@@ -83,15 +83,16 @@ export async function GET(
         }
 
         // Backend expects path parameters: /user/orders/success/{paymentMethod}/{orderId}
-        // And token in the request body/query
+        // And the RAW GetPay token (base64 string) in the request body
+        // The backend will decode and verify this token itself
         const requestBody = {
-            token: transactionId || getPayToken, // Use transaction ID, fallback to raw token
+            token: getPayToken, // Send the RAW token as received from GetPay
         };
 
         // Build the correct backend URL with path parameters
         const backendUrl = `/user/orders/success/${paymentMethod}/${orderId}`;
         console.log("Sending POST to backend:", backendUrl);
-        console.log("Request body:", JSON.stringify(requestBody));
+        console.log("Token being sent (first 50 chars):", getPayToken?.substring(0, 50) + "...");
 
         const response = await apiClient.post(backendUrl, requestBody, { headers });
         console.log("Backend response:", response.data);
