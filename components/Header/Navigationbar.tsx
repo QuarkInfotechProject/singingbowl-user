@@ -11,6 +11,7 @@ const navItems = [
   { name: "Blog", href: "/blog" },
   { name: "Gallery", href: "/gallery" },
   { name: "Contact", href: "/contact_us" },
+  { name: "Courses", href: "/courses" },
 ];
 
 const NavigationBar = () => {

@@ -1,11 +1,10 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   CreditCard,
   ChevronRight,
   Lock,
   Truck,
-  Banknote,
   Loader2,
 } from "lucide-react";
 import {
@@ -24,13 +23,7 @@ import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
 
-// Utility for safe logging
-const safeLog = (label: string, data?: any) => {
-  console.log(`[CheckoutDebug] ${label}`, data !== undefined ? data : "");
-};
-
 const Checkout = () => {
-  const [paymentMethod, setPaymentMethod] = useState("cod");
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +34,10 @@ const Checkout = () => {
   const [activeTab, setActiveTab] = useState<'checkout' | 'payment'>('checkout');
   const [paymentConfig, setPaymentConfig] = useState<any>(null);
   const [sdkLoading, setSdkLoading] = useState(false);
+
+  // Refs for reliable iframe initialization
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const initAttemptRef = useRef(0);
 
   const {
     cartItems,
@@ -55,168 +52,175 @@ const Checkout = () => {
   const { isLoggedIn, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
-  // DEBUG: Track key state updates
-  useEffect(() => { safeLog("State Update: paymentMethod", paymentMethod); }, [paymentMethod]);
-  useEffect(() => { safeLog("State Update: isSubmitting", isSubmitting); }, [isSubmitting]);
-  useEffect(() => { safeLog("State Update: activeTab", activeTab); }, [activeTab]);
-
   // GetPay SDK URL
   const GETPAY_SDK_URL = "https://minio.finpos.global/getpay-cdn/webcheckout/v5/bundle.js";
+
+  // Memoized message handler to prevent recreation on each render
+  const handleMessage = useCallback((event: MessageEvent) => {
+    if (event.data?.type === 'GETPAY_READY') {
+      setSdkLoading(false);
+    } else if (event.data?.type === 'GETPAY_SUCCESS') {
+      clearCart();
+      setShowSuccessDialog(true);
+    } else if (event.data?.type === 'GETPAY_ERROR') {
+      setOrderError(`Payment failed: ${event.data.error?.message || 'Unknown error'}`);
+      setSdkLoading(false);
+    }
+  }, [clearCart]);
 
   // Initialize GetPay when payment tab becomes active using iframe
   useEffect(() => {
     if (activeTab !== 'payment' || !paymentConfig) return;
 
-    safeLog("=== PAYMENT TAB ACTIVE - Creating iframe for GetPay ===");
     setSdkLoading(true);
+    initAttemptRef.current += 1;
+    const currentAttempt = initAttemptRef.current;
 
-    const container = document.getElementById("getpay-payment-container");
-    if (!container) {
-      safeLog("ERROR: Container not found!");
-      setOrderError("Payment container not found. Please try again.");
-      setSdkLoading(false);
-      return;
-    }
+    // Use requestAnimationFrame to ensure DOM is ready
+    const initPayment = () => {
+      // Check if this is still the current attempt
+      if (currentAttempt !== initAttemptRef.current) return;
 
-    // Clear container
-    container.innerHTML = "";
+      const container = document.getElementById("getpay-payment-container");
+      if (!container) {
+        // Retry after a short delay if container not found
+        requestAnimationFrame(initPayment);
+        return;
+      }
 
-    const sdkUrl = GETPAY_SDK_URL;
+      // Clear any existing content
+      container.innerHTML = "";
 
-    // Build the options for GetPay - use backend-provided callbackUrl
-    // Backend returns callbackUrl as: { successUrl: "...", failUrl: "..." }
-    const backendCallbackUrl = paymentConfig.getPayOptions.callbackUrl;
-    const getPayOptions = {
-      ...paymentConfig.getPayOptions,
-      containerId: "#checkout",
-      // Extract successUrl and failUrl from the nested object
-      successUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.successUrl : backendCallbackUrl,
-      failUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.failUrl : undefined,
-      // Also keep callbackUrl for backward compatibility
-      callbackUrl: backendCallbackUrl
-    };
+      // Build the options for GetPay
+      const backendCallbackUrl = paymentConfig.getPayOptions.callbackUrl;
+      const getPayOptions = {
+        ...paymentConfig.getPayOptions,
+        containerId: "#checkout",
+        successUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.successUrl : backendCallbackUrl,
+        failUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.failUrl : undefined,
+        callbackUrl: backendCallbackUrl
+      };
 
-    // Debug: Log the callback URLs being used
-    safeLog("GetPay callbackUrl from backend:", backendCallbackUrl);
-    safeLog("Extracted successUrl:", getPayOptions.successUrl);
-    safeLog("Extracted failUrl:", getPayOptions.failUrl);
-    safeLog("Full getPayOptions:", JSON.stringify(getPayOptions, null, 2));
-
-    // Create iframe HTML that loads GetPay SDK in isolation
-    const iframeHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          html, body { height: 100%; width: 100%; }
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
-          #checkout { width: 100%; min-height: 600px; padding: 16px; }
-        </style>
-      </head>
-      <body>
-        <div id="checkout"></div>
-        <script src="${sdkUrl}"><\/script>
-        <script>
-          (function() {
-            console.log('[GetPayIframe] Starting initialization');
-            var retryCount = 0;
-            var maxRetries = 50;
-            
-            function initGetPay() {
-              retryCount++;
-              if (typeof GetPay === 'undefined') {
-                console.log('[GetPayIframe] GetPay not ready, retry ' + retryCount + '/' + maxRetries);
-                if (retryCount < maxRetries) {
-                  setTimeout(initGetPay, 200);
-                } else {
-                  console.error('[GetPayIframe] GetPay SDK failed to load after max retries');
-                  window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'SDK failed to load' } }, '*');
-                }
-                return;
-              }
-              
-              console.log('[GetPayIframe] GetPay available, initializing...');
-              console.log('[GetPayIframe] Container exists:', !!document.getElementById('checkout'));
-              
-              var options = ${JSON.stringify(getPayOptions)};
-              // Set baseUrl in options cleas per SDK documentation
-              options.baseUrl = '${paymentConfig.getPayOptions.baseUrl}';
-              options.onSuccess = function(data) {
-                console.log('[GetPayIframe] onSuccess:', data);
-                if (data && data.transactionId) {
-                  window.parent.postMessage({ type: 'GETPAY_SUCCESS', data: data }, '*');
-                } else {
-                  console.log('[GetPayIframe] Init callback (no transactionId), ignoring...');
-                }
+      // Create iframe HTML with improved initialization logic
+      const iframeHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body { height: 100%; width: 100%; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
+            #checkout { width: 100%; min-height: 600px; padding: 16px; }
+          </style>
+        </head>
+        <body>
+          <div id="checkout"></div>
+          <script>
+            (function() {
+              var script = document.createElement('script');
+              script.src = '${GETPAY_SDK_URL}';
+              script.onload = function() {
+                initGetPayAfterLoad();
               };
-              options.onError = function(err) {
-                console.log('[GetPayIframe] onError:', err);
-                if (err && (err.code || err.message)) {
-                  window.parent.postMessage({ type: 'GETPAY_ERROR', error: err }, '*');
-                }
+              script.onerror = function() {
+                window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'Failed to load payment SDK' } }, '*');
               };
+              document.head.appendChild(script);
               
-              try {
-                var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
-                getpay.initialize();
-                console.log('[GetPayIframe] GetPay initialized successfully');
-                window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
-              } catch (e) {
-                console.error('[GetPayIframe] Init error:', e);
-                window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
+              function initGetPayAfterLoad() {
+                var retryCount = 0;
+                var maxRetries = 30;
+                
+                function tryInit() {
+                  retryCount++;
+                  if (typeof GetPay === 'undefined') {
+                    if (retryCount < maxRetries) {
+                      setTimeout(tryInit, 100);
+                    } else {
+                      window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'SDK initialization timeout' } }, '*');
+                    }
+                    return;
+                  }
+                  
+                  var options = ${JSON.stringify(getPayOptions)};
+                  options.baseUrl = '${paymentConfig.getPayOptions.baseUrl}';
+                  options.onSuccess = function(data) {
+                    if (data && data.transactionId) {
+                      window.parent.postMessage({ type: 'GETPAY_SUCCESS', data: data }, '*');
+                    }
+                  };
+                  options.onError = function(err) {
+                    if (err && (err.code || err.message)) {
+                      window.parent.postMessage({ type: 'GETPAY_ERROR', error: err }, '*');
+                    }
+                  };
+                  
+                  try {
+                    var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
+                    getpay.initialize();
+                    window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
+                  } catch (e) {
+                    window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
+                  }
+                }
+                
+                // Start initialization immediately after script loads
+                tryInit();
               }
-            }
-            
-            // Start initialization after a delay for SDK to load
-            setTimeout(initGetPay, 1000);
-          })();
-        <\/script>
-      </body>
-      </html>
-    `;
+            })();
+          <\/script>
+        </body>
+        </html>
+      `;
 
-    // Create iframe
-    const iframe = document.createElement('iframe');
-    iframe.style.width = '100%';
-    iframe.style.minHeight = '500px';
-    iframe.style.border = 'none';
-    iframe.style.borderRadius = '12px';
+      // Create iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.width = '100%';
+      iframe.style.minHeight = '500px';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '12px';
+      iframeRef.current = iframe;
 
-    container.appendChild(iframe);
+      container.appendChild(iframe);
 
-    // Write content to iframe
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (iframeDoc) {
-      iframeDoc.open();
-      iframeDoc.write(iframeHtml);
-      iframeDoc.close();
-    }
+      // Write content to iframe with proper timing
+      const writeToIframe = () => {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (iframeDoc) {
+          iframeDoc.open();
+          iframeDoc.write(iframeHtml);
+          iframeDoc.close();
+        }
+      };
 
-    // Listen for messages from iframe
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'GETPAY_READY') {
-        safeLog("GetPay iframe ready");
-        setSdkLoading(false);
-      } else if (event.data?.type === 'GETPAY_SUCCESS') {
-        safeLog("GetPay payment success:", event.data.data);
-        clearCart();
-        setShowSuccessDialog(true);
-      } else if (event.data?.type === 'GETPAY_ERROR') {
-        safeLog("GetPay payment error:", event.data.error);
-        setOrderError(`Payment failed: ${event.data.error?.message || 'Unknown error'}`);
+      // Wait for iframe to be ready
+      if (iframe.contentDocument?.readyState === 'complete') {
+        writeToIframe();
+      } else {
+        iframe.onload = writeToIframe;
+        // Also try writing immediately as fallback
+        setTimeout(writeToIframe, 50);
       }
     };
+
+    // Start initialization after a brief delay to ensure React has rendered
+    const timeoutId = setTimeout(() => {
+      requestAnimationFrame(initPayment);
+    }, 100);
 
     window.addEventListener('message', handleMessage);
 
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('message', handleMessage);
+      if (iframeRef.current) {
+        iframeRef.current = null;
+      }
     };
 
-  }, [activeTab, paymentConfig, clearCart]);
+  }, [activeTab, paymentConfig, handleMessage]);
 
   const handleAddressSelect = (address: Address | null) => {
     setSelectedAddress(address);
@@ -225,7 +229,6 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setOrderError(null);
-    safeLog("Submit clicked. Method:", paymentMethod);
 
     if (!selectedAddress?.uuid) {
       setOrderError("Please select a delivery address");
@@ -244,11 +247,9 @@ const Checkout = () => {
         addressId: selectedAddress.uuid,
         couponCodes: [] as string[],
         note: "",
-        paymentMethod: paymentMethod === "cod" ? "cod" : "getPay",
+        paymentMethod: "getPay",
         termsAndConditions: "true"
       };
-
-      safeLog("Creating Order...", orderData);
 
       // Create Order on Backend
       const response = await createOrder(orderData);
@@ -256,49 +257,21 @@ const Checkout = () => {
       // Handle response wrapping
       const orderResponse = response.data || response;
 
-      // PERSISTENT LOG: Show full order response in console
-      console.log("%c=== ORDER CREATION RESPONSE ===", "background: #4CAF50; color: white; font-size: 14px; padding: 5px;");
-      console.log("Full Response:", response);
-      console.log("Order Response (data):", orderResponse);
-      console.log("Payment Method:", orderResponse.paymentMethod);
-      console.log("Order ID:", orderResponse.orderId);
-      if (orderResponse.getPayOptions) {
-        console.log("%c=== GETPAY OPTIONS ===", "background: #2196F3; color: white; font-size: 12px; padding: 3px;");
-        console.log("GetPay Options:", JSON.stringify(orderResponse.getPayOptions, null, 2));
-        console.log("Callback URL Object:", orderResponse.getPayOptions.callbackUrl);
-        console.log("Success URL:", orderResponse.getPayOptions.callbackUrl?.successUrl);
-        console.log("Fail URL:", orderResponse.getPayOptions.callbackUrl?.failUrl);
-      }
-      console.log("%c=== END ORDER RESPONSE ===", "background: #4CAF50; color: white; font-size: 14px; padding: 5px;");
-
-      safeLog("Order Created Response:", orderResponse);
-
-      if (paymentMethod === "card") {
-        // CARD FLOW: Switch to payment tab
-        if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
-          safeLog("Switching to payment tab...");
-
-          // Store payment config for the payment tab
-          const config = {
-            ...orderResponse,
-            addressUuid: selectedAddress?.uuid
-          };
-          setPaymentConfig(config);
-          setActiveTab('payment');
-          setIsSubmitting(false);
-        } else {
-          throw new Error("Invalid payment configuration from server - Missing GetPay options");
-        }
-      } else {
-        // COD FLOW: Instant Success
-        safeLog("COD Flow - Success");
-        await clearCart();
-        setShowSuccessDialog(true);
+      // GetPay FLOW: Switch to payment tab
+      if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
+        // Store payment config for the payment tab
+        const config = {
+          ...orderResponse,
+          addressUuid: selectedAddress?.uuid
+        };
+        setPaymentConfig(config);
+        setActiveTab('payment');
         setIsSubmitting(false);
+      } else {
+        throw new Error("Invalid payment configuration from server - Missing GetPay options");
       }
 
     } catch (error: any) {
-      console.error("Order submission failed:", error);
       setOrderError(error.response?.data?.message || "Failed to place order. Please try again.");
       setIsSubmitting(false);
     }
@@ -382,7 +355,7 @@ const Checkout = () => {
                 />
               </div>
 
-              {/* Payment Method Selection */}
+              {/* Payment Method Info */}
               {selectedAddress && (
                 <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100">
                   <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
@@ -390,69 +363,30 @@ const Checkout = () => {
                     Payment Method
                   </h2>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    {/* Cash on Delivery */}
-                    <div
-                      onClick={() => setPaymentMethod("cod")}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition relative overflow-hidden ${paymentMethod === "cod"
-                        ? "border-green-500 bg-green-50/50"
-                        : "border-slate-200 bg-white hover:border-slate-300"
-                        }`}
-                    >
-                      <div className="flex items-center gap-3 relative z-10">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "cod" ? "border-green-500" : "border-slate-300"}`}>
-                          {paymentMethod === "cod" && <div className="w-2.5 h-2.5 rounded-full bg-green-500" />}
-                        </div>
-                        <Banknote className={`w-6 h-6 ${paymentMethod === "cod" ? "text-green-600" : "text-slate-400"}`} />
-                        <div>
-                          <div className="font-semibold text-slate-900">
-                            Cash on Delivery
-                          </div>
-                          <div className="text-xs text-slate-500">
-                            Pay upon receipt
-                          </div>
-                        </div>
+                  {/* GetPay Payment - Single Option */}
+                  <div className="p-4 rounded-xl border-2 border-blue-500 bg-blue-50/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full border-2 border-blue-500 flex items-center justify-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
                       </div>
-                    </div>
-
-                    {/* GetPay Card Payment */}
-                    <div
-                      onClick={() => setPaymentMethod("card")}
-                      className={`p-4 rounded-xl border-2 cursor-pointer transition relative overflow-hidden ${paymentMethod === "card"
-                        ? "border-blue-500 bg-blue-50/50"
-                        : "border-slate-200 bg-white hover:border-slate-300"
-                        }`}
-                    >
-                      <div className="flex items-center gap-3 relative z-10">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "card" ? "border-blue-500" : "border-slate-300"}`}>
-                          {paymentMethod === "card" && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                      <CreditCard className="w-6 h-6 text-blue-600" />
+                      <div>
+                        <div className="font-semibold text-slate-900">
+                          Pay with Card
                         </div>
-                        <CreditCard className={`w-6 h-6 ${paymentMethod === "card" ? "text-blue-600" : "text-slate-400"}`} />
-                        <div>
-                          <div className="font-semibold text-slate-900">
-                            Pay with Card
-                          </div>
-                          <div className="text-xs text-slate-500">
-                            Secure via GetPay
-                          </div>
+                        <div className="text-xs text-slate-500">
+                          Secure payment via GetPay
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Payment Info Box */}
-                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 text-sm text-slate-600">
-                    {paymentMethod === "card" ? (
-                      <p className="flex items-start gap-2">
-                        <span className="text-lg">💳</span>
-                        <span>You will be prompted to enter your card details in a secure popup after clicking "Complete Purchase".</span>
-                      </p>
-                    ) : (
-                      <p className="flex items-start gap-2">
-                        <span className="text-lg">💵</span>
-                        <span>Please have the exact amount ready for the delivery driver.</span>
-                      </p>
-                    )}
+                  <div className="mt-4 bg-slate-50 rounded-lg p-4 border border-slate-200 text-sm text-slate-600">
+                    <p className="flex items-start gap-2">
+                      <span className="text-lg">💳</span>
+                      <span>You will be prompted to enter your card details in a secure form after clicking &quot;Complete Purchase&quot;.</span>
+                    </p>
                   </div>
                 </div>
               )}
@@ -594,12 +528,19 @@ const Checkout = () => {
                 />
               </div>
 
+              {orderError && (
+                <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 flex items-center gap-2">
+                  <span className="text-xl">⚠️</span> {orderError}
+                </div>
+              )}
+
               {/* Back button */}
               <div className="mt-6 pt-6 border-t border-slate-100">
                 <button
                   onClick={() => {
                     setActiveTab('checkout');
                     setPaymentConfig(null);
+                    setOrderError(null);
                   }}
                   className="text-slate-500 hover:text-slate-700 text-sm flex items-center gap-2"
                 >
