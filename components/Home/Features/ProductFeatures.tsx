@@ -34,21 +34,20 @@ const ProductFeatures = () => {
         {/* Content Section */}
         <div className="w-full lg:w-3/5 flex flex-col gap-6 sm:gap-8 px-2 sm:px-6 lg:px-0 py-8 lg:pr-20">
           <div className="text-center lg:text-left flex flex-col gap-6 sm:gap-8">
-            <div className="hidden xl:flex w-full mb-4">
-              <Image src="/assets/images/logo1.png" width={650} height={500} alt="Singing Bowl" className="w-full max-w-full h-auto object-contain" />
-            </div>
 
-            <div className="flex xl:hidden w-full mb-4">
-              <Image src="/assets/images/logo1.png" width={400} height={300} alt="Singing Bowl" className="w-full max-w-full h-auto object-contain" />
-            </div>
-            
-            <h3 className="text-xl sm:text-3xl md:text-4xl text-start lg:text-4xl font-bold text-gray-800 leading-tight">
+           <div>
+             <h3 className="text-[#A12717] text-xl font-bold leading-tight sm:text-3xl md:text-4xl text-start lg:text-4xl">
+              SINGING BOWLS VILLAGE
+            </h3>
+            <b>A Subsidiary of Freedom Expert</b>
+           </div>
+            <p className="text-lg font-bold text-gray-800 leading-tight">
 
               <span className="text-[#A12717]">
                 {productData.highlightedText}
               </span>
               <br />
-            </h3>
+            </p>
           </div>
 
           <div className="flex flex-col gap-6 sm:gap-8 w-full text-justify">
@@ -66,7 +65,7 @@ const ProductFeatures = () => {
               <br />
               This is a homecoming for your soul. It's time to remember what it feels
               like to be vibrantly, authentically you. Your journey back to
-              balance starts with a single, powerful note.              
+              balance starts with a single, powerful note.
             </p>
           </div>
         </div>

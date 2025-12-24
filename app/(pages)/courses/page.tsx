@@ -8,15 +8,15 @@ export default function CoursesPage() {
     return (
         <div className="min-h-screen bg-stone-50">
             {/* Hero Section */}
-            <HeroSection />
+            {/* <HeroSection /> */}
 
             {/* Courses Section */}
-            <section className="py-12 md:py-20">
+            <section className="py-12 ">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Section Header */}
-                    <div className="text-center mb-12">
+                    <div className="text-center mb-14">
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
-                            Our Experiences
+                            Our Courses and Experiences
                         </h2>
                         <p className="text-lg text-slate-600 max-w-2xl mx-auto">
                             Choose from our carefully curated selection of courses and experiences

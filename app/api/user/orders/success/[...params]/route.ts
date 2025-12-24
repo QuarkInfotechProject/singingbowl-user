@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 const apiClient = axios.create({
-    baseURL: process.env.BASE_URL || "https://api.singingbowlvillagenepal.com/api",
+    baseURL: process.env.BASE_URL,
     timeout: 60000,
     headers: {
         "Content-Type": "application/json",

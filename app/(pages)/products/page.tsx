@@ -99,14 +99,20 @@ const ProductContent = () => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bestSellers, setBestSellers] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const response: any = await fetchProductsByCategory();
 
-        const rawData = response.data || response;
+        // Fetch products by category and best sellers in parallel
+        const [categoryResponse, bestSellersResponse] = await Promise.all([
+          fetchProductsByCategory(),
+          fetch("/api/user/best-sellers").then(res => res.json()).catch(() => ({ data: [] }))
+        ]);
+
+        const rawData = (categoryResponse as any).data || categoryResponse;
         const categoryListRaw = Array.isArray(rawData) ? rawData : [];
 
         // Map API data to UI interfaces
@@ -132,6 +138,22 @@ const ProductContent = () => {
         }));
 
         setCategories(mappedCategories);
+
+        // Map best sellers to product format
+        const bestSellersData = bestSellersResponse?.data || bestSellersResponse || [];
+        const mappedBestSellers = Array.isArray(bestSellersData) ? bestSellersData.map((prod: any) => ({
+          id: prod.id,
+          url: prod.url,
+          name: prod.productName || prod.name,
+          price: prod.specialPrice || prod.originalPrice || prod.price,
+          originalPrice: prod.specialPrice ? prod.originalPrice : undefined,
+          image: prod.baseImage || prod.image,
+          rating: prod.rating || 0,
+          reviews: prod.reviewCount || prod.reviews || 0,
+          discount: prod.specialPrice ? "On Sale" : undefined,
+          inStock: prod.inStock,
+        })) : [];
+        setBestSellers(mappedBestSellers);
 
         // Auto-select category from URL if present
         if (categoryFromUrl && mappedCategories.length > 0) {
@@ -214,7 +236,11 @@ const ProductContent = () => {
         </div>
 
         <Find />
-        <ProductGrid title="Our Best Sellers" products={productsToDisplay.slice(0, 5)} />
+        <ProductGrid
+          title="Our Best Sellers"
+          products={bestSellers.slice(0, 5)}
+          showLoadMore={false}
+        />
       </div>
     </div>
   );

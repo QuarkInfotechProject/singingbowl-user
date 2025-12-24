@@ -18,17 +18,37 @@ import {
   ImagePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchUserProfile, updateUserProfile, logoutUser, changeUserPassword, fetchWishlist, removeFromWishlist, fetchOrders } from "@/lib/apiItems";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { fetchUserProfile, updateUserProfile, logoutUser, changeUserPassword, fetchWishlist, removeFromWishlist, fetchOrders, fetchPurchases } from "@/lib/apiItems";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import Link from "next/link";
 import AddressList from "@/components/Address/AddressList";
 
+// Purchase item type
+interface PurchaseItem {
+  orderItemId: number;
+  productId: string;
+  name: string;
+  slug: string;
+  quantity: number;
+  unitPrice: string;
+  lineTotal: string;
+  baseImage: string;
+  isReviewed: boolean;
+}
+
 function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { logout } = useAuth(); // Update context if available
+  const { logout } = useAuth();
   const [activeSection, setActiveSection] = useState("profile");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -44,7 +64,7 @@ function ProfileContent() {
     profilePicture: "",
   });
 
-  // Other states (Address/Password) kept as is for now or initialized
+  // Address state (kept for compatibility)
   const [addressData, setAddressData] = useState({
     firstName: "John",
     lastName: "Doe",
@@ -77,10 +97,14 @@ function ProfileContent() {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
-  // Review state
+  // Purchase History state
+  const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
+
+  // Review Modal state
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedPurchase, setSelectedPurchase] = useState<PurchaseItem | null>(null);
   const [reviewData, setReviewData] = useState({
-    productId: "",
-    orderId: "",
     rating: 0,
     comment: "",
   });
@@ -88,13 +112,9 @@ function ProfileContent() {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [reviewImages, setReviewImages] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
 
-  // Static data for reviews (will be replaced with API data later)
-  const mockOrders = [
-    { id: "ORD-001", products: [{ id: "PROD-001", name: "Tibetan Singing Bowl - 7 inch" }, { id: "PROD-002", name: "Meditation Cushion" }] },
-    { id: "ORD-002", products: [{ id: "PROD-003", name: "Brass Bell" }] },
-    { id: "ORD-003", products: [{ id: "PROD-004", name: "Wooden Mallet" }, { id: "PROD-005", name: "Silk Cushion Cover" }] },
-  ];
   // Orders State
   interface Order {
     id: number | string;
@@ -113,7 +133,7 @@ function ProfileContent() {
     loadProfile();
   }, []);
 
-  // Handle URL query parameters for tabs (e.g. ?tab=orders)
+  // Handle URL query parameters for tabs
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab) {
@@ -131,11 +151,17 @@ function ProfileContent() {
     }
   }, [activeSection]);
 
+  // Load purchase history when section becomes active
+  useEffect(() => {
+    if (activeSection === "history") {
+      loadPurchases();
+    }
+  }, [activeSection]);
+
   const loadWishlist = async () => {
     try {
       setWishlistLoading(true);
       const res = await fetchWishlist();
-      console.log("Wishlist API response:", res);
       if (res && res.data && Array.isArray(res.data)) {
         setWishlistItems(res.data);
       } else if (Array.isArray(res)) {
@@ -148,11 +174,26 @@ function ProfileContent() {
     }
   };
 
+  const loadPurchases = async () => {
+    try {
+      setPurchaseLoading(true);
+      const res = await fetchPurchases();
+      if (res && res.data && Array.isArray(res.data)) {
+        setPurchaseItems(res.data);
+      } else if (Array.isArray(res)) {
+        setPurchaseItems(res);
+      }
+    } catch (error) {
+      console.error("Failed to load purchases", error);
+    } finally {
+      setPurchaseLoading(false);
+    }
+  };
+
   const loadOrders = async (page: number = 1) => {
     try {
       setOrdersLoading(true);
       const res = await fetchOrders(page);
-      console.log("Orders API response:", res);
       if (res && res.data && Array.isArray(res.data.data)) {
         setOrders(res.data.data);
         setOrdersPage(res.data.current_page);
@@ -162,7 +203,6 @@ function ProfileContent() {
       }
     } catch (error) {
       console.error("Failed to load orders", error);
-      // Handle 401 or other errors if needed
     } finally {
       setOrdersLoading(false);
     }
@@ -243,11 +283,10 @@ function ProfileContent() {
         fullName,
         email: formData.email,
         phone: formData.phone,
-        // Include other fields if API expects them to be preserved
       };
 
       const res = await updateUserProfile(payload);
-      if (res.code === 0 || res.success) { // Adjust based on actual success response
+      if (res.code === 0 || res.success) {
         alert(res.message || "Profile updated successfully!");
       } else {
         alert(res.message || "Failed to update profile");
@@ -303,13 +342,113 @@ function ProfileContent() {
   const handleLogout = async () => {
     try {
       await logoutUser();
-      logout(); // Context logout
+      logout();
       router.push("/");
     } catch (error) {
       console.error("Logout failed", error);
-      // Force logout anyway
       logout();
       router.push("/");
+    }
+  };
+
+  // Open review modal
+  const openReviewModal = (purchase: PurchaseItem) => {
+    setSelectedPurchase(purchase);
+    setReviewData({ rating: 0, comment: "" });
+    setReviewImages([]);
+    setImagePreviewUrls([]);
+    setReviewError(null);
+    setReviewSuccess(false);
+    setShowReviewModal(true);
+  };
+
+  // Close review modal
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setSelectedPurchase(null);
+    setReviewData({ rating: 0, comment: "" });
+    imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    setReviewImages([]);
+    setImagePreviewUrls([]);
+    setReviewError(null);
+    setReviewSuccess(false);
+  };
+
+  // Handle image selection with 2MB validation
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remainingSlots = 5 - reviewImages.length;
+    const filesToAdd: File[] = [];
+
+    for (const file of files.slice(0, remainingSlots)) {
+      if (file.size > 2 * 1024 * 1024) {
+        setReviewError("Each image must be less than 2MB");
+        continue;
+      }
+      filesToAdd.push(file);
+    }
+
+    if (filesToAdd.length > 0) {
+      const newUrls = filesToAdd.map((file) => URL.createObjectURL(file));
+      setReviewImages([...reviewImages, ...filesToAdd]);
+      setImagePreviewUrls([...imagePreviewUrls, ...newUrls]);
+      setReviewError(null);
+    }
+
+    e.target.value = "";
+  };
+
+  // Submit review
+  const handleSubmitReview = async () => {
+    if (!selectedPurchase) return;
+
+    if (reviewData.rating === 0) {
+      setReviewError("Please select a rating");
+      return;
+    }
+
+    try {
+      setReviewSubmitting(true);
+      setReviewError(null);
+
+      const formData = new FormData();
+      formData.append("productId", selectedPurchase.productId);
+      formData.append("orderItemId", selectedPurchase.orderItemId.toString());
+      formData.append("rating", reviewData.rating.toString());
+      formData.append("comment", reviewData.comment);
+
+      reviewImages.forEach((image) => {
+        formData.append("images[]", image);
+      });
+
+      const response = await fetch("/api/user/reviews/create", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (response.ok && (result.code === 0 || result.success)) {
+        setReviewSuccess(true);
+        // Mark item as reviewed in local state
+        setPurchaseItems((prev) =>
+          prev.map((item) =>
+            item.orderItemId === selectedPurchase.orderItemId
+              ? { ...item, isReviewed: true }
+              : item
+          )
+        );
+        setTimeout(() => {
+          closeReviewModal();
+        }, 2000);
+      } else {
+        setReviewError(result.error || result.message || "Failed to submit review");
+      }
+    } catch (error: any) {
+      console.error("Review submission failed", error);
+      setReviewError("Failed to submit review. Please try again.");
+    } finally {
+      setReviewSubmitting(false);
     }
   };
 
@@ -404,19 +543,6 @@ function ProfileContent() {
                 >
                   <Heart size={18} />
                   <span className="text-sm">Wishlist</span>
-                </Button>
-                <Button
-                  onClick={() => {
-                    setActiveSection("reviews");
-                    setSidebarOpen(false);
-                  }}
-                  className={`w-full flex justify-start p-0 hover:bg-gray-100 items-center bg-transparent cursor-pointer gap-3 rounded-lg transition-colors ${activeSection === "reviews"
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                >
-                  <MessageSquare size={18} />
-                  <span className="text-sm">Reviews</span>
                 </Button>
               </nav>
             </div>
@@ -637,7 +763,6 @@ function ProfileContent() {
             )}
 
             {/* Orders */}
-            {/* Orders */}
             {activeSection === "orders" && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
                 <h1 className="text-2xl font-bold text-gray-900 mb-6">
@@ -731,10 +856,75 @@ function ProfileContent() {
                 <h1 className="text-2xl font-bold text-gray-900 mb-6">
                   Purchase History
                 </h1>
-                <div className="text-center py-12">
-                  <History size={48} className="mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600">You have no purchase history</p>
-                </div>
+
+                {purchaseLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
+                  </div>
+                ) : purchaseItems.length === 0 ? (
+                  <div className="text-center py-12">
+                    <History size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-600">You have no purchase history</p>
+                    <Link href="/products">
+                      <Button className="mt-4 bg-blue-600 text-white hover:bg-blue-700">
+                        Start Shopping
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {purchaseItems.map((item) => (
+                      <div
+                        key={item.orderItemId}
+                        className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                      >
+                        <Link href={`/products/${item.slug}`}>
+                          <div className="aspect-square relative bg-gray-100">
+                            <Image
+                              src={item.baseImage || "/assets/images/product/1.jpg"}
+                              alt={item.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </Link>
+                        <div className="p-4">
+                          <Link href={`/products/${item.slug}`}>
+                            <h3 className="font-semibold text-gray-900 mb-2 hover:text-blue-600 line-clamp-2">
+                              {item.name}
+                            </h3>
+                          </Link>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-lg font-bold text-green-600">
+                              ${item.unitPrice}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              Qty: {item.quantity}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-600 mb-4">
+                            Total: <span className="font-semibold">${item.lineTotal}</span>
+                          </div>
+
+                          {item.isReviewed ? (
+                            <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
+                              <Star size={16} className="fill-green-600" />
+                              <span>Review Submitted</span>
+                            </div>
+                          ) : (
+                            <Button
+                              onClick={() => openReviewModal(item)}
+                              className="w-full bg-[#A12717] text-white hover:bg-[#8a2113] flex items-center justify-center gap-2"
+                            >
+                              <MessageSquare size={16} />
+                              Write Review
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -813,239 +1003,6 @@ function ProfileContent() {
                 )}
               </div>
             )}
-
-            {/* Reviews */}
-            {activeSection === "reviews" && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
-                <h1 className="text-2xl font-bold text-gray-900 mb-6">
-                  Write a Review
-                </h1>
-                <p className="text-gray-600 mb-8">
-                  Share your experience with products you&apos;ve purchased. Your feedback helps other customers make informed decisions.
-                </p>
-
-                <div className="space-y-6 max-w-2xl">
-                  {/* Order Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Order
-                    </label>
-                    <select
-                      value={reviewData.orderId}
-                      onChange={(e) => {
-                        setReviewData({
-                          ...reviewData,
-                          orderId: e.target.value,
-                          productId: "", // Reset product when order changes
-                        });
-                      }}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
-                    >
-                      <option value="">-- Select an order --</option>
-                      {mockOrders.map((order) => (
-                        <option key={order.id} value={order.id}>
-                          {order.id}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Product Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Product
-                    </label>
-                    <select
-                      value={reviewData.productId}
-                      onChange={(e) =>
-                        setReviewData({ ...reviewData, productId: e.target.value })
-                      }
-                      disabled={!reviewData.orderId}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      <option value="">-- Select a product --</option>
-                      {reviewData.orderId &&
-                        mockOrders
-                          .find((o) => o.id === reviewData.orderId)
-                          ?.products.map((product) => (
-                            <option key={product.id} value={product.id}>
-                              {product.name}
-                            </option>
-                          ))}
-                    </select>
-                  </div>
-
-                  {/* Star Rating */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Rating
-                    </label>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() =>
-                            setReviewData({ ...reviewData, rating: star })
-                          }
-                          onMouseEnter={() => setHoveredRating(star)}
-                          onMouseLeave={() => setHoveredRating(0)}
-                          className="p-1 transition-transform hover:scale-110 focus:outline-none"
-                        >
-                          <Star
-                            size={32}
-                            className={`transition-colors ${star <= (hoveredRating || reviewData.rating)
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-gray-300"
-                              }`}
-                          />
-                        </button>
-                      ))}
-                      <span className="ml-3 text-sm text-gray-600">
-                        {reviewData.rating > 0
-                          ? `${reviewData.rating} out of 5 stars`
-                          : "Click to rate"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Comment */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Your Review
-                    </label>
-                    <textarea
-                      value={reviewData.comment}
-                      onChange={(e) =>
-                        setReviewData({ ...reviewData, comment: e.target.value })
-                      }
-                      rows={5}
-                      placeholder="Share your experience with this product. What did you like or dislike? Would you recommend it to others?"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      {reviewData.comment.length}/500 characters
-                    </p>
-                  </div>
-
-                  {/* Image Upload */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Add Photos (Optional)
-                    </label>
-                    <p className="text-xs text-gray-500 mb-3">
-                      Upload up to 5 images to share with your review
-                    </p>
-
-                    <div className="flex flex-wrap gap-3">
-                      {/* Image Previews */}
-                      {imagePreviewUrls.map((url, index) => (
-                        <div
-                          key={index}
-                          className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 group"
-                        >
-                          <img
-                            src={url}
-                            alt={`Review image ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newImages = [...reviewImages];
-                              const newUrls = [...imagePreviewUrls];
-                              URL.revokeObjectURL(newUrls[index]);
-                              newImages.splice(index, 1);
-                              newUrls.splice(index, 1);
-                              setReviewImages(newImages);
-                              setImagePreviewUrls(newUrls);
-                            }}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
-
-                      {/* Upload Button */}
-                      {reviewImages.length < 5 && (
-                        <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
-                          <ImagePlus size={24} className="text-gray-400 mb-1" />
-                          <span className="text-xs text-gray-500">Add Photo</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            className="hidden"
-                            onChange={(e) => {
-                              const files = Array.from(e.target.files || []);
-                              const remainingSlots = 5 - reviewImages.length;
-                              const filesToAdd = files.slice(0, remainingSlots);
-
-                              if (filesToAdd.length > 0) {
-                                const newUrls = filesToAdd.map((file) =>
-                                  URL.createObjectURL(file)
-                                );
-                                setReviewImages([...reviewImages, ...filesToAdd]);
-                                setImagePreviewUrls([...imagePreviewUrls, ...newUrls]);
-                              }
-
-                              // Reset input
-                              e.target.value = "";
-                            }}
-                          />
-                        </label>
-                      )}
-                    </div>
-
-                    {reviewImages.length > 0 && (
-                      <p className="mt-2 text-xs text-gray-500">
-                        {reviewImages.length}/5 images uploaded
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    onClick={() => {
-                      // Static handler for now
-                      setReviewSubmitting(true);
-                      setTimeout(() => {
-                        alert("Review submitted successfully! (Static demo)");
-                        setReviewData({
-                          productId: "",
-                          orderId: "",
-                          rating: 0,
-                          comment: "",
-                        });
-                        // Clean up image URLs and reset
-                        imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-                        setReviewImages([]);
-                        setImagePreviewUrls([]);
-                        setReviewSubmitting(false);
-                      }, 1000);
-                    }}
-                    disabled={
-                      reviewSubmitting ||
-                      !reviewData.productId ||
-                      !reviewData.orderId ||
-                      reviewData.rating === 0 ||
-                      !reviewData.comment.trim()
-                    }
-                    className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {reviewSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin inline" />
-                        Submitting...
-                      </>
-                    ) : (
-                      "Submit Review"
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -1058,6 +1015,182 @@ function ProfileContent() {
           />
         )}
       </div>
+
+      {/* Review Modal */}
+      <Dialog open={showReviewModal} onOpenChange={(open) => !open && closeReviewModal()}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Write a Review</DialogTitle>
+            <DialogDescription>
+              Share your experience with {selectedPurchase?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {reviewSuccess ? (
+            <div className="py-8 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star size={32} className="text-green-600 fill-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Thank you!</h3>
+              <p className="text-gray-600">Your review has been submitted successfully.</p>
+            </div>
+          ) : (
+            <div className="space-y-6 py-4">
+              {/* Product Info */}
+              {selectedPurchase && (
+                <div className="flex gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="w-16 h-16 relative rounded-lg overflow-hidden flex-shrink-0">
+                    <Image
+                      src={selectedPurchase.baseImage || "/assets/images/product/1.jpg"}
+                      alt={selectedPurchase.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900 line-clamp-2">{selectedPurchase.name}</h4>
+                    <p className="text-sm text-gray-500">Order Item #{selectedPurchase.orderItemId}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Star Rating */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rating <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewData({ ...reviewData, rating: star })}
+                      onMouseEnter={() => setHoveredRating(star)}
+                      onMouseLeave={() => setHoveredRating(0)}
+                      className="p-1 transition-transform hover:scale-110 focus:outline-none"
+                    >
+                      <Star
+                        size={32}
+                        className={`transition-colors ${star <= (hoveredRating || reviewData.rating)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                          }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="ml-3 text-sm text-gray-600">
+                    {reviewData.rating > 0
+                      ? `${reviewData.rating} out of 5 stars`
+                      : "Click to rate"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Comment */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Review
+                </label>
+                <textarea
+                  value={reviewData.comment}
+                  onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+                  rows={4}
+                  placeholder="Share your experience with this product..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition resize-none"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  {reviewData.comment.length}/500 characters
+                </p>
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Add Photos (Optional)
+                </label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Upload up to 5 images (max 2MB each)
+                </p>
+
+                <div className="flex flex-wrap gap-3">
+                  {/* Image Previews */}
+                  {imagePreviewUrls.map((url, index) => (
+                    <div
+                      key={index}
+                      className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group"
+                    >
+                      <img
+                        src={url}
+                        alt={`Review image ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newImages = [...reviewImages];
+                          const newUrls = [...imagePreviewUrls];
+                          URL.revokeObjectURL(newUrls[index]);
+                          newImages.splice(index, 1);
+                          newUrls.splice(index, 1);
+                          setReviewImages(newImages);
+                          setImagePreviewUrls(newUrls);
+                        }}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Upload Button */}
+                  {reviewImages.length < 5 && (
+                    <label className="w-20 h-20 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                      <ImagePlus size={20} className="text-gray-400 mb-1" />
+                      <span className="text-xs text-gray-500">Add</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleImageSelect}
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {reviewImages.length > 0 && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    {reviewImages.length}/5 images uploaded
+                  </p>
+                )}
+              </div>
+
+              {/* Error Message */}
+              {reviewError && (
+                <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                  {reviewError}
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <Button
+                onClick={handleSubmitReview}
+                disabled={reviewSubmitting || reviewData.rating === 0}
+                className="w-full bg-[#A12717] text-white py-3 rounded-lg hover:bg-[#8a2113] transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {reviewSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin inline" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Review"
+                )}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -9,8 +9,10 @@ import {
   Twitter,
   Instagram,
   Github,
+  Loader2,
 } from "lucide-react";
 import Socialmedia from "@/components/Socialmedia";
+import { toast } from "sonner";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -22,6 +24,7 @@ export default function ContactPage() {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -33,11 +36,48 @@ export default function ContactPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setFormData({ name: "", email: "", contactNumber: "", subject: "", message: "" });
-    setTimeout(() => setSubmitted(false), 3000);
+
+    // Basic validation
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/user/general-support/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.contactNumber,
+          subject: formData.subject,
+          message: formData.message,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitted(true);
+        setFormData({ name: "", email: "", contactNumber: "", subject: "", message: "" });
+        toast.success("Message sent successfully! We'll get back to you soon.");
+        setTimeout(() => setSubmitted(false), 3000);
+      } else {
+        toast.error(data.message || "Failed to send message. Please try again.");
+      }
+    } catch (error) {
+      console.error("Failed to submit contact form:", error);
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -113,7 +153,7 @@ export default function ContactPage() {
                         href="tel:+1234567890"
                         className="text-slate-900 hover:text-[#39B856] transition-colors font-medium"
                       >
-                        +977-9851352794, 
+                        +977-9851352794,
                         <br />
                         +977-9843488252
                       </a>
@@ -257,14 +297,22 @@ export default function ContactPage() {
 
                 <button
                   onClick={handleSubmit}
-                  className="w-full py-3 rounded-lg font-medium text-white transition-all duration-300 hover:shadow-lg"
+                  disabled={isSubmitting}
+                  className="w-full py-3 rounded-lg font-medium text-white transition-all duration-300 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{
                     backgroundColor: "#A12717",
                     backgroundImage:
                       "linear-gradient(135deg, #A12717 0%, #8B1F12 100%)",
                   }}
                 >
-                  Send Message
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Message"
+                  )}
                 </button>
 
                 {submitted && (

@@ -72,6 +72,6 @@ export const footerData: FooterData = {
     "Copyright © 2025 Singing Bowl Village Nepal. All Rights Reserved.",
   bottomLinks: [
     { name: "Privacy Policy", href: "/privacy-policy" },
-    { name: "Terms of use", href: "/terms-of-use" },
+    { name: "Terms of use", href: "/terms-and-condition" },
   ],
 };

@@ -9,7 +9,7 @@ const PrivacyPolicy = () => {
           <h1 className="text-4xl font-bold text-slate-900 mb-2">
             Privacy Policy
           </h1>
-          {/* <p className="text-slate-600">Last updated: January 2025</p> */}
+          <p className="text-slate-600">Last Updated: January 2026</p>
         </div>
       </div>
 
@@ -19,217 +19,241 @@ const PrivacyPolicy = () => {
           {/* Introduction */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-slate-900">
-              Introduction
+              1. Introduction
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              Singing Bowl ("we," "us," "our," or "Company") is committed to
-              protecting your privacy. This Privacy Policy explains how we
-              collect, use, disclose, and safeguard your information when you
-              visit our website, including any other media form, media channel,
-              mobile website, or mobile application related or connected thereto
-              (collectively, the "Site").
-            </p>
-            <p className="text-slate-700 leading-relaxed">
-              Please read this Privacy Policy carefully. If you do not agree
-              with our policies and practices, please do not use our Site.
+              Welcome to SingingBowl Village. We are committed to protecting
+              your privacy and the confidentiality of your personal
+              information. This Privacy Policy explains how we collect, use,
+              disclose, and safeguard your information when you visit our
+              website{" "}
+              <a
+                href="https://www.singingbowlvillagenepal.com/"
+                className="text-blue-600 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                www.singingbowlvillagenepal.com
+              </a>{" "}
+              (the &quot;Site&quot;) and engage with our services.
             </p>
           </section>
 
           {/* Information We Collect */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-slate-900">
-              1. Information We Collect
+              2. Information We Collect
             </h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium text-slate-800 mb-2">
-                  Personal Information
-                </h3>
-                <p className="text-slate-700 leading-relaxed">
-                  We may collect personal information that you voluntarily
-                  provide when you create an account, make a purchase, subscribe
-                  to our newsletter, contact us, or interact with our Site,
-                  including:
-                </p>
-                <ul className="list-disc list-inside text-slate-700 leading-relaxed mt-2 space-y-1">
-                  <li>Name and email address</li>
-                  <li>Billing and shipping addresses</li>
-                  <li>Phone number</li>
-                  <li>
-                    Payment information (processed securely by third-party
-                    providers)
-                  </li>
-                  <li>Account preferences and communication preferences</li>
-                </ul>
-              </div>
+            <p className="text-slate-700 leading-relaxed">
+              We may collect personal information that you voluntarily provide
+              to us when you:
+            </p>
+            <ul className="list-disc list-inside text-slate-700 leading-relaxed space-y-1 mt-2">
+              <li>Create an account</li>
+              <li>Place an order or make a purchase</li>
+              <li>Contact us via forms, email, or phone</li>
+              <li>Sign up for our newsletter</li>
+            </ul>
+            <p className="text-slate-700 leading-relaxed mt-4">
+              This information may include your name, email address, postal
+              address, phone number, and payment information.
+            </p>
+          </section>
 
+          {/* Confidentiality of Transactions */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-semibold text-slate-900">
+              3. Confidentiality of Transactions
+            </h2>
+            <p className="text-slate-700 leading-relaxed">
+              All transactions between SingingBowl Village and our customers
+              are treated as strictly private and confidential. We do not
+              share, sell, rent, or trade your personal or transactional
+              details (including purchase history and payment information) with
+              any third parties for their promotional purposes or unrelated
+              business activities.
+            </p>
+          </section>
+
+          {/* Intellectual Property & Content Restrictions */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-semibold text-slate-900">
+              4. Intellectual Property & Content Restrictions
+            </h2>
+            <p className="text-slate-700 leading-relaxed">
+              All content on this Site, including but not limited to text,
+              graphics, logos, images, photographs, audio clips, digital
+              downloads, data compilations, videos, and the specific design of
+              our singing bowls and products, is the exclusive property of
+              SingingBowl Village or its content suppliers and is protected by
+              international copyright, trademark, and other intellectual
+              property laws.
+            </p>
+            <div className="space-y-4 mt-4">
               <div>
                 <h3 className="text-lg font-medium text-slate-800 mb-2">
-                  Automatic Information
+                  Images
                 </h3>
                 <p className="text-slate-700 leading-relaxed">
-                  When you visit our Site, we automatically collect certain
-                  technical information, including:
+                  All photographs, graphics, and logos displayed on this Site
+                  are the copyrighted material of SingingBowl Village. They may
+                  not be downloaded, reproduced, copied, redistributed,
+                  manipulated, or used for any purpose (personal, commercial, or
+                  otherwise) without the express prior written permission of
+                  SingingBowl Village.
                 </p>
-                <ul className="list-disc list-inside text-slate-700 leading-relaxed mt-2 space-y-1">
-                  <li>IP address and browser type</li>
-                  <li>Pages viewed and time spent on the Site</li>
-                  <li>Referring website</li>
-                  <li>Device information and operating system</li>
-                  <li>Cookies and similar tracking technologies</li>
-                </ul>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-slate-800 mb-2">
+                  General Content
+                </h3>
+                <p className="text-slate-700 leading-relaxed">
+                  The textual information, product descriptions, and all other
+                  written content are proprietary. You may not copy, modify,
+                  publish, transmit, participate in the transfer or sale of,
+                  create derivative works from, or in any way exploit any of the
+                  content, in whole or in part.
+                </p>
               </div>
             </div>
           </section>
 
-          {/* How We Use Information */}
+          {/* How We Use Your Information */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-slate-900">
-              2. How We Use Your Information
+              5. How We Use Your Information
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              We use the information we collect for various purposes, including:
+              We use the information we collect to:
             </p>
-            <ul className="list-disc list-inside text-slate-700 leading-relaxed space-y-1">
-              <li>Processing and fulfilling your orders</li>
-              <li>Providing customer support and responding to inquiries</li>
+            <ul className="list-disc list-inside text-slate-700 leading-relaxed space-y-1 mt-2">
+              <li>Process and fulfill your orders.</li>
               <li>
-                Sending promotional emails and newsletters (with your consent)
+                Communicate with you about your order, our products, and
+                services.
               </li>
-              <li>Improving our Site and services</li>
-              <li>Analyzing website usage and trends</li>
-              <li>
-                Preventing fraudulent transactions and protecting security
-              </li>
-              <li>Complying with legal obligations</li>
+              <li>Improve our website and customer service.</li>
+              <li>Send periodic emails (you can opt-out at any time).</li>
             </ul>
           </section>
 
-          {/* Information Sharing */}
+          {/* Information Sharing and Disclosure */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-slate-900">
-              3. Information Sharing
+              6. Information Sharing and Disclosure
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              We do not sell, trade, or rent your personal information to third
-              parties. However, we may share your information with:
+              We do not sell your personal information. We may share information
+              only in the following limited circumstances:
             </p>
-            <ul className="list-disc list-inside text-slate-700 leading-relaxed space-y-1">
+            <ul className="list-disc list-inside text-slate-700 leading-relaxed space-y-1 mt-2">
               <li>
-                Service providers who assist us in operating our Site and
-                conducting our business (under strict confidentiality
-                agreements)
+                With trusted third-party service providers who assist us in
+                operating our website, conducting our business, or servicing you
+                (e.g., payment processors, shipping companies), so long as those
+                parties agree to keep this information confidential.
               </li>
-              <li>Payment processors to handle financial transactions</li>
-              <li>Shipping and logistics partners to deliver your orders</li>
               <li>
-                Law enforcement or government agencies when required by law
+                When required to comply with the law, enforce our site policies,
+                or protect ours or others&apos; rights, property, or safety.
               </li>
             </ul>
-          </section>
-
-          {/* Cookies and Tracking */}
-          <section className="space-y-4">
-            <h2 className="text-2xl font-semibold text-slate-900">
-              4. Cookies and Tracking Technologies
-            </h2>
-            <p className="text-slate-700 leading-relaxed">
-              Our Site uses cookies and similar tracking technologies to enhance
-              your experience. These help us remember your preferences,
-              understand user behavior, and analyze Site performance. You can
-              control cookies through your browser settings, though disabling
-              them may affect Site functionality.
-            </p>
           </section>
 
           {/* Data Security */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-slate-900">
-              5. Data Security
+              7. Data Security
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              We implement reasonable security measures to protect your personal
-              information from unauthorized access, alteration, and destruction.
-              However, no method of transmission over the Internet is completely
-              secure. We cannot guarantee absolute security of your data.
+              We implement a variety of security measures to maintain the safety
+              of your personal information. All sensitive/credit information is
+              transmitted via Secure Socket Layer (SSL) technology and encrypted
+              into our payment gateway provider&apos;s database, accessible only by
+              those authorized with special access rights.
             </p>
           </section>
 
           {/* Your Rights */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-slate-900">
-              6. Your Privacy Rights
+              8. Your Rights
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              Depending on your location, you may have certain rights regarding
-              your personal information, including the right to access, correct,
-              or delete your data. To exercise these rights, please contact us
-              at privacy@singingbowl.com.
+              Depending on your location, you may have rights regarding your
+              personal data, such as the right to access, correct, or request
+              deletion of your personal data. To exercise these rights, please
+              contact us using the information below.
             </p>
           </section>
 
           {/* Third-Party Links */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-slate-900">
-              7. Third-Party Links
+              9. Third-Party Links
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              Our Site may contain links to third-party websites. We are not
-              responsible for the privacy practices of these external sites. We
-              encourage you to review their privacy policies before providing
-              any personal information.
+              Our site may contain links to third-party websites. We are not
+              responsible for the content or privacy practices of these external
+              sites.
             </p>
           </section>
 
-          {/* Children's Privacy */}
+          {/* Cookies */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-slate-900">
-              8. Children's Privacy
+              10. Cookies
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              Our Site is not directed to children under the age of 13. We do
-              not knowingly collect personal information from children. If we
-              become aware that a child has provided us with personal
-              information, we will delete such information and terminate the
-              child's account immediately.
+              Our website may use &quot;cookies&quot; to enhance user experience. You can
+              choose to set your web browser to refuse cookies or to alert you
+              when cookies are being sent.
             </p>
           </section>
 
           {/* Policy Updates */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-slate-900">
-              9. Changes to This Privacy Policy
+              11. Policy Updates
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              We may update this Privacy Policy from time to time to reflect
-              changes in our practices or legal requirements. We will notify you
-              of significant changes by posting the updated policy on our Site
-              with a new "Last updated" date. Your continued use of the Site
-              following the posting of revised Privacy Policy means that you
-              accept and agree to the changes.
+              We may update this Privacy Policy periodically. We will notify you
+              of any changes by posting the new policy on this page with an
+              updated revision date.
             </p>
           </section>
 
           {/* Contact Information */}
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-slate-900">
-              10. Contact Us
+              12. Contact Us
             </h2>
             <p className="text-slate-700 leading-relaxed">
-              If you have questions about this Privacy Policy or our privacy
-              practices, please contact us at:
+              If you have any questions about this Privacy Policy, our
+              intellectual property, or our practices, please contact us at:
             </p>
             <div className="bg-slate-50 rounded-lg p-6 space-y-2">
-              <p className="text-slate-900 font-medium">Singing Bowl</p>
+              <p className="text-slate-900 font-medium">SingingBowl Village</p>
+              <p className="text-slate-700">Kathmandu, Nepal</p>
               <p className="text-slate-700">
-                Email: singingbowlvillagenepal@gmail.com
+                Email:{" "}
+                <a
+                  href="mailto:singingbowlvillagenepal@gmail.com"
+                  className="text-blue-600 hover:underline"
+                >
+                  singingbowlvillagenepal@gmail.com
+                </a>
               </p>
               <p className="text-slate-700">
-                Phone: +977 9851352794, 9851352794 01-5353501
-              </p>
-              <p className="text-slate-700">
-                Address: Kwabahal Chowk & Jyatha Street Thamel-17 Kathmandu,
-                Nepal
+                Website:{" "}
+                <a
+                  href="https://www.singingbowlvillagenepal.com/"
+                  className="text-blue-600 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  www.singingbowlvillagenepal.com
+                </a>
               </p>
             </div>
           </section>
@@ -237,7 +261,7 @@ const PrivacyPolicy = () => {
           {/* Footer */}
           <div className="border-t border-slate-200 pt-8 mt-8">
             <p className="text-sm text-slate-600 text-center">
-              © 2025 Singing Bowl. All rights reserved.
+              © 2026 SingingBowl Village. All rights reserved.
             </p>
           </div>
         </div>

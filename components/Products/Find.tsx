@@ -6,14 +6,14 @@ const Find = () => {
   return (
     <div className="w-full">
       <div className="w-full bg-[#EBE9E9] rounded-xl p-6">
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-18 w-full">
-          <div className="w-[320px] rounded-full">
+        <div className="flex flex-col bg-transparent lg:flex-row items-center justify-center gap-18 w-full">
+          <div className="w-[320px] bg-transparent ">
             <Image
-              src="/assets/images/product/3.png"
+              src="/assets/images/productCard.png"
               alt="find"
               width={320}
               height={100}
-              className="rounded-full"
+              className="rounded-xl"
             />
           </div>
           <div className="w-full lg:w-[50%] flex flex-col items-start justify-start text-start gap-4">

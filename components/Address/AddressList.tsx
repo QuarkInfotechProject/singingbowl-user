@@ -46,7 +46,7 @@ const AddressList: React.FC<AddressListProps> = ({
                 addressList = res.data;
             }
 
-            console.log("Parsed address list:", addressList);
+
             setAddresses(addressList);
 
             // Auto-select default address if selectable and no selection

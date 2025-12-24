@@ -88,10 +88,8 @@ export const fetchProducts = async (limit: number = 10) => {
 export const fetchPosts = async (page: number = 1) => {
     try {
         const response = await api.post("/user/posts", { page });
-        console.log("fetchPosts response:", response);
         return response.data;
     } catch (error) {
-        console.error("fetchPosts error:", error);
         throw error;
     }
 };
@@ -168,10 +166,8 @@ export const addToCart = async (products: { productId: string; quantity: string 
 export const fetchCart = async () => {
     try {
         const response = await api.get("/cart");
-        console.log("fetchCart response:", response);
         return response.data;
     } catch (error) {
-        console.error("fetchCart error:", error);
         throw error;
     }
 };
@@ -234,17 +230,9 @@ export const removeFromWishlist = async (productId: string) => {
 // Add Address
 export const addAddress = async (data: any) => {
     try {
-        console.log("=== addAddress Request ===");
-        console.log("Request Body:", JSON.stringify(data, null, 2));
         const response = await api.post("/user/address/add", data);
-        console.log("=== addAddress Success ===");
-        console.log("Response:", response.data);
         return response.data;
     } catch (error: any) {
-        console.log("=== addAddress Error ===");
-        console.log("Status:", error.response?.status);
-        console.log("Error Response Data:", JSON.stringify(error.response?.data, null, 2));
-        console.log("Error Message:", error.message);
         throw error;
     }
 };
@@ -253,11 +241,8 @@ export const addAddress = async (data: any) => {
 export const fetchAddresses = async () => {
     try {
         const response = await api.get("/user/address");
-        console.log("=== fetchAddresses Response ===");
-        console.log("Full Response:", JSON.stringify(response.data, null, 2));
         return response.data;
     } catch (error) {
-        console.error("fetchAddresses error:", error);
         throw error;
     }
 };
@@ -319,6 +304,17 @@ export const fetchOrders = async (page: number = 1) => {
         return response.data;
     } catch (error) {
         console.error("fetchOrders error:", error);
+        throw error;
+    }
+};
+
+// Fetch Purchase History
+export const fetchPurchases = async () => {
+    try {
+        const response = await api.get("/user/purchases");
+        return response.data;
+    } catch (error) {
+        console.error("fetchPurchases error:", error);
         throw error;
     }
 };

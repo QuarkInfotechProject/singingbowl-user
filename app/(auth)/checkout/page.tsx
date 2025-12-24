@@ -6,6 +6,7 @@ import {
   Lock,
   Truck,
   Loader2,
+  Banknote,
 } from "lucide-react";
 import {
   Dialog,
@@ -23,12 +24,15 @@ import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
 
+type PaymentMethod = "cod" | "getPay";
+
 const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("cod");
 
   // Tab-based checkout state
   const [activeTab, setActiveTab] = useState<'checkout' | 'payment'>('checkout');
@@ -247,7 +251,7 @@ const Checkout = () => {
         addressId: selectedAddress.uuid,
         couponCodes: [] as string[],
         note: "",
-        paymentMethod: "getPay",
+        paymentMethod: selectedPaymentMethod,
         termsAndConditions: "true"
       };
 
@@ -256,6 +260,14 @@ const Checkout = () => {
 
       // Handle response wrapping
       const orderResponse = response.data || response;
+
+      // COD FLOW: Show success directly
+      if (selectedPaymentMethod === "cod") {
+        clearCart();
+        setShowSuccessDialog(true);
+        setIsSubmitting(false);
+        return;
+      }
 
       // GetPay FLOW: Switch to payment tab
       if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
@@ -355,7 +367,7 @@ const Checkout = () => {
                 />
               </div>
 
-              {/* Payment Method Info */}
+              {/* Payment Method Selection */}
               {selectedAddress && (
                 <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100">
                   <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
@@ -363,30 +375,77 @@ const Checkout = () => {
                     Payment Method
                   </h2>
 
-                  {/* GetPay Payment - Single Option */}
-                  <div className="p-4 rounded-xl border-2 border-blue-500 bg-blue-50/50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-5 h-5 rounded-full border-2 border-blue-500 flex items-center justify-center">
-                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                      </div>
-                      <CreditCard className="w-6 h-6 text-blue-600" />
-                      <div>
-                        <div className="font-semibold text-slate-900">
-                          Pay with Card
+                  <div className="space-y-3">
+                    {/* COD Payment Option */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPaymentMethod("cod")}
+                      className={`w-full p-4 rounded-xl border-2 transition-all text-left ${selectedPaymentMethod === "cod"
+                          ? "border-green-500 bg-green-50/50"
+                          : "border-slate-200 hover:border-slate-300"
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPaymentMethod === "cod" ? "border-green-500" : "border-slate-300"
+                          }`}>
+                          {selectedPaymentMethod === "cod" && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                          )}
                         </div>
-                        <div className="text-xs text-slate-500">
-                          Secure payment via GetPay
+                        <Banknote className={`w-6 h-6 ${selectedPaymentMethod === "cod" ? "text-green-600" : "text-slate-400"}`} />
+                        <div>
+                          <div className="font-semibold text-slate-900">
+                            Cash on Delivery (COD)
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            Pay when you receive your order
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </button>
+
+                    {/* GetPay Payment Option */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPaymentMethod("getPay")}
+                      className={`w-full p-4 rounded-xl border-2 transition-all text-left ${selectedPaymentMethod === "getPay"
+                          ? "border-blue-500 bg-blue-50/50"
+                          : "border-slate-200 hover:border-slate-300"
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPaymentMethod === "getPay" ? "border-blue-500" : "border-slate-300"
+                          }`}>
+                          {selectedPaymentMethod === "getPay" && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                          )}
+                        </div>
+                        <CreditCard className={`w-6 h-6 ${selectedPaymentMethod === "getPay" ? "text-blue-600" : "text-slate-400"}`} />
+                        <div>
+                          <div className="font-semibold text-slate-900">
+                            Pay with Card
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            Secure payment via GetPay
+                          </div>
+                        </div>
+                      </div>
+                    </button>
                   </div>
 
                   {/* Payment Info Box */}
                   <div className="mt-4 bg-slate-50 rounded-lg p-4 border border-slate-200 text-sm text-slate-600">
-                    <p className="flex items-start gap-2">
-                      <span className="text-lg">💳</span>
-                      <span>You will be prompted to enter your card details in a secure form after clicking &quot;Complete Purchase&quot;.</span>
-                    </p>
+                    {selectedPaymentMethod === "cod" ? (
+                      <p className="flex items-start gap-2">
+                        <span className="text-lg">💵</span>
+                        <span>Pay cash when your order is delivered. Please have the exact amount ready.</span>
+                      </p>
+                    ) : (
+                      <p className="flex items-start gap-2">
+                        <span className="text-lg">💳</span>
+                        <span>You will be prompted to enter your card details in a secure form after clicking &quot;Complete Purchase&quot;.</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -409,9 +468,9 @@ const Checkout = () => {
                     </div>
                     <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">
                       I agree to the{" "}
-                      <a href="/terms" className="text-[#A12717] hover:underline font-medium">Terms and Conditions</a>
+                      <a href="/terms-and-condition" className="text-[#A12717] hover:underline font-medium">Terms and Conditions</a>
                       {" "}and{" "}
-                      <a href="/privacy" className="text-[#A12717] hover:underline font-medium">Privacy Policy</a>
+                      <a href="/privacy-policy" className="text-[#A12717] hover:underline font-medium">Privacy Policy</a>
                     </span>
                   </label>
 
@@ -429,7 +488,7 @@ const Checkout = () => {
                       </>
                     ) : (
                       <>
-                        Complete Purchase
+                        {selectedPaymentMethod === "cod" ? "Place Order" : "Complete Purchase"}
                         <ChevronRight className="w-6 h-6" />
                       </>
                     )}
@@ -568,7 +627,9 @@ const Checkout = () => {
               <span className="text-2xl">🎉</span> Order Placed Successfully!
             </DialogTitle>
             <DialogDescription>
-              Your order has been placed successfully and is being processed. You can track your order status in the orders tab.
+              {selectedPaymentMethod === "cod"
+                ? "Your order has been placed successfully! Please have the payment ready when your order arrives."
+                : "Your order has been placed successfully and is being processed. You can track your order status in the orders tab."}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-center">
