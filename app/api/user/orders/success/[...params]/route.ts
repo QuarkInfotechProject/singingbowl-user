@@ -97,10 +97,57 @@ export async function GET(
         const response = await apiClient.post(backendUrl, requestBody, { headers });
         console.log("Backend response:", response.data);
 
-        // Redirect to profile orders page on success
-        return NextResponse.redirect(
-            new URL("/profile?tab=orders&payment=success", prodOrigin)
-        );
+        // Return HTML that redirects the TOP window (breaks out of iframe)
+        const successUrl = `${prodOrigin}/profile?tab=orders&payment=success`;
+        const successHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Payment Successful</title>
+                <style>
+                    body { 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                    }
+                    .container {
+                        text-align: center;
+                        padding: 40px;
+                        background: white;
+                        border-radius: 16px;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                    }
+                    .success-icon { font-size: 64px; margin-bottom: 16px; }
+                    h1 { color: #10b981; margin-bottom: 8px; }
+                    p { color: #6b7280; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="success-icon">✅</div>
+                    <h1>Payment Successful!</h1>
+                    <p>Redirecting to your orders...</p>
+                </div>
+                <script>
+                    // Redirect the top/parent window to break out of iframe
+                    if (window.top !== window.self) {
+                        window.top.location.href = "${successUrl}";
+                    } else {
+                        window.location.href = "${successUrl}";
+                    }
+                </script>
+            </body>
+            </html>
+        `;
+
+        return new NextResponse(successHtml, {
+            status: 200,
+            headers: { "Content-Type": "text/html" },
+        });
     } catch (error: any) {
         console.error("=== Payment Success Callback ERROR ===");
         console.error("Error message:", error.message);
@@ -115,9 +162,56 @@ export async function GET(
             console.error("Request body:", JSON.stringify(error.config.data));
         }
 
-        // Redirect to checkout with error
-        return NextResponse.redirect(
-            new URL("/checkout?error=payment_verification_failed", prodOrigin)
-        );
+        // Return HTML that redirects the TOP window with error (breaks out of iframe)
+        const errorUrl = `${prodOrigin}/checkout?error=payment_verification_failed`;
+        const errorHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Payment Error</title>
+                <style>
+                    body { 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                    }
+                    .container {
+                        text-align: center;
+                        padding: 40px;
+                        background: white;
+                        border-radius: 16px;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                    }
+                    .error-icon { font-size: 64px; margin-bottom: 16px; }
+                    h1 { color: #ef4444; margin-bottom: 8px; }
+                    p { color: #6b7280; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="error-icon">⚠️</div>
+                    <h1>Payment Verification Failed</h1>
+                    <p>Redirecting back to checkout...</p>
+                </div>
+                <script>
+                    // Redirect the top/parent window to break out of iframe
+                    if (window.top !== window.self) {
+                        window.top.location.href = "${errorUrl}";
+                    } else {
+                        window.location.href = "${errorUrl}";
+                    }
+                </script>
+            </body>
+            </html>
+        `;
+
+        return new NextResponse(errorHtml, {
+            status: 200,
+            headers: { "Content-Type": "text/html" },
+        });
     }
 }

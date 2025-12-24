@@ -48,18 +48,112 @@ export async function GET(
             console.log("Backend fail endpoint error (may be ok):", e);
         }
 
-        // Redirect to checkout with error
+        // Return HTML that redirects the TOP window (breaks out of iframe)
         const prodOrigin = "https://www.singingbowlvillagenepal.com";
-        return NextResponse.redirect(
-            new URL(`/checkout?error=payment_failed&orderId=${orderId}`, prodOrigin)
-        );
+        const errorUrl = `${prodOrigin}/checkout?error=payment_failed&orderId=${orderId}`;
+        const errorHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Payment Failed</title>
+                <style>
+                    body { 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                    }
+                    .container {
+                        text-align: center;
+                        padding: 40px;
+                        background: white;
+                        border-radius: 16px;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                    }
+                    .error-icon { font-size: 64px; margin-bottom: 16px; }
+                    h1 { color: #ef4444; margin-bottom: 8px; }
+                    p { color: #6b7280; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="error-icon">❌</div>
+                    <h1>Payment Failed</h1>
+                    <p>Redirecting back to checkout...</p>
+                </div>
+                <script>
+                    // Redirect the top/parent window to break out of iframe
+                    if (window.top !== window.self) {
+                        window.top.location.href = "${errorUrl}";
+                    } else {
+                        window.location.href = "${errorUrl}";
+                    }
+                </script>
+            </body>
+            </html>
+        `;
+
+        return new NextResponse(errorHtml, {
+            status: 200,
+            headers: { "Content-Type": "text/html" },
+        });
     } catch (error: any) {
         console.error("Payment fail callback error:", error.message);
 
-        // Redirect to checkout with generic error
+        // Return HTML that redirects the TOP window (breaks out of iframe)
         const prodOrigin = "https://www.singingbowlvillagenepal.com";
-        return NextResponse.redirect(
-            new URL("/checkout?error=payment_failed", prodOrigin)
-        );
+        const errorUrl = `${prodOrigin}/checkout?error=payment_failed`;
+        const errorHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Payment Error</title>
+                <style>
+                    body { 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                        margin: 0;
+                        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                    }
+                    .container {
+                        text-align: center;
+                        padding: 40px;
+                        background: white;
+                        border-radius: 16px;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                    }
+                    .error-icon { font-size: 64px; margin-bottom: 16px; }
+                    h1 { color: #ef4444; margin-bottom: 8px; }
+                    p { color: #6b7280; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="error-icon">⚠️</div>
+                    <h1>Payment Error</h1>
+                    <p>Redirecting back to checkout...</p>
+                </div>
+                <script>
+                    // Redirect the top/parent window to break out of iframe
+                    if (window.top !== window.self) {
+                        window.top.location.href = "${errorUrl}";
+                    } else {
+                        window.location.href = "${errorUrl}";
+                    }
+                </script>
+            </body>
+            </html>
+        `;
+
+        return new NextResponse(errorHtml, {
+            status: 200,
+            headers: { "Content-Type": "text/html" },
+        });
     }
 }

@@ -80,7 +80,7 @@ const Checkout = () => {
     initAttemptRef.current += 1;
     const currentAttempt = initAttemptRef.current;
 
-    // Use requestAnimationFrame to ensure DOM is ready
+    // Initialize payment after ensuring DOM is ready
     const initPayment = () => {
       // Check if this is still the current attempt
       if (currentAttempt !== initAttemptRef.current) return;
@@ -88,7 +88,7 @@ const Checkout = () => {
       const container = document.getElementById("getpay-payment-container");
       if (!container) {
         // Retry after a short delay if container not found
-        requestAnimationFrame(initPayment);
+        setTimeout(initPayment, 100);
         return;
       }
 
@@ -105,7 +105,7 @@ const Checkout = () => {
         callbackUrl: backendCallbackUrl
       };
 
-      // Create iframe HTML with improved initialization logic
+      // Create iframe HTML - using srcdoc for more reliable loading
       const iframeHtml = `
         <!DOCTYPE html>
         <html>
@@ -117,37 +117,36 @@ const Checkout = () => {
             html, body { height: 100%; width: 100%; }
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
             #checkout { width: 100%; min-height: 600px; padding: 16px; }
+            .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; }
+            .spinner { width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
+            @keyframes spin { to { transform: rotate(360deg); } }
           </style>
         </head>
         <body>
-          <div id="checkout"></div>
+          <div id="checkout">
+            <div class="loading-container">
+              <div class="spinner"></div>
+              <p style="margin-top: 16px; color: #6b7280;">Loading payment form...</p>
+            </div>
+          </div>
+          <script src="${GETPAY_SDK_URL}"><\\/script>
           <script>
             (function() {
-              var script = document.createElement('script');
-              script.src = '${GETPAY_SDK_URL}';
-              script.onload = function() {
-                initGetPayAfterLoad();
-              };
-              script.onerror = function() {
-                window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'Failed to load payment SDK' } }, '*');
-              };
-              document.head.appendChild(script);
+              var retryCount = 0;
+              var maxRetries = 50;
               
-              function initGetPayAfterLoad() {
-                var retryCount = 0;
-                var maxRetries = 30;
-                
-                function tryInit() {
-                  retryCount++;
-                  if (typeof GetPay === 'undefined') {
-                    if (retryCount < maxRetries) {
-                      setTimeout(tryInit, 100);
-                    } else {
-                      window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'SDK initialization timeout' } }, '*');
-                    }
-                    return;
+              function tryInit() {
+                retryCount++;
+                if (typeof GetPay === 'undefined') {
+                  if (retryCount < maxRetries) {
+                    setTimeout(tryInit, 100);
+                  } else {
+                    window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'SDK initialization timeout' } }, '*');
                   }
-                  
+                  return;
+                }
+                
+                try {
                   var options = ${JSON.stringify(getPayOptions)};
                   options.baseUrl = '${paymentConfig.getPayOptions.baseUrl}';
                   options.onSuccess = function(data) {
@@ -161,58 +160,45 @@ const Checkout = () => {
                     }
                   };
                   
-                  try {
-                    var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
-                    getpay.initialize();
-                    window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
-                  } catch (e) {
-                    window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
-                  }
+                  var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
+                  getpay.initialize();
+                  window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
+                } catch (e) {
+                  window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
                 }
-                
-                // Start initialization immediately after script loads
-                tryInit();
+              }
+              
+              // Wait for DOM to be ready, then start trying to initialize
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                  setTimeout(tryInit, 100);
+                });
+              } else {
+                setTimeout(tryInit, 100);
               }
             })();
-          <\/script>
+          <\\/script>
         </body>
         </html>
       `;
 
-      // Create iframe
+      // Create iframe with srcdoc for more reliable first-time loading
       const iframe = document.createElement('iframe');
       iframe.style.width = '100%';
       iframe.style.minHeight = '500px';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '12px';
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation');
+
+      // Use srcdoc which is more reliable than document.write()
+      iframe.srcdoc = iframeHtml;
+
       iframeRef.current = iframe;
-
       container.appendChild(iframe);
-
-      // Write content to iframe with proper timing
-      const writeToIframe = () => {
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (iframeDoc) {
-          iframeDoc.open();
-          iframeDoc.write(iframeHtml);
-          iframeDoc.close();
-        }
-      };
-
-      // Wait for iframe to be ready
-      if (iframe.contentDocument?.readyState === 'complete') {
-        writeToIframe();
-      } else {
-        iframe.onload = writeToIframe;
-        // Also try writing immediately as fallback
-        setTimeout(writeToIframe, 50);
-      }
     };
 
-    // Start initialization after a brief delay to ensure React has rendered
-    const timeoutId = setTimeout(() => {
-      requestAnimationFrame(initPayment);
-    }, 50);
+    // Start initialization with a small delay to ensure React has fully rendered
+    const timeoutId = setTimeout(initPayment, 150);
 
     window.addEventListener('message', handleMessage);
 
