@@ -21,7 +21,7 @@ export const courses: Course[] = [
             "Daily wellness integration",
         ],
         icon: <Sparkles className="w-6 h-6" />,
-        image: "/assets/images/product/1.jpg",
+        image: "/assets/images/courses/introductory-session.jpg",
     },
     {
         id: 2,
@@ -40,7 +40,7 @@ export const courses: Course[] = [
             "Certification upon completion",
         ],
         icon: <Music className="w-6 h-6" />,
-        image: "/assets/images/product/2.jpg",
+        image: "/assets/images/courses/sound-healing-session.jpg",
     },
     {
         id: 3,
@@ -59,6 +59,6 @@ export const courses: Course[] = [
             "Complimentary transport",
         ],
         icon: <Factory className="w-6 h-6" />,
-        image: "/assets/images/product/3.jpg",
+        image: "/assets/images/courses/factory-visit-tour.jpg",
     },
 ];

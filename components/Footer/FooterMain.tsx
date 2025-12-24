@@ -1,6 +1,7 @@
 import React from "react";
 import { FooterData } from "@/types/footertypes";
 import FooterColumn from "./FooterColumn";
+import FooterProducts from "./FooterProducts";
 import Socialmedia from "../Socialmedia";
 import Image from "next/image";
 import Link from "next/link";
@@ -55,8 +56,8 @@ const FooterMain = ({
       </div>
 
       <div className="w-full grid grid-cols-2 gap-16">
-        {/* Products Column */}
-        <FooterColumn title={products.title} links={products.links} />
+        {/* Products Column - Now fetched from API */}
+        <FooterProducts />
 
         {/* Navigation Column */}
         <FooterColumn title={navigation.title} links={navigation.links} />

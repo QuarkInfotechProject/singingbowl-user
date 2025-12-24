@@ -56,8 +56,20 @@ const Checkout = () => {
   const { isLoggedIn, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
-  // GetPay SDK URL
-  const GETPAY_SDK_URL = "https://minio.finpos.global/getpay-cdn/webcheckout/v5/bundle.js";
+  // GetPay SDK URL - LIVE version
+  const GETPAY_SDK_URL = "https://minio.finpos.global/getpay-cdn/webcheckout/live/v2/bundle.js";
+
+  // Preload GetPay SDK on mount for faster checkout
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'script';
+    link.href = GETPAY_SDK_URL;
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
 
   // Memoized message handler to prevent recreation on each render
   const handleMessage = useCallback((event: MessageEvent) => {
@@ -209,15 +221,12 @@ const Checkout = () => {
       }
     };
 
-    // Start initialization after a brief delay to ensure React has rendered
-    const timeoutId = setTimeout(() => {
-      requestAnimationFrame(initPayment);
-    }, 100);
+    // Start initialization immediately using requestAnimationFrame
+    requestAnimationFrame(initPayment);
 
     window.addEventListener('message', handleMessage);
 
     return () => {
-      clearTimeout(timeoutId);
       window.removeEventListener('message', handleMessage);
       if (iframeRef.current) {
         iframeRef.current = null;
@@ -381,8 +390,8 @@ const Checkout = () => {
                       type="button"
                       onClick={() => setSelectedPaymentMethod("cod")}
                       className={`w-full p-4 rounded-xl border-2 transition-all text-left ${selectedPaymentMethod === "cod"
-                          ? "border-green-500 bg-green-50/50"
-                          : "border-slate-200 hover:border-slate-300"
+                        ? "border-green-500 bg-green-50/50"
+                        : "border-slate-200 hover:border-slate-300"
                         }`}
                     >
                       <div className="flex items-center gap-3">
@@ -409,8 +418,8 @@ const Checkout = () => {
                       type="button"
                       onClick={() => setSelectedPaymentMethod("getPay")}
                       className={`w-full p-4 rounded-xl border-2 transition-all text-left ${selectedPaymentMethod === "getPay"
-                          ? "border-blue-500 bg-blue-50/50"
-                          : "border-slate-200 hover:border-slate-300"
+                        ? "border-blue-500 bg-blue-50/50"
+                        : "border-slate-200 hover:border-slate-300"
                         }`}
                     >
                       <div className="flex items-center gap-3">
