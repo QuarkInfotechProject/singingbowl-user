@@ -105,100 +105,106 @@ const Checkout = () => {
         callbackUrl: backendCallbackUrl
       };
 
-      // Create iframe HTML - using srcdoc for more reliable loading
-      const iframeHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            html, body { height: 100%; width: 100%; }
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
-            #checkout { width: 100%; min-height: 600px; padding: 16px; }
-            .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; }
-            .spinner { width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
-            @keyframes spin { to { transform: rotate(360deg); } }
-          </style>
-        </head>
-        <body>
-          <div id="checkout">
-            <div class="loading-container">
-              <div class="spinner"></div>
-              <p style="margin-top: 16px; color: #6b7280;">Loading payment form...</p>
-            </div>
-          </div>
-          <script src="${GETPAY_SDK_URL}"><\\/script>
-          <script>
-            (function() {
-              var retryCount = 0;
-              var maxRetries = 50;
-              
-              function tryInit() {
-                retryCount++;
-                if (typeof GetPay === 'undefined') {
-                  if (retryCount < maxRetries) {
-                    setTimeout(tryInit, 100);
-                  } else {
-                    window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'SDK initialization timeout' } }, '*');
-                  }
-                  return;
-                }
-                
-                try {
-                  var options = ${JSON.stringify(getPayOptions)};
-                  options.baseUrl = '${paymentConfig.getPayOptions.baseUrl}';
-                  options.onSuccess = function(data) {
-                    if (data && data.transactionId) {
-                      window.parent.postMessage({ type: 'GETPAY_SUCCESS', data: data }, '*');
-                    }
-                  };
-                  options.onError = function(err) {
-                    if (err && (err.code || err.message)) {
-                      window.parent.postMessage({ type: 'GETPAY_ERROR', error: err }, '*');
-                    }
-                  };
-                  
-                  var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
-                  getpay.initialize();
-                  window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
-                } catch (e) {
-                  window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
-                }
-              }
-              
-              // Wait for DOM to be ready, then start trying to initialize
-              if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function() {
-                  setTimeout(tryInit, 100);
-                });
-              } else {
-                setTimeout(tryInit, 100);
-              }
-            })();
-          <\\/script>
-        </body>
-        </html>
-      `;
-
-      // Create iframe with srcdoc for more reliable first-time loading
+      // Create iframe
       const iframe = document.createElement('iframe');
       iframe.style.width = '100%';
       iframe.style.minHeight = '500px';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '12px';
-      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation');
-
-      // Use srcdoc which is more reliable than document.write()
-      iframe.srcdoc = iframeHtml;
-
       iframeRef.current = iframe;
       container.appendChild(iframe);
+
+      // Write content to iframe after it's in the DOM
+      const writeContent = () => {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) {
+          setTimeout(writeContent, 50);
+          return;
+        }
+
+        const iframeHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              html, body { height: 100%; width: 100%; }
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
+              #checkout { width: 100%; min-height: 600px; padding: 16px; }
+            </style>
+          </head>
+          <body>
+            <div id="checkout"></div>
+            <script>
+              (function() {
+                var script = document.createElement('script');
+                script.src = '${GETPAY_SDK_URL}';
+                script.onload = function() {
+                  initGetPay();
+                };
+                script.onerror = function() {
+                  window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'Failed to load payment SDK' } }, '*');
+                };
+                document.head.appendChild(script);
+                
+                function initGetPay() {
+                  var retryCount = 0;
+                  var maxRetries = 50;
+                  
+                  function tryInit() {
+                    retryCount++;
+                    if (typeof GetPay === 'undefined') {
+                      if (retryCount < maxRetries) {
+                        setTimeout(tryInit, 100);
+                      } else {
+                        window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'SDK initialization timeout' } }, '*');
+                      }
+                      return;
+                    }
+                    
+                    try {
+                      var options = ${JSON.stringify(getPayOptions)};
+                      options.baseUrl = '${paymentConfig.getPayOptions.baseUrl}';
+                      options.onSuccess = function(data) {
+                        if (data && data.transactionId) {
+                          window.parent.postMessage({ type: 'GETPAY_SUCCESS', data: data }, '*');
+                        }
+                      };
+                      options.onError = function(err) {
+                        if (err && (err.code || err.message)) {
+                          window.parent.postMessage({ type: 'GETPAY_ERROR', error: err }, '*');
+                        }
+                      };
+                      
+                      var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
+                      getpay.initialize();
+                      window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
+                    } catch (e) {
+                      window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
+                    }
+                  }
+                  
+                  tryInit();
+                }
+              })();
+            <\/script>
+          </body>
+          </html>
+        `;
+
+        iframeDoc.open();
+        iframeDoc.write(iframeHtml);
+        iframeDoc.close();
+      };
+
+      // Give the iframe a moment to attach to DOM before writing
+      setTimeout(writeContent, 100);
     };
 
-    // Start initialization with a small delay to ensure React has fully rendered
-    const timeoutId = setTimeout(initPayment, 150);
+    // Start initialization with delay to ensure React has fully rendered
+    const timeoutId = setTimeout(initPayment, 200);
 
     window.addEventListener('message', handleMessage);
 
