@@ -59,18 +59,6 @@ const Checkout = () => {
   // GetPay SDK URL - LIVE version
   const GETPAY_SDK_URL = "https://minio.finpos.global/getpay-cdn/webcheckout/live/v2/bundle.js";
 
-  // Preload GetPay SDK on mount for faster checkout
-  useEffect(() => {
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'script';
-    link.href = GETPAY_SDK_URL;
-    document.head.appendChild(link);
-    return () => {
-      document.head.removeChild(link);
-    };
-  }, []);
-
   // Memoized message handler to prevent recreation on each render
   const handleMessage = useCallback((event: MessageEvent) => {
     if (event.data?.type === 'GETPAY_READY') {
@@ -221,12 +209,15 @@ const Checkout = () => {
       }
     };
 
-    // Start initialization immediately using requestAnimationFrame
-    requestAnimationFrame(initPayment);
+    // Start initialization after a brief delay to ensure React has rendered
+    const timeoutId = setTimeout(() => {
+      requestAnimationFrame(initPayment);
+    }, 50);
 
     window.addEventListener('message', handleMessage);
 
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('message', handleMessage);
       if (iframeRef.current) {
         iframeRef.current = null;
