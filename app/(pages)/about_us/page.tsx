@@ -50,7 +50,7 @@ const AboutUsPage = () => {
       experience: "45 years",
       specialty: "Hand-hammering & alloy mixing",
       quote:
-        "AS the MD of our singingbowl company, we have a team dedicated to preserving Himalayan traditions. We offer authentic bowls blending craftsmanship with spiritual resonance. Whether exploring our tours joining healing classes or discovering angtique treasures join us in this journey of trtanquility and wisdom and become a part of our family",
+        "As the Managing Director of our singing bowl company, I lead a dedicated team committed to preserving the timeless traditions of the Himalayas. Together, we create and offer authentic singing bowls that harmoniously blend skilled craftsmanship with deep spiritual resonance.\n\nWhether you are exploring our immersive factory tours, joining our sound healing classes, or discovering rare antique treasures, I invite you to walk this journey of tranquility and wisdom with us. We are more than a company—we are a family rooted in heritage, healing, and shared purpose. Join us, and become a part of our continuing story.",
       image: "/assets/images/md/3.avif",
     },
     {
@@ -61,7 +61,7 @@ const AboutUsPage = () => {
       quote:
         "Reflecting on my 30-year journey with our singing bowl company fills me with pride and gratitude. From humble beginnings, we've grown into a symbol of authenticity and excellence in Himalayan traditions. Our dedication to craftsmanship, spiritual resonance, and customer satisfaction has fueled our success. Beyond producing bowls, we preserve ancient wisdom and foster a healing community. Thank you for being part of our journey. We look forward to continuing to serve you with unwavering passion and dedication.",
       image: "/assets/images/md/1.avif",
-    },    
+    },
   ];
 
   const milestones: Milestone[] = [
@@ -169,7 +169,7 @@ const AboutUsPage = () => {
   return (
     <div className="w-full bg-stone-50 text-stone-700 font-sans leading-relaxed">
       <HeroSection />
-            <ChairmanMessage />
+      <ChairmanMessage />
       <OriginStory />
       <SacredMetals sacredMetals={sacredMetals} />
       <ArtisansSection artisans={artisans} />

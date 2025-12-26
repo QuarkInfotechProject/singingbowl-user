@@ -14,7 +14,7 @@ export async function GET(
     request: NextRequest,
     context: { params: Promise<{ params: string[] }> }
 ) {
-    const prodOrigin = "https://www.singingbowlvillagenepal.com";
+    const prodOrigin = process.env.SITE_ORIGIN;
 
     try {
         const routeParams = await context.params;

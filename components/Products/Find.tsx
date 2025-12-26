@@ -18,7 +18,7 @@ const Find = () => {
           </div>
           <div className="w-full lg:w-[50%] flex flex-col items-start justify-start text-start gap-4">
             <h2 className="text-[40px] font-semibold leading-tight">
-              Find the right product for your needs
+             Investment Pieces at Singing Bowl Village
             </h2>
             <p className="text-base text-gray-600">
               At Singing Bowl Village, we proudly present a curated collection of antique and investment-grade art pieces from families across Nepal. Each masterpiece reflects exceptional craftsmanship, timeless elegance, and rare cultural value, making it a must-have for discerning collectors and art enthusiasts. Explore our collection today and bring home a unique Himalayan treasure that elevates any collection

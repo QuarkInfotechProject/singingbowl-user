@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  title: "Singing Bowl Nepal - Mindfulness & Healing",
+  title: "Singing Bowl Village Nepal - Mindfulness & Healing",
   description:
     "Explore handcrafted singing bowls from Nepal. Enhance meditation, mindfulness, and healing with authentic Himalayan bowls.",
   keywords: [
@@ -30,13 +30,13 @@ export const metadata: Metadata = {
     "Healing",
     "Himalayan Bowls",
   ],
-  authors: [{ name: "Singing Bowl Nepal", url: "https://singingbowl.com" }],
+  authors: [{ name: "Singing Bowl Village Nepal", url: "https://www.singingbowlvillagenepal.com/" }],
   openGraph: {
-    title: "Singing Bowl Nepal - Mindfulness & Healing",
+    title: "Singing Bowl Village Nepal - Mindfulness & Healing",
     description:
       "Explore handcrafted singing bowls from Nepal. Enhance meditation, mindfulness, and healing with authentic Himalayan bowls.",
-    url: "https://singingbowl.com",
-    siteName: "Singing Bowl Nepal",
+    url: "https://singingbowlvillagenepal.com",
+    siteName: "Singing Bowl Village Nepal",
     images: [
       {
         url: "/images/og-image.jpg",

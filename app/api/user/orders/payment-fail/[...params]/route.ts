@@ -49,7 +49,7 @@ export async function GET(
         }
 
         // Return HTML that redirects the TOP window (breaks out of iframe)
-        const prodOrigin = "https://www.singingbowlvillagenepal.com";
+        const prodOrigin = process.env.SITE_ORIGIN;
         const errorUrl = `${prodOrigin}/checkout?error=payment_failed&orderId=${orderId}`;
         const errorHtml = `
             <!DOCTYPE html>
@@ -104,7 +104,7 @@ export async function GET(
         console.error("Payment fail callback error:", error.message);
 
         // Return HTML that redirects the TOP window (breaks out of iframe)
-        const prodOrigin = "https://www.singingbowlvillagenepal.com";
+        const prodOrigin = process.env.SITE_ORIGIN;
         const errorUrl = `${prodOrigin}/checkout?error=payment_failed`;
         const errorHtml = `
             <!DOCTYPE html>

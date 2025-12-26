@@ -319,5 +319,71 @@ export const fetchPurchases = async () => {
     }
 };
 
+// Fetch Reviews for home page
+export const fetchReviews = async () => {
+    try {
+        const response = await api.get("/user/reviews");
+        return response.data;
+    } catch (error) {
+        console.error("fetchReviews error:", error);
+        throw error;
+    }
+};
+
+// Fetch Product Specification (includes reviews) by slug
+export const fetchProductSpecification = async (slug: string) => {
+    try {
+        const response = await api.get(`/user/products/show/specification/${slug}`);
+        return response.data;
+    } catch (error) {
+        console.error("fetchProductSpecification error:", error);
+        throw error;
+    }
+};
+
+// Fetch Similar Products by slug
+export const fetchSimilarProducts = async (slug: string) => {
+    try {
+        const response = await api.get(`/user/products/show/similar/${slug}`);
+        return response.data;
+    } catch (error) {
+        console.error("fetchSimilarProducts error:", error);
+        throw error;
+    }
+};
+
+// Fetch Galleries
+export const fetchGalleries = async () => {
+    try {
+        const response = await api.get("/user/galleries");
+        return response.data;
+    } catch (error) {
+        console.error("fetchGalleries error:", error);
+        throw error;
+    }
+};
+
+// Fetch Best Sellers
+export const fetchBestSellers = async () => {
+    try {
+        const response = await api.get("/user/products/bestsellers");
+        return response.data;
+    } catch (error) {
+        console.error("fetchBestSellers error:", error);
+        throw error;
+    }
+};
+
+// Search Products
+export const searchProducts = async (query: string) => {
+    try {
+        const response = await api.get(`/user/search?q=${encodeURIComponent(query)}`);
+        return response.data;
+    } catch (error) {
+        console.error("searchProducts error:", error);
+        throw error;
+    }
+};
+
 export default api;
 

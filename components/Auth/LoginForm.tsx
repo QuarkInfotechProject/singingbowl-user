@@ -41,8 +41,9 @@ export const LoginForm = ({
     try {
       await onForgotPassword(forgotEmail);
       setForgotSuccess(true);
-    } catch (err) {
-      setForgotError("Failed to send reset email. Please try again.");
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || err?.message || "Failed to send reset email. Please try again.";
+      setForgotError(errorMessage);
     } finally {
       setForgotLoading(false);
     }

@@ -74,8 +74,9 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
 
             if (onClose) onClose();
             else router.push("/"); // fallback for standalone
-        } catch (err) {
-            setError("An error occurred. Please try again.");
+        } catch (err: any) {
+            const errorMessage = err?.response?.data?.message || err?.message || "An error occurred. Please try again.";
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -104,8 +105,9 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
             await authService.sendOTP(state.signupEmail);
             setSignupStep("details");
             setResendCountdown(60);
-        } catch (err) {
-            setError("Failed to send OTP. Please try again.");
+        } catch (err: any) {
+            const errorMessage = err?.response?.data?.message || err?.message || "Failed to send OTP. Please try again.";
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -117,8 +119,9 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
         try {
             await authService.resendOTP(state.signupEmail);
             setResendCountdown(60);
-        } catch (err) {
-            setError("Failed to resend OTP. Please try again.");
+        } catch (err: any) {
+            const errorMessage = err?.response?.data?.message || err?.message || "Failed to resend OTP. Please try again.";
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -156,8 +159,9 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
 
             if (onClose) onClose();
             else router.push("/");
-        } catch (err) {
-            setError("An error occurred. Please try again.");
+        } catch (err: any) {
+            const errorMessage = err?.response?.data?.message || err?.message || "An error occurred. Please try again.";
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

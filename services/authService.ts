@@ -61,6 +61,20 @@ export const authService = {
     }
   },
 
+  async resetPassword(token: string, password: string, confirmPassword: string): Promise<any> {
+    try {
+      const { data } = await axios.post("/api/user/reset-password", {
+        token,
+        password,
+        confirmPassword
+      });
+      return data;
+    } catch (error) {
+      console.error("resetPassword error:", error);
+      throw error;
+    }
+  },
+
   async googleSignIn(): Promise<void> {
     // Get the current URL to return to after authentication
     const returnUrl = typeof window !== "undefined" ? window.location.href : "/";

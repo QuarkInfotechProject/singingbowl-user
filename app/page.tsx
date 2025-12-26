@@ -3,6 +3,7 @@ import ProductFeatures from "@/components/Home/Features/ProductFeatures";
 import SingingBowlComponent from "@/components/Home/HandCrafted/index";
 import HeroSection from "@/components/Home/Hero/HeroSection";
 import ProductCollection from "@/components/Home/Product/ProductCollection";
+// import BestSellers from "@/components/Home/Product/BestSellers";
 import CustomerReviews from "@/components/Home/Reviews/CustomerReviews";
 import WhySingingBowl from "@/components/Home/Why";
 
@@ -14,6 +15,7 @@ const Home = () => {
         <div className="flex flex-col gap-8 md:gap-1 items-center">
           <ProductFeatures />
           <ProductCollection />
+          {/* <BestSellers /> */}
           <SingingBowlComponent />
           <WhySingingBowl />
           <CustomerReviews />

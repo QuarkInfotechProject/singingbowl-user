@@ -57,7 +57,7 @@ const Checkout = () => {
   const router = useRouter();
 
   // GetPay SDK URL - LIVE version
-  const GETPAY_SDK_URL = "https://minio.finpos.global/getpay-cdn/webcheckout/live/v2/bundle.js";
+  const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL;
 
   // Memoized message handler to prevent recreation on each render
   const handleMessage = useCallback((event: MessageEvent) => {

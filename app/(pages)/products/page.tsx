@@ -2,13 +2,13 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import ProductGrid from "@/components/Products/ProductGrid";
 import BreadCrumbs from "@/components/Products/Breadcrumbs";
 import CategoryCaraousel from "@/components/Products/Category/CategoryCaraousel";
 import Find from "@/components/Products/Find";
 import ProductSection, { CategoryData } from "@/components/Products/ProductInfo/ProductSection";
 import { fetchProductsByCategory, fetchCategories } from "@/lib/apiItems";
 import { ChevronDown } from "lucide-react";
+import BestSellers from "@/components/Home/Product/BestSellers";
 
 // Category filter sidebar component
 interface CategoryFilterProps {
@@ -236,11 +236,7 @@ const ProductContent = () => {
         </div>
 
         <Find />
-        <ProductGrid
-          title="Our Best Sellers"
-          products={bestSellers.slice(0, 5)}
-          showLoadMore={false}
-        />
+        <BestSellers />
       </div>
     </div>
   );

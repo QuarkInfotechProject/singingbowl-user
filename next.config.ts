@@ -16,6 +16,16 @@ const nextConfig: NextConfig = {
         hostname: 'api.singingbowlvillagenepal.com',
         pathname: '/modules/files/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'api.singingbowlvillagenepal.com',
+        pathname: '/modules/review/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.singingbowlvillagenepal.com',
+        pathname: '/modules/review/**',
+      },
     ],
   },
 };

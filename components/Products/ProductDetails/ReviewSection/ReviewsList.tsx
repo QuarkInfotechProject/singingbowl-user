@@ -1,18 +1,18 @@
-
 import ReviewItem from "./ReviewItem";
 
-interface Review {
-  id: string;
-  author: string;
-  avatar: string;
-  date: string;
+interface ProductReview {
+  reviewer: string;
+  profilePicture: string | null;
+  reviewedAt: string;
   rating: number;
-  content: string;
-  isOwnerReply?: boolean;
+  comment: string;
+  reply: string | null;
+  repliedAt: string | null;
+  images: string[];
 }
 
 interface ReviewsListProps {
-  reviews: Review[];
+  reviews: ProductReview[];
   isLoading?: boolean;
   isEmpty?: boolean;
 }
@@ -43,8 +43,8 @@ const ReviewsList = ({
   return (
     <section>
       <h2 className="sr-only">Customer Reviews</h2>
-      {reviews.map((review) => (
-        <ReviewItem key={review.id} review={review} />
+      {reviews.map((review, index) => (
+        <ReviewItem key={index} review={review} />
       ))}
     </section>
   );

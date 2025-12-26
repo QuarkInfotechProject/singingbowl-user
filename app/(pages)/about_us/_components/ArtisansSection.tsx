@@ -38,9 +38,8 @@ const ArtisansSection: React.FC<ArtisansSectionProps> = ({ artisans }) => (
           className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center"
         >
           <div
-            className={`relative h-[600px] rounded-lg overflow-hidden shadow-xl ${
-              idx % 2 !== 0 ? "md:order-last" : ""
-            }`}
+            className={`relative h-[600px] rounded-lg overflow-hidden shadow-xl ${idx % 2 !== 0 ? "md:order-last" : ""
+              }`}
           >
             <Image
               src={artisan.image}
@@ -63,7 +62,11 @@ const ArtisansSection: React.FC<ArtisansSectionProps> = ({ artisans }) => (
               <span className="absolute top-0 left-0 text-6xl text-amber-200 font-serif -z-10">
                 “
               </span>
-              {artisan.quote}
+              {artisan.quote.split('\n\n').map((paragraph, pIdx) => (
+                <p key={pIdx} className={pIdx > 0 ? 'mt-4' : ''}>
+                  {paragraph}
+                </p>
+              ))}
             </blockquote>
             {/* <p className="font-semibold text-stone-700">
               Specialty:{" "}

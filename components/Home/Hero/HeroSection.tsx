@@ -2,15 +2,15 @@ const HeroSection = () => {
   return (
     <div className="w-full items-center flex relative ">
       <div className="w-full relative overflow-hidden">
-       <video
-          src="https://singingbowlwebsite.oss-ap-southeast-1.aliyuncs.com/public/home.MP4?OSSAccessKeyId=LTAI5tBLcHS1BZEEJDorpqSF&Expires=1795078819&Signature=7jxAlg7szkK324GUK0IVCOs4Xc4%3D"
+        <video
+          src={process.env.NEXT_PUBLIC_HERO_VIDEO_URL}
           autoPlay
           loop
           muted
           playsInline
-          className="w-full h-[66vh] object-cover" 
+          className="w-full h-[66vh] object-cover"
         />
-      </div>    
+      </div>
     </div>
   );
 };

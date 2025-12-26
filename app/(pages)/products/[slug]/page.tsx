@@ -7,8 +7,11 @@ import DetailBreadCrumbs from "@/components/Products/ProductDetails/DetailBreadC
 import IconCard from "@/components/Products/ProductDetails/IconCard";
 import ProductHeroSection from "@/components/Products/ProductDetails/ProductHeroSection";
 import DetailsSection from "@/components/Products/ProductDetails/DetailsSection";
-import { fetchProductBySlug } from "@/lib/apiItems";
+import SimilarProductsGrid from "@/components/Products/SimilarProductsGrid";
+import { fetchProductBySlug, fetchSimilarProducts } from "@/lib/apiItems";
 import { ProductDetailSkeleton } from "@/components/ui/skeletons";
+import BlogGrid from "@/components/Home/Blogs/BlogGrid";
+import { SimilarProduct } from "@/components/Products/SimilarProductCard";
 
 // Product detail interface based on API response
 export interface ProductDetail {
@@ -39,6 +42,7 @@ const ProductDetail = () => {
   const slug = params.slug as string;
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [similarProducts, setSimilarProducts] = useState<SimilarProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +67,24 @@ const ProductDetail = () => {
     loadProduct();
   }, [slug]);
 
+  // Fetch similar products
+  useEffect(() => {
+    const loadSimilarProducts = async () => {
+      if (!slug) return;
+
+      try {
+        const response = await fetchSimilarProducts(slug);
+        if (response.data && response.data[0]?.relatedProducts) {
+          setSimilarProducts(response.data[0].relatedProducts);
+        }
+      } catch (err) {
+        console.error("Failed to load similar products", err);
+      }
+    };
+
+    loadSimilarProducts();
+  }, [slug]);
+
   if (loading) {
     return <ProductDetailSkeleton />;
   }
@@ -84,9 +106,16 @@ const ProductDetail = () => {
         </div>
         <IconCard specifications={product.specifications} />
         <div className="px-4 md:px-26 mx-auto w-full flex flex-col gap-12">
-          <ProductGrid title="You Might also like" products={product.relatedProducts || []} />
-          <DetailsSection description={product.description} additionalDescription={product.additionalDescription} />
-          <ProductGrid title="Recently Viewed" products={[]} />
+          <SimilarProductsGrid
+            title="You Might Also Like"
+            products={similarProducts}
+          />
+          <DetailsSection
+            description={product.description}
+            additionalDescription={product.additionalDescription}
+            slug={slug}
+          />
+          <BlogGrid />
         </div>
       </div>
     </div>

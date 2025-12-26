@@ -10,18 +10,18 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 const defaultSocialLinks = [
-  { name: "WhatsApp", href: "https://wa.me/+9779851352794" },
+  { name: "WhatsApp", href: process.env.NEXT_PUBLIC_WHATSAPP_URL || "https://wa.me/+9779851352794" },
   {
     name: "Instagram",
-    href: "https://www.instagram.com/singingbowlvillage/?igsh=MTkxcDY0YzNvbWQyNg%3D%3D&utm_source=qr",
+    href: process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://www.instagram.com/singingbowlvillage/?igsh=MTkxcDY0YzNvbWQyNg%3D%3D&utm_source=qr",
   },
   {
     name: "Facebook",
-    href: "https://www.facebook.com/people/Singing-Bowl/61550698021090/",
+    href: process.env.NEXT_PUBLIC_FACEBOOK_URL || "https://www.facebook.com/people/Singing-Bowl/61550698021090/",
   },
   {
     name: "YouTube",
-    href: "https://www.youtube.com/@singingbowlvillage",
+    href: process.env.NEXT_PUBLIC_YOUTUBE_URL || "https://www.youtube.com/@singingbowlvillage",
   },
 ];
 

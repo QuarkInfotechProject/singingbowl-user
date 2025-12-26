@@ -331,7 +331,7 @@ export default function ContactPage() {
         <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 ">
           <div className="bg-white rounded-2xl mt-20 overflow-hidden shadow-sm hover:shadow-md transition-shadow h-120">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3532.1629301011144!2d85.3112074!3d27.7122553!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb18fdca609831%3A0x3e2bc4d23b67c920!2sSinging%20Bowl%20Gallery%20%26%20Museum%20by%20Freedom%20Export!5e0!3m2!1sen!2snp!4v1763465522005!5m2!1sen!2snp"
+              src={process.env.NEXT_PUBLIC_GOOGLE_MAPS_GALLERY_URL}
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -343,7 +343,7 @@ export default function ContactPage() {
 
           <div className="bg-white rounded-2xl mt-20 overflow-hidden shadow-sm hover:shadow-md transition-shadow h-120">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d7064.321028700457!2d85.3096129!3d27.7123299!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb190fc5dffb3b%3A0xe3f6dadd18f9f5ba!2sSinging%20Bowl%20Village%20by%20Freedom%20Export!5e0!3m2!1sen!2snp!4v1763465399485!5m2!1sen!2snp"
+              src={process.env.NEXT_PUBLIC_GOOGLE_MAPS_VILLAGE_URL}
               width="100%"
               height="100%"
               style={{ border: 0 }}

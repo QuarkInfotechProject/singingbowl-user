@@ -37,7 +37,7 @@ const ProductFeatures = () => {
 
            <div>
              <h3 className="text-[#A12717] text-xl font-bold leading-tight sm:text-3xl md:text-4xl text-start lg:text-4xl">
-              SINGING BOWLS VILLAGE
+              SINGING BOWL VILLAGE
             </h3>
             <b>A Subsidiary of Freedom Expert</b>
            </div>
