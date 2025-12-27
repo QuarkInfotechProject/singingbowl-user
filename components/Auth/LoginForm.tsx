@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmailInput } from "./EmailInput";
 import { PasswordInput } from "./PasswordInput";
@@ -13,6 +15,7 @@ interface LoginFormProps {
   onSubmit: () => void;
   onGoogleSignIn: () => void;
   onForgotPassword: (email: string) => Promise<void>;
+  onEnterVerificationCode?: (email: string) => void;
 }
 
 export const LoginForm = ({
@@ -24,11 +27,13 @@ export const LoginForm = ({
   onSubmit,
   onGoogleSignIn,
   onForgotPassword,
+  onEnterVerificationCode,
 }: LoginFormProps) => {
+  const router = useRouter();
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
-  const [forgotSuccess, setForgotSuccess] = useState(false);
+
   const [forgotError, setForgotError] = useState("");
 
   const handleForgotSubmit = async () => {
@@ -40,7 +45,10 @@ export const LoginForm = ({
     setForgotLoading(true);
     try {
       await onForgotPassword(forgotEmail);
-      setForgotSuccess(true);
+      // Immediate transition
+      if (onEnterVerificationCode) {
+        onEnterVerificationCode(forgotEmail);
+      }
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || err?.message || "Failed to send reset email. Please try again.";
       setForgotError(errorMessage);
@@ -52,76 +60,64 @@ export const LoginForm = ({
   const handleBackToLogin = () => {
     setShowForgotPassword(false);
     setForgotEmail("");
-    setForgotSuccess(false);
     setForgotError("");
   };
 
   if (showForgotPassword) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
         <div className="text-center mb-4">
           <h3 className="text-lg font-semibold text-gray-800">Forgot Password</h3>
           <p className="text-sm text-gray-600 mt-1">
-            Enter your email to receive a password reset link
+            Enter your email to receive a verification code
           </p>
         </div>
 
-        {forgotSuccess ? (
-          <div className="text-center space-y-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-green-700 text-sm">
-                Password reset instructions have been sent to your email.
-              </p>
-            </div>
-            <Button
-              onClick={handleBackToLogin}
-              variant="outline"
-              className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              Back to Sign In
-            </Button>
+        {forgotError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <p className="text-red-700 text-sm">{forgotError}</p>
           </div>
-        ) : (
-          <>
-            {forgotError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-red-700 text-sm">{forgotError}</p>
-              </div>
-            )}
-
-            <EmailInput value={forgotEmail} onChange={setForgotEmail} />
-
-            <Button
-              onClick={handleForgotSubmit}
-              className="w-full bg-[#A12717] cursor-pointer hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 text-sm h-9"
-              disabled={forgotLoading}
-            >
-              {forgotLoading ? "Sending..." : "Send Reset Link"}
-            </Button>
-
-            <button
-              onClick={handleBackToLogin}
-              className="w-full text-sm text-gray-600 hover:text-[#A12717] transition-colors"
-            >
-              ← Back to Sign In
-            </button>
-          </>
         )}
+
+        <EmailInput value={forgotEmail} onChange={setForgotEmail} />
+
+        <Button
+          onClick={handleForgotSubmit}
+          className="w-full bg-[#A12717] cursor-pointer hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 text-sm h-9"
+          disabled={forgotLoading}
+        >
+          {forgotLoading ? "Sending..." : "Send Verification Code"}
+        </Button>
+
+        <button
+          onClick={handleBackToLogin}
+          className="w-full text-sm text-gray-600 hover:text-[#A12717] transition-colors"
+        >
+          ← Back to Sign In
+        </button>
       </div>
     );
   }
 
   return (
-    <>
-      <EmailInput value={email} onChange={onEmailChange} />
-      <PasswordInput
-        label="Password"
-        value={password}
-        onChange={onPasswordChange}
-        id="login-password"
-      />
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
+      className="space-y-0 animate-in fade-in slide-in-from-right-4 duration-300"
+    >
+      <div className="space-y-3">
+        <EmailInput value={email} onChange={onEmailChange} />
+        <PasswordInput
+          label="Password"
+          value={password}
+          onChange={onPasswordChange}
+          id="login-password"
+        />
+      </div>
 
-      <div className="flex justify-end mt-1">
+      <div className="flex justify-end mt-1 mb-3">
         <button
           type="button"
           onClick={() => setShowForgotPassword(true)}
@@ -132,8 +128,8 @@ export const LoginForm = ({
       </div>
 
       <Button
-        onClick={onSubmit}
-        className="w-full mt-3 bg-[#A12717] cursor-pointer hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 text-sm h-9"
+        type="submit"
+        className="w-full bg-[#A12717] cursor-pointer hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 text-sm h-9"
         disabled={loading}
       >
         {loading ? "Loading..." : "Sign In"}
@@ -148,6 +144,6 @@ export const LoginForm = ({
       </div>
 
       <GoogleSignIn loading={loading} onSignIn={onGoogleSignIn} />
-    </>
+    </form>
   );
 };

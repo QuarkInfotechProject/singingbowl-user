@@ -1,26 +1,40 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Package, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { fetchOrders } from "@/lib/apiItems";
 import { Order } from "./types";
 
-interface OrdersSectionProps {
-    orders: Order[];
-    ordersLoading: boolean;
-    ordersPage: number;
-    ordersTotalPages: number;
-    setOrdersPage: React.Dispatch<React.SetStateAction<number>>;
-}
+export default function OrdersSection() {
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [ordersLoading, setOrdersLoading] = useState(false);
+    const [ordersPage, setOrdersPage] = useState(1);
+    const [ordersTotalPages, setOrdersTotalPages] = useState(1);
 
-export default function OrdersSection({
-    orders,
-    ordersLoading,
-    ordersPage,
-    ordersTotalPages,
-    setOrdersPage,
-}: OrdersSectionProps) {
+    useEffect(() => {
+        loadOrders(ordersPage);
+    }, [ordersPage]);
+
+    const loadOrders = async (page: number = 1) => {
+        try {
+            setOrdersLoading(true);
+            const res = await fetchOrders(page);
+            if (res?.data?.data && Array.isArray(res.data.data)) {
+                setOrders(res.data.data);
+                setOrdersPage(res.data.current_page);
+                setOrdersTotalPages(res.data.last_page);
+            } else {
+                setOrders([]);
+            }
+        } catch (error) {
+            console.error("Failed to load orders", error);
+        } finally {
+            setOrdersLoading(false);
+        }
+    };
+
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">Orders</h1>
@@ -66,10 +80,10 @@ export default function OrdersSection({
                                 <span className="md:hidden text-gray-500">Status:</span>
                                 <span
                                     className={`px-2 py-1 rounded-full text-xs font-medium ${order.status === "Completed"
-                                            ? "bg-green-100 text-green-700"
-                                            : order.status === "Cancelled"
-                                                ? "bg-red-100 text-red-700"
-                                                : "bg-blue-100 text-blue-700"
+                                        ? "bg-green-100 text-green-700"
+                                        : order.status === "Cancelled"
+                                            ? "bg-red-100 text-red-700"
+                                            : "bg-blue-100 text-blue-700"
                                         }`}
                                 >
                                     {order.status}

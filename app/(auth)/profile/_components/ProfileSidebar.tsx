@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
     User,
     Package,
@@ -11,35 +11,64 @@ import {
     Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { fetchUserProfile } from "@/lib/apiItems";
 import { ActiveSection, ProfileFormData } from "./types";
 
 interface ProfileSidebarProps {
     activeSection: ActiveSection;
     setActiveSection: (section: ActiveSection) => void;
-    formData: ProfileFormData;
-    sidebarOpen: boolean;
-    setSidebarOpen: (open: boolean) => void;
+    onNavClick?: () => void; // Callback to close sheet on mobile
     onLogout: () => void;
 }
 
 export default function ProfileSidebar({
     activeSection,
     setActiveSection,
-    formData,
-    sidebarOpen,
-    setSidebarOpen,
+    onNavClick,
     onLogout,
 }: ProfileSidebarProps) {
+    const [formData, setFormData] = useState<ProfileFormData>({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        profilePicture: "",
+    });
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const res = await fetchUserProfile();
+                if (res?.data) {
+                    const { fullName, email, phone, profilePicture } = res.data;
+                    const nameParts = (fullName || "").split(" ");
+                    const firstName = nameParts[0] || "";
+                    const lastName = nameParts.slice(1).join(" ") || "";
+
+                    setFormData({
+                        firstName,
+                        lastName,
+                        email: email || "",
+                        phone: phone || "",
+                        profilePicture: profilePicture || "",
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to load profile in sidebar", error);
+            }
+        };
+        loadProfile();
+    }, []);
+
     const handleNavClick = (section: ActiveSection) => {
         setActiveSection(section);
-        setSidebarOpen(false);
+        if (onNavClick) {
+            onNavClick();
+        }
     };
 
     return (
-        <div
-            className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-                } fixed lg:relative lg:translate-x-0 z-30 w-64 h-full bg-white border-r border-gray-200 transition-transform duration-300 overflow-y-auto`}
-        >
+        <div className="w-full h-full bg-white border-r border-gray-200 overflow-y-auto">
             <div className="p-6">
                 {/* Profile Section */}
                 <div className="text-center mb-8">

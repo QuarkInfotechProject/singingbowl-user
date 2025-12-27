@@ -1,25 +1,50 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Heart, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import { fetchWishlist, removeFromWishlist } from "@/lib/apiItems";
 import { WishlistItem } from "./types";
 
-interface WishlistSectionProps {
-    wishlistItems: WishlistItem[];
-    wishlistLoading: boolean;
-    removingIds: string[];
-    onRemoveFromWishlist: (productId: string) => void;
-}
+export default function WishlistSection() {
+    const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+    const [wishlistLoading, setWishlistLoading] = useState(false);
+    const [removingIds, setRemovingIds] = useState<string[]>([]);
 
-export default function WishlistSection({
-    wishlistItems,
-    wishlistLoading,
-    removingIds,
-    onRemoveFromWishlist,
-}: WishlistSectionProps) {
+    useEffect(() => {
+        loadWishlist();
+    }, []);
+
+    const loadWishlist = async () => {
+        try {
+            setWishlistLoading(true);
+            const res = await fetchWishlist();
+            if (res?.data && Array.isArray(res.data)) {
+                setWishlistItems(res.data);
+            } else if (Array.isArray(res)) {
+                setWishlistItems(res);
+            }
+        } catch (error) {
+            console.error("Failed to load wishlist", error);
+        } finally {
+            setWishlistLoading(false);
+        }
+    };
+
+    const handleRemoveFromWishlist = async (productId: string) => {
+        try {
+            setRemovingIds((prev) => [...prev, productId]);
+            await removeFromWishlist(productId);
+            setWishlistItems((prev) => prev.filter((item) => item.uuid !== productId));
+        } catch (error) {
+            console.error("Failed to remove from wishlist", error);
+        } finally {
+            setRemovingIds((prev) => prev.filter((id) => id !== productId));
+        }
+    };
+
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">My Wishlist</h1>
@@ -73,7 +98,7 @@ export default function WishlistSection({
                                     )}
                                 </div>
                                 <Button
-                                    onClick={() => onRemoveFromWishlist(item.uuid)}
+                                    onClick={() => handleRemoveFromWishlist(item.uuid)}
                                     disabled={removingIds.includes(item.uuid)}
                                     variant="outline"
                                     className="w-full flex items-center justify-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"

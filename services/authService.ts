@@ -61,10 +61,11 @@ export const authService = {
     }
   },
 
-  async resetPassword(token: string, password: string, confirmPassword: string): Promise<any> {
+  async resetPassword(email: string, token: string, password: string, confirmPassword: string): Promise<any> {
     try {
       const { data } = await axios.post("/api/user/reset-password", {
-        token,
+        email,
+        OTP: token,
         password,
         confirmPassword
       });

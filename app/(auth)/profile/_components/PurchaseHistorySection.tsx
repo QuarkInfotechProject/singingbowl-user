@@ -1,23 +1,157 @@
 "use client";
 
-import React from "react";
-import { History, Loader2, Star, MessageSquare } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { History, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import Link from "next/link";
-import { PurchaseItem } from "./types";
+import { fetchPurchases } from "@/lib/apiItems";
+import { PurchaseItem, ReviewData } from "./types";
+import ReviewModal from "./ReviewModal";
+import PurchaseHistoryCard from "./PurchaseHistoryCard";
 
-interface PurchaseHistorySectionProps {
-    purchaseItems: PurchaseItem[];
-    purchaseLoading: boolean;
-    onOpenReviewModal: (purchase: PurchaseItem) => void;
-}
+export default function PurchaseHistorySection() {
+    const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
+    const [purchaseLoading, setPurchaseLoading] = useState(false);
 
-export default function PurchaseHistorySection({
-    purchaseItems,
-    purchaseLoading,
-    onOpenReviewModal,
-}: PurchaseHistorySectionProps) {
+    // Review Modal state
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [selectedPurchase, setSelectedPurchase] = useState<PurchaseItem | null>(null);
+    const [reviewData, setReviewData] = useState<ReviewData>({
+        rating: 0,
+        comment: "",
+    });
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const [hoveredRating, setHoveredRating] = useState(0);
+    const [reviewImages, setReviewImages] = useState<File[]>([]);
+    const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+    const [reviewError, setReviewError] = useState<string | null>(null);
+    const [reviewSuccess, setReviewSuccess] = useState(false);
+
+    useEffect(() => {
+        loadPurchases();
+    }, []);
+
+    const loadPurchases = async () => {
+        try {
+            setPurchaseLoading(true);
+            const res = await fetchPurchases();
+            if (res?.data && Array.isArray(res.data)) {
+                setPurchaseItems(res.data);
+            } else if (Array.isArray(res)) {
+                setPurchaseItems(res);
+            }
+        } catch (error) {
+            console.error("Failed to load purchases", error);
+        } finally {
+            setPurchaseLoading(false);
+        }
+    };
+
+    // Review modal functions
+    const openReviewModal = (purchase: PurchaseItem) => {
+        setSelectedPurchase(purchase);
+        setReviewData({ rating: 0, comment: "" });
+        setReviewImages([]);
+        setImagePreviewUrls([]);
+        setReviewError(null);
+        setReviewSuccess(false);
+        setShowReviewModal(true);
+    };
+
+    const closeReviewModal = () => {
+        setShowReviewModal(false);
+        setSelectedPurchase(null);
+        setReviewData({ rating: 0, comment: "" });
+        imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+        setReviewImages([]);
+        setImagePreviewUrls([]);
+        setReviewError(null);
+        setReviewSuccess(false);
+    };
+
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        const remainingSlots = 5 - reviewImages.length;
+        const filesToAdd: File[] = [];
+
+        for (const file of files.slice(0, remainingSlots)) {
+            if (file.size > 2 * 1024 * 1024) {
+                setReviewError("Each image must be less than 2MB");
+                continue;
+            }
+            filesToAdd.push(file);
+        }
+
+        if (filesToAdd.length > 0) {
+            const newUrls = filesToAdd.map((file) => URL.createObjectURL(file));
+            setReviewImages([...reviewImages, ...filesToAdd]);
+            setImagePreviewUrls([...imagePreviewUrls, ...newUrls]);
+            setReviewError(null);
+        }
+
+        e.target.value = "";
+    };
+
+    const handleRemoveImage = (index: number) => {
+        const newImages = [...reviewImages];
+        const newUrls = [...imagePreviewUrls];
+        URL.revokeObjectURL(newUrls[index]);
+        newImages.splice(index, 1);
+        newUrls.splice(index, 1);
+        setReviewImages(newImages);
+        setImagePreviewUrls(newUrls);
+    };
+
+    const handleSubmitReview = async () => {
+        if (!selectedPurchase) return;
+
+        if (reviewData.rating === 0) {
+            setReviewError("Please select a rating");
+            return;
+        }
+
+        try {
+            setReviewSubmitting(true);
+            setReviewError(null);
+
+            const formDataObj = new FormData();
+            formDataObj.append("productId", selectedPurchase.productId);
+            formDataObj.append("orderItemId", selectedPurchase.orderItemId.toString());
+            formDataObj.append("rating", reviewData.rating.toString());
+            formDataObj.append("comment", reviewData.comment);
+
+            reviewImages.forEach((image) => {
+                formDataObj.append("images[]", image);
+            });
+
+            const response = await fetch("/api/user/reviews/create", {
+                method: "POST",
+                body: formDataObj,
+            });
+
+            const result = await response.json();
+
+            if (response.ok && (result.code === 0 || result.success)) {
+                setReviewSuccess(true);
+                setPurchaseItems((prev) =>
+                    prev.map((item) =>
+                        item.orderItemId === selectedPurchase.orderItemId
+                            ? { ...item, isReviewed: true }
+                            : item
+                    )
+                );
+                setTimeout(() => closeReviewModal(), 2000);
+            } else {
+                setReviewError(result.error || result.message || "Failed to submit review");
+            }
+        } catch (error: any) {
+            console.error("Review submission failed", error);
+            setReviewError("Failed to submit review. Please try again.");
+        } finally {
+            setReviewSubmitting(false);
+        }
+    };
+
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">Purchase History</h1>
@@ -37,57 +171,34 @@ export default function PurchaseHistorySection({
                     </Link>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {purchaseItems.map((item) => (
-                        <div
+                        <PurchaseHistoryCard
                             key={item.orderItemId}
-                            className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-                        >
-                            <Link href={`/products/${item.slug}`}>
-                                <div className="aspect-square relative bg-gray-100">
-                                    <Image
-                                        src={item.baseImage || "/assets/images/product/1.jpg"}
-                                        alt={item.name}
-                                        fill
-                                        className="object-cover"
-                                    />
-                                </div>
-                            </Link>
-                            <div className="p-4">
-                                <Link href={`/products/${item.slug}`}>
-                                    <h3 className="font-semibold text-gray-900 mb-2 hover:text-blue-600 line-clamp-2">
-                                        {item.name}
-                                    </h3>
-                                </Link>
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-lg font-bold text-green-600">
-                                        ${item.unitPrice}
-                                    </span>
-                                    <span className="text-sm text-gray-500">Qty: {item.quantity}</span>
-                                </div>
-                                <div className="text-sm text-gray-600 mb-4">
-                                    Total: <span className="font-semibold">${item.lineTotal}</span>
-                                </div>
-
-                                {item.isReviewed ? (
-                                    <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
-                                        <Star size={16} className="fill-green-600" />
-                                        <span>Review Submitted</span>
-                                    </div>
-                                ) : (
-                                    <Button
-                                        onClick={() => onOpenReviewModal(item)}
-                                        className="w-full bg-[#A12717] text-white hover:bg-[#8a2113] flex items-center justify-center gap-2"
-                                    >
-                                        <MessageSquare size={16} />
-                                        Write Review
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
+                            item={item}
+                            onOpenReviewModal={openReviewModal}
+                        />
                     ))}
                 </div>
             )}
+
+            <ReviewModal
+                showReviewModal={showReviewModal}
+                selectedPurchase={selectedPurchase}
+                reviewData={reviewData}
+                setReviewData={setReviewData}
+                reviewImages={reviewImages}
+                imagePreviewUrls={imagePreviewUrls}
+                reviewError={reviewError}
+                reviewSuccess={reviewSuccess}
+                reviewSubmitting={reviewSubmitting}
+                hoveredRating={hoveredRating}
+                setHoveredRating={setHoveredRating}
+                onClose={closeReviewModal}
+                onSubmitReview={handleSubmitReview}
+                onImageSelect={handleImageSelect}
+                onRemoveImage={handleRemoveImage}
+            />
         </div>
     );
 }

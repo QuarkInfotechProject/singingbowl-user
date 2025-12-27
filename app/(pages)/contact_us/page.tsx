@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Socialmedia from "@/components/Socialmedia";
 import { toast } from "sonner";
+import CountryCodeDropdown from "@/components/ui/CountryCodeDropdown";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ export default function ContactPage() {
     subject: "",
     message: "",
   });
+  const [countryCode, setCountryCode] = useState("+977");
 
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,6 +49,9 @@ export default function ContactPage() {
 
     setIsSubmitting(true);
 
+    // Combine country code and phone number
+    const fullPhone = formData.contactNumber ? `${countryCode} ${formData.contactNumber}` : "";
+
     try {
       const response = await fetch("/api/user/general-support/create", {
         method: "POST",
@@ -56,7 +61,7 @@ export default function ContactPage() {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          phone: formData.contactNumber,
+          phone: fullPhone,
           subject: formData.subject,
           message: formData.message,
         }),
@@ -67,6 +72,7 @@ export default function ContactPage() {
       if (response.ok) {
         setSubmitted(true);
         setFormData({ name: "", email: "", contactNumber: "", subject: "", message: "" });
+        setCountryCode("+977");
         toast.success("Message sent successfully! We'll get back to you soon.");
         setTimeout(() => setSubmitted(false), 3000);
       } else {
@@ -191,7 +197,7 @@ export default function ContactPage() {
 
           {/* Right Column - Contact Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl p-10 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-2xl p-6 lg:p-10 shadow-sm hover:shadow-md transition-shadow">
               <h2 className="text-2xl font-light text-slate-900 mb-8">
                 Send us a Message
               </h2>
@@ -245,15 +251,22 @@ export default function ContactPage() {
                     >
                       Contact Number
                     </label>
-                    <input
-                      type="tel"
-                      id="contactNumber"
-                      name="contactNumber"
-                      value={formData.contactNumber}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#72479C] focus:border-transparent transition-all"
-                      placeholder="+977 9800000000"
-                    />
+                    <div className="flex">
+                      <CountryCodeDropdown
+                        value={countryCode}
+                        onChange={setCountryCode}
+                        className="[&_button]:rounded-r-none [&_button]:h-[50px]"
+                      />
+                      <input
+                        type="tel"
+                        id="contactNumber"
+                        name="contactNumber"
+                        value={formData.contactNumber}
+                        onChange={handleChange}
+                        className="flex-1 min-w-0 px-4 py-3 h-[50px] rounded-r-lg bg-slate-50 border border-slate-200 border-l-0 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-0 focus:border-[#72479C] transition-all"
+                        placeholder="98XXXXXXXX"
+                      />
+                    </div>
                   </div>
 
                   <div>

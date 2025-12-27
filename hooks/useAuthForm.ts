@@ -7,6 +7,7 @@ export interface AuthFormState {
   signupEmail: string;
   username: string;
   phone: string;
+  countryCode: string;
   password: string;
   confirmPassword: string;
   otp: string;
@@ -23,6 +24,7 @@ export const useAuthForm = () => {
     signupEmail: "",
     username: "",
     phone: "",
+    countryCode: "+977",
     password: "",
     confirmPassword: "",
     otp: "",
@@ -60,6 +62,7 @@ export const useAuthForm = () => {
       signupEmail: "",
       username: "",
       phone: "",
+      countryCode: "+977",
       password: "",
       confirmPassword: "",
       otp: "",

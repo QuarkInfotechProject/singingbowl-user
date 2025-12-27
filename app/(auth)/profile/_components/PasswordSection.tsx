@@ -1,23 +1,56 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { changeUserPassword } from "@/lib/apiItems";
 import { PasswordFormData } from "./types";
 
-interface PasswordSectionProps {
-    passwordData: PasswordFormData;
-    onPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onSavePassword: () => void;
-    passwordSaving: boolean;
-}
+export default function PasswordSection() {
+    const [passwordData, setPasswordData] = useState<PasswordFormData>({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+    });
+    const [passwordSaving, setPasswordSaving] = useState(false);
 
-export default function PasswordSection({
-    passwordData,
-    onPasswordChange,
-    onSavePassword,
-    passwordSaving,
-}: PasswordSectionProps) {
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+    };
+
+    const handleSavePassword = async () => {
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            toast.error("Passwords do not match!");
+            return;
+        }
+        if (!passwordData.currentPassword) {
+            toast.error("Please enter your current password");
+            return;
+        }
+
+        try {
+            setPasswordSaving(true);
+            const res = await changeUserPassword({
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword,
+                confirmPassword: passwordData.confirmPassword,
+            });
+
+            if (res.code === 0 || res.success) {
+                toast.success(res.message || "Password changed successfully!");
+                setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+            } else {
+                toast.error(res.message || "Failed to change password");
+            }
+        } catch (error: any) {
+            console.error("Password change failed", error);
+            toast.error(error?.response?.data?.message || "Failed to change password.");
+        } finally {
+            setPasswordSaving(false);
+        }
+    };
+
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">
@@ -32,7 +65,7 @@ export default function PasswordSection({
                         type="password"
                         name="currentPassword"
                         value={passwordData.currentPassword}
-                        onChange={onPasswordChange}
+                        onChange={handlePasswordChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                     />
                 </div>
@@ -44,7 +77,7 @@ export default function PasswordSection({
                         type="password"
                         name="newPassword"
                         value={passwordData.newPassword}
-                        onChange={onPasswordChange}
+                        onChange={handlePasswordChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                     />
                 </div>
@@ -56,12 +89,12 @@ export default function PasswordSection({
                         type="password"
                         name="confirmPassword"
                         value={passwordData.confirmPassword}
-                        onChange={onPasswordChange}
+                        onChange={handlePasswordChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                     />
                 </div>
                 <Button
-                    onClick={onSavePassword}
+                    onClick={handleSavePassword}
                     disabled={passwordSaving}
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
                 >

@@ -1,14 +1,18 @@
+"use client";
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EmailDisplay } from "./EmailDisplay";
 import { PasswordInput } from "./PasswordInput";
 import { OTPField } from "./OTPField";
+import CountryCodeDropdown from "@/components/ui/CountryCodeDropdown";
 
 interface SignupDetailsStepProps {
   email: string;
   username: string;
   phone: string;
+  countryCode: string;
   password: string;
   confirmPassword: string;
   otp: string;
@@ -16,6 +20,7 @@ interface SignupDetailsStepProps {
   resendCountdown: number;
   onUsernameChange: (value: string) => void;
   onPhoneChange: (value: string) => void;
+  onCountryCodeChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
   onOtpChange: (value: string) => void;
@@ -27,6 +32,7 @@ export const SignupDetailsStep = ({
   email,
   username,
   phone,
+  countryCode,
   password,
   confirmPassword,
   otp,
@@ -34,6 +40,7 @@ export const SignupDetailsStep = ({
   resendCountdown,
   onUsernameChange,
   onPhoneChange,
+  onCountryCodeChange,
   onPasswordChange,
   onConfirmPasswordChange,
   onOtpChange,
@@ -66,14 +73,21 @@ export const SignupDetailsStep = ({
           <Label htmlFor="phone" className="text-gray-700 font-medium text-sm">
             Phone
           </Label>
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="+977 9874563210"
-            value={phone}
-            onChange={(e) => onPhoneChange(e.target.value)}
-            className="bg-gray-50 border-gray-300 focus:border-amber-400 focus:ring-amber-300 rounded-lg placeholder:text-gray-400 text-gray-900 text-xs h-8"
-          />
+          <div className="flex">
+            <CountryCodeDropdown
+              value={countryCode}
+              onChange={onCountryCodeChange}
+              className="[&_button]:h-8 [&_button]:text-xs [&_button]:min-w-[80px] [&_button]:rounded-r-none"
+            />
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="98XXXXXXXX"
+              value={phone}
+              onChange={(e) => onPhoneChange(e.target.value)}
+              className="bg-gray-50 border-gray-300 border-l-0 focus:border-amber-400 focus:ring-0 rounded-l-none rounded-r-lg placeholder:text-gray-400 text-gray-900 text-xs h-8"
+            />
+          </div>
         </div>
 
         <PasswordInput

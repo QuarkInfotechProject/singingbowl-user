@@ -12,6 +12,8 @@ import { SignupEmailStep } from "./SignupEmailStep";
 import { SignupDetailsStep } from "./SignupDetailsStep";
 import { ModeSwitch } from "./ModeSwitch";
 
+import { ResetPasswordForm } from "./ResetPasswordForm";
+
 interface AuthContentProps {
     initialMode?: "login" | "signup";
     onClose?: () => void;
@@ -20,7 +22,8 @@ interface AuthContentProps {
 
 export const AuthContent = ({ initialMode = "login", onClose, isModal = false }: AuthContentProps) => {
     const router = useRouter();
-    const [isLogin, setIsLogin] = useState(initialMode === "login");
+    const [mode, setMode] = useState<"login" | "signup" | "reset-password">(initialMode);
+    const [resetEmail, setResetEmail] = useState("");
 
     const {
         state,
@@ -33,25 +36,18 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
     } = useAuthForm();
 
     useEffect(() => {
-
         if (initialMode) {
-            setIsLogin(initialMode === "login");
+            setMode(initialMode);
         }
     }, [initialMode]);
 
-    const handleModeSwitch = (mode: "login" | "signup") => {
-        setIsLogin(mode === "login");
+    const handleModeSwitch = (newMode: "login" | "signup" | "reset-password") => {
+        setMode(newMode);
         resetForm();
 
-        // If not a modal (standalone page), we might want to actually navigate?
-        // But for intercepting routes, switching mode inside the modal is often preferred to keep the background the same.
-        // However, if we want to update URL:
-        if (isModal) {
-            // logic for modal switching if we want to change URL
-            // For now, let's just switch state locally to be smooth
-        } else {
-            // If standalone, navigate to the other page
-            router.push(`/${mode}`);
+        // Only update URL for main login/signup switches if standalone
+        if (!isModal && (newMode === "login" || newMode === "signup")) {
+            router.push(`/${newMode}`);
         }
     };
 
@@ -75,7 +71,7 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
             if (onClose) onClose();
             else router.push("/"); // fallback for standalone
         } catch (err: any) {
-            const errorMessage = err?.response?.data?.message || err?.message || "An error occurred. Please try again.";
+            const errorMessage = err?.response?.data?.error || err?.response?.data?.message || err?.message || "An error occurred. Please try again.";
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -106,7 +102,7 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
             setSignupStep("details");
             setResendCountdown(60);
         } catch (err: any) {
-            const errorMessage = err?.response?.data?.message || err?.message || "Failed to send OTP. Please try again.";
+            const errorMessage = err?.response?.data?.error || err?.response?.data?.message || err?.message || "Failed to send OTP. Please try again.";
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -120,7 +116,7 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
             await authService.resendOTP(state.signupEmail);
             setResendCountdown(60);
         } catch (err: any) {
-            const errorMessage = err?.response?.data?.message || err?.message || "Failed to resend OTP. Please try again.";
+            const errorMessage = err?.response?.data?.error || err?.response?.data?.message || err?.message || "Failed to resend OTP. Please try again.";
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -145,10 +141,12 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
         }
         setLoading(true);
         try {
+            // Combine country code and phone number
+            const fullPhone = `${state.countryCode} ${state.phone}`;
             const response = await authService.signup({
                 email: state.signupEmail,
                 username: state.username,
-                phone: state.phone,
+                phone: fullPhone,
                 password: state.password,
                 otp: state.otp,
             });
@@ -160,7 +158,7 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
             if (onClose) onClose();
             else router.push("/");
         } catch (err: any) {
-            const errorMessage = err?.response?.data?.message || err?.message || "An error occurred. Please try again.";
+            const errorMessage = err?.response?.data?.error || err?.response?.data?.message || err?.message || "An error occurred. Please try again.";
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -172,12 +170,15 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
             <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full opacity-30 blur-3xl" />
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-orange-100 to-amber-100 rounded-full opacity-30 blur-3xl" />
 
-            <AuthHeader isLogin={isLogin} />
+            {/* Only show AuthHeader for login/signup */}
+            {(mode === "login" || mode === "signup") && (
+                <AuthHeader isLogin={mode === "login"} />
+            )}
 
             <div className="relative z-10 space-y-4 px-6 py-6">
-                <ErrorAlert message={state.error} />
+                {mode !== "reset-password" && <ErrorAlert message={state.error} />}
 
-                {isLogin ? (
+                {mode === "login" ? (
                     <LoginForm
                         email={state.loginEmail}
                         password={state.loginPassword}
@@ -191,8 +192,12 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
                         onForgotPassword={async (email: string) => {
                             await authService.forgotPassword(email);
                         }}
+                        onEnterVerificationCode={(email) => {
+                            setResetEmail(email);
+                            handleModeSwitch("reset-password");
+                        }}
                     />
-                ) : (
+                ) : mode === "signup" ? (
                     <>
                         {state.signupStep === "email" ? (
                             <SignupEmailStep
@@ -206,6 +211,7 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
                                 email={state.signupEmail}
                                 username={state.username}
                                 phone={state.phone}
+                                countryCode={state.countryCode}
                                 password={state.password}
                                 confirmPassword={state.confirmPassword}
                                 otp={state.otp}
@@ -213,6 +219,7 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
                                 resendCountdown={state.resendCountdown}
                                 onUsernameChange={(value) => updateField("username", value)}
                                 onPhoneChange={(value) => updateField("phone", value)}
+                                onCountryCodeChange={(value) => updateField("countryCode", value)}
                                 onPasswordChange={(value) => updateField("password", value)}
                                 onConfirmPasswordChange={(value) =>
                                     updateField("confirmPassword", value)
@@ -223,9 +230,16 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
                             />
                         )}
                     </>
+                ) : (
+                    <ResetPasswordForm
+                        email={resetEmail}
+                        onBackToLogin={() => handleModeSwitch("login")}
+                    />
                 )}
 
-                <ModeSwitch isLogin={isLogin} onSwitch={handleModeSwitch} />
+                {(mode === "login" || mode === "signup") && (
+                    <ModeSwitch isLogin={mode === "login"} onSwitch={() => handleModeSwitch(mode === "login" ? "signup" : "login")} />
+                )}
             </div>
         </div>
     );
