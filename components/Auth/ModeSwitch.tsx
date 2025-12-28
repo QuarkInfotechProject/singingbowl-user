@@ -7,7 +7,7 @@ interface ModeSwitchProps {
 
 export const ModeSwitch = ({ isLogin, onSwitch }: ModeSwitchProps) => {
   return (
-    <div className="text-center text-xs mt-4">
+    <div className="text-center text-xs mt-2">
       <p className="text-gray-700">
         {isLogin ? "Don't have an account? " : "Already have an account? "}
         <Button variant="outline"

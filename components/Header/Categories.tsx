@@ -64,7 +64,7 @@ const Categories = () => {
         onTouchStart={() => setIsPaused(true)}
         onTouchEnd={() => setIsPaused(false)}
       >
-        {[...categories, ...categories, ...categories, ...categories].map(
+        {[...categories, ...categories].map(
           (category, index) => (
             <Button
               key={`${category.id}-${index}`}
@@ -98,7 +98,7 @@ const Categories = () => {
             transform: translateX(0);
           }
           100% {
-            transform: translateX(-25%);
+            transform: translateX(-50%);
           }
         }
       `}</style>

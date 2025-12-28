@@ -167,15 +167,12 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
 
     return (
         <div className="relative">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full opacity-30 blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-orange-100 to-amber-100 rounded-full opacity-30 blur-3xl" />
-
             {/* Only show AuthHeader for login/signup */}
             {(mode === "login" || mode === "signup") && (
                 <AuthHeader isLogin={mode === "login"} />
             )}
 
-            <div className="relative z-10 space-y-4 px-6 py-6">
+            <div className="relative z-10 space-y-2 px-6 py-4">
                 {mode !== "reset-password" && <ErrorAlert message={state.error} />}
 
                 {mode === "login" ? (

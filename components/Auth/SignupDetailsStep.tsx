@@ -47,11 +47,18 @@ export const SignupDetailsStep = ({
   onResendOTP,
   onSubmit,
 }: SignupDetailsStepProps) => {
+  const handlePhoneInput = (value: string) => {
+    // Only allow numbers
+    const numbersOnly = value.replace(/\D/g, '');
+    onPhoneChange(numbersOnly);
+  };
+
   return (
     <>
       <EmailDisplay email={email} />
 
-      <div className="grid grid-cols-2 gap-3">
+      {/* Grid 1: Username and Phone */}
+      <div className="grid grid-cols-1 gap-3">
         <div className="space-y-2">
           <Label
             htmlFor="username"
@@ -73,23 +80,28 @@ export const SignupDetailsStep = ({
           <Label htmlFor="phone" className="text-gray-700 font-medium text-sm">
             Phone
           </Label>
-          <div className="flex">
+          <div className="flex gap-1">
             <CountryCodeDropdown
               value={countryCode}
               onChange={onCountryCodeChange}
-              className="[&_button]:h-8 [&_button]:text-xs [&_button]:min-w-[80px] [&_button]:rounded-r-none"
+              className="[&_button]:h-8 [&_button]:text-xs [&_button]:min-w-[80px] [&_button]:rounded-lg flex-shrink-0"
             />
             <Input
               id="phone"
-              type="tel"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               placeholder="98XXXXXXXX"
               value={phone}
-              onChange={(e) => onPhoneChange(e.target.value)}
-              className="bg-gray-50 border-gray-300 border-l-0 focus:border-amber-400 focus:ring-0 rounded-l-none rounded-r-lg placeholder:text-gray-400 text-gray-900 text-xs h-8"
+              onChange={(e) => handlePhoneInput(e.target.value)}
+              className="bg-gray-50 border-gray-300 focus:border-amber-400 focus:ring-amber-300 rounded-lg placeholder:text-gray-400 text-gray-900 text-xs h-8 flex-1"
             />
           </div>
         </div>
+      </div>
 
+      {/* Grid 2: Password fields and OTP */}
+      <div className="grid grid-cols-2 gap-3">
         <PasswordInput
           label="Password"
           value={password}
@@ -115,7 +127,7 @@ export const SignupDetailsStep = ({
 
       <Button
         onClick={onSubmit}
-        className="w-full mt-4 bg-[#A12717] cursor-pointer text-white font-semibold py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 text-sm h-9"
+        className="w-full mt-3 bg-[#A12717] cursor-pointer text-white font-semibold py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 text-sm h-9"
         disabled={loading}
       >
         {loading ? "Creating..." : "Create Account"}
