@@ -236,21 +236,14 @@ const Search = () => {
         )}
       </div>
 
-      {/* Mobile Search Bar - Click anywhere opens dialog */}
-      <div
+      {/* Mobile Search Icon - Opens dialog */}
+      <button
         onClick={() => setOpen(true)}
-        className="md:hidden flex items-center border border-gray-300 rounded-xl overflow-visible w-[80px] flex-1 cursor-pointer"
+        className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        aria-label="Search"
       >
-        <input
-          type="text"
-          placeholder="Search..."
-          className="flex-grow px-3 py-2 outline-none text-gray-700 text-sm pointer-events-none w-full"
-          readOnly
-        />
-        <div className="bg-black text-white px-3 py-2 flex items-center justify-center flex-shrink-0 rounded-r-xl">
-          <SearchIcon className="text-white" style={{ fontSize: "20px" }} />
-        </div>
-      </div>
+        <SearchIcon className="text-black" style={{ fontSize: "24px" }} />
+      </button>
 
       {/* Search Dialog (Mobile) */}
       <Dialog open={open} onOpenChange={setOpen}>

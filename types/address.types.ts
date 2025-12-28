@@ -29,7 +29,7 @@ export interface AddressFormData {
     lastName: string;
     email: string;
     mobile: string;
-    backupMobile?: string;
+    backupMobile: string;
     addressLine1: string;
     addressLine2?: string;
     postalCode: string;
@@ -41,10 +41,10 @@ export interface AddressFormData {
     countryId: string;
     countryCode: string;
     countryName: string;
-    provinceId: string;
+    provinceId?: string;
     provinceName: string;
-    cityId: string;
+    cityId?: string;
     cityName: string;
-    zoneId: string;
+    zoneId?: string;
     zoneName: string;
 }

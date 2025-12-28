@@ -11,7 +11,7 @@ const ImageGallery = ({
   discount,
 }: ImageGalleryProps) => {
   return (
-    <div className="grid grid-cols-1  gap-2 h-full">
+    <div className="grid grid-cols-1 gap-2 h-full">
       {/* Main large image */}
       <div className="rounded-lg overflow-hidden">
         <FeaturedImage
@@ -21,8 +21,8 @@ const ImageGallery = ({
         />
       </div>
 
-      {/* Right column with smaller images */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 h-full">
+      {/* Right column with smaller images - Hidden on mobile */}
+      <div className="hidden lg:grid grid-cols-1 md:grid-cols-2 gap-2 h-full">
         <div className="rounded-lg overflow-hidden">
           <SecondaryImage src={images[1]} alt="Singing Bowl detail" />
         </div>

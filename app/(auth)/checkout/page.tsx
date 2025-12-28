@@ -536,7 +536,9 @@ const Checkout = () => {
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">{shippingType || "Shipping"}</span>
+                    <span className="text-slate-600"><span>Standard shipping rate from Nepal</span>
+                      </span>
+                      <span className="font-medium"></span>
                     <span className="font-medium text-slate-900">{shippingCharge === 0 ? "Free" : `$${shippingCharge.toFixed(2)}`}</span>
                   </div>
                 </div>

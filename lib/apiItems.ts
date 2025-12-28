@@ -353,9 +353,9 @@ export const fetchSimilarProducts = async (slug: string) => {
 };
 
 // Fetch Galleries
-export const fetchGalleries = async () => {
+export const fetchGalleries = async (page: number = 1) => {
     try {
-        const response = await api.get("/user/galleries");
+        const response = await api.get(`/user/galleries?page=${page}`);
         return response.data;
     } catch (error) {
         console.error("fetchGalleries error:", error);

@@ -281,7 +281,7 @@ const Cart = () => {
                     <div className="flex justify-between text-slate-600">
                       <span className="flex items-center gap-1">
                         <Truck className="w-4 h-4" />
-                        {shippingType || 'Shipping'}
+                        <span>Standard shipping rate from Nepal</span>
                       </span>
                       <span className="font-medium">
                         {shippingCharge === 0 ? (

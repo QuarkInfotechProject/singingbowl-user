@@ -70,21 +70,21 @@ export default function ProductCollection() {
           {categories.map((category) => (
             <CarouselItem
               key={category.id}
-              className="basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5 pl-4"
+              className="basis-2/5 md:basis-1/3 lg:basis-1/4 xl:basis-1/5 pl-4"
             >
               <Link
                 href={`/products?category=${category.slug}`}
                 className="group block"
               >
                 <div className="flex justify-center mb-3">
-                  <div className="relative aspect-square w-full max-w-[150px] md:max-w-[160px] lg:max-w-[180px] overflow-hidden rounded-full bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 transition-all duration-300 group-hover:shadow-lg group-hover:border-[#A12717]/30 group-hover:scale-[1.02]">
+                  <div className="relative aspect-square w-full max-w-[120px] md:max-w-[160px] lg:max-w-[180px] overflow-hidden rounded-full bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 transition-all duration-300 group-hover:shadow-lg group-hover:border-[#A12717]/30 group-hover:scale-[1.02]">
                     {category.logo ? (
                       <Image
                         src={category.logo}
                         alt={category.name}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-110"
-                        sizes="(max-width: 640px) 150px, (max-width: 768px) 160px, 180px"
+                        sizes="(max-width: 640px) 120px, (max-width: 768px) 160px, 180px"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#A12717]/5 to-[#A12717]/15">

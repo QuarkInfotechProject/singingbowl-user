@@ -14,7 +14,8 @@ const Middlebar = () => {
 
   return (
     <div className="w-full px-2 md:px-20 mx-auto mb-2">
-      <div className="flex items-center gap-4 md:justify-between ">
+      <div className="flex items-center justify-between">
+        {/* Logo on the left */}
         <Link href="/">
           <Image
             src="/assets/images/logo/logo.png"
@@ -23,20 +24,30 @@ const Middlebar = () => {
             height={50}
           />
         </Link>
-        <Search />
-        <div className="flex items-center gap-4">
+
+        {/* Search (desktop) - centered */}
+        <div className="hidden md:block flex-1 max-w-3xl mx-8">
+          <Search />
+        </div>
+
+        {/* Search, Profile, and Cart grouped together on the right */}
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Mobile Search Icon */}
+          <div className="md:hidden">
+            <Search />
+          </div>
+
+          {/* Profile/Login */}
           {isLoggedIn ? (
-            <div className="flex items-center gap-4">
-              <Link href="/profile">
-                <Button
-                  variant="ghost"
-                  className="flex items-center gap-2 hover:opacity-70 text-black cursor-pointer bg-transparent hover:bg-transparent border-none p-0 transition"
-                >
-                  <PersonOutlineOutlinedIcon />
-                  <p className="hidden sm:inline">{user?.name || "User"}</p>
-                </Button>
-              </Link>
-            </div>
+            <Link href="/profile">
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2 hover:opacity-70 text-black cursor-pointer bg-transparent hover:bg-transparent border-none p-0 transition"
+              >
+                <PersonOutlineOutlinedIcon />
+                <p className="hidden sm:inline">{user?.name || "User"}</p>
+              </Button>
+            </Link>
           ) : (
             <Link href="/login">
               <Button
@@ -48,6 +59,8 @@ const Middlebar = () => {
               </Button>
             </Link>
           )}
+
+          {/* Cart */}
           <Cart />
         </div>
       </div>

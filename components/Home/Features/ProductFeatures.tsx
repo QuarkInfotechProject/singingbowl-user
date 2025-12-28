@@ -13,16 +13,9 @@ const productData = {
 const ProductFeatures = () => {
   return (
     <div className="w-full">
-      {/* Title - Visible on all screens */}
-      {/* <div className="mb-8 lg:mb-0">
-        <h2 className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-black text-center lg:hidden tracking-tight">
-          <SectionTitle title="Product Features" />
-        </h2>
-      </div> */}
-
       <div className="flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-20 items-center justify-start">
-        {/* Image Section */}
-        <div className="w-full lg:w-2/5 flex justify-start lg:justify-start">
+        {/* Image Section - Desktop only */}
+        <div className="hidden lg:block w-full lg:w-2/5 flex justify-start lg:justify-start">
           <Image
             src={productData.image.src}
             alt={productData.image.alt}
@@ -33,25 +26,35 @@ const ProductFeatures = () => {
 
         {/* Content Section */}
         <div className="w-full lg:w-3/5 flex flex-col gap-6 sm:gap-8 px-2 sm:px-6 lg:px-0 py-8 lg:pr-20">
-          <div className="text-center lg:text-left flex flex-col gap-6 sm:gap-8">
-
-           <div>
-             <h3 className="text-[#A12717] text-xl font-bold leading-tight sm:text-3xl md:text-4xl text-start lg:text-4xl">
-              SINGING BOWL VILLAGE
-            </h3>
-            <b>A Subsidiary of Freedom Expert</b>
-           </div>
+          {/* Titles aligned together */}
+          <div className="text-center lg:text-left flex flex-col gap-3 sm:gap-4">
+            <div>
+              <h3 className="text-[#A12717] text-xl font-bold leading-tight sm:text-3xl md:text-4xl text-center md:text-start lg:text-4xl">
+                SINGING BOWL VILLAGE
+              </h3>
+              <b>A Subsidiary of Freedom Expert</b>
+            </div>
             <p className="text-lg font-bold text-gray-800 leading-tight">
-
               <span className="text-[#A12717]">
                 {productData.highlightedText}
               </span>
-              <br />
             </p>
           </div>
 
-          <div className="flex flex-col gap-6 sm:gap-8 w-full text-justify">
-            <p className="w-full text-base sm:text-lg text-gray-600 leading-relaxed px-2 sm:px-0">
+          {/* Image between title and text - Mobile only */}
+          <div className="lg:hidden flex justify-center my-4">
+            <Image
+              src={productData.image.src}
+              alt={productData.image.alt}
+              width={250}
+              height={200}
+              className="w-full max-w-[200px] h-auto object-contain"
+            />
+          </div>
+
+          {/* Description text */}
+          <div className="flex flex-col gap-6 sm:gap-8 w-full">
+            <p className="w-full text-base sm:text-lg text-gray-600 leading-relaxed px-4 lg:px-0 text-justify">
               What if your greatest healing came not from a pill, but from a
               frequency? Welcome to the future of wellness, where ancient sonic
               wisdom meets modern science.

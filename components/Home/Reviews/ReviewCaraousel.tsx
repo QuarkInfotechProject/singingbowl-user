@@ -121,8 +121,8 @@ const ReviewCarousel = () => {
         </CarouselContent>
 
         <div className="flex gap-3 sm:gap-5 justify-center mt-8 relative w-full">
-          <CarouselPrevious className="static bg-[#A12717] rounded-lg text-white w-10 h-10 border-0 hover:bg-[#8A1F0E] hover:text-white cursor-pointer" />
-          <CarouselNext className="static bg-[#A12717] rounded-lg text-white w-10 h-10 border-0 hover:bg-[#8A1F0E] hover:text-white cursor-pointer" />
+          <CarouselPrevious className="static bg-[#A12717] rounded-lg text-xl text-white w-8 h-8 border-0 hover:bg-[#8A1F0E] hover:text-white cursor-pointer" />
+          <CarouselNext className="static bg-[#A12717] rounded-lg text-xl text-white w-8 h-8 border-0 hover:bg-[#8A1F0E] hover:text-white cursor-pointer" />
         </div>
       </Carousel>
     </div>

@@ -11,12 +11,12 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   buttonText,
 }) => {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 lg:px-0">
       <div>
         <h1 className="text-lg md:text-2xl font-bold text-gray-900 mb-6">
           {title}
         </h1>
-        <p className="text-gray-700 text-md leading-relaxed">{description}</p>
+        <p className="text-gray-700 text-md leading-relaxed text-justify">{description}</p>
       </div>
 
       <div className="space-y-4">

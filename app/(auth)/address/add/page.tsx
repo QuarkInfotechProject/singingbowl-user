@@ -22,14 +22,11 @@ const initialFormData: AddressFormData = {
     deliveryInstructions: "",
     isDefault: true,
     label: "Home",
-    countryId: "1",
+    countryId: "",
     countryCode: "NP",
     countryName: "Nepal",
-    provinceId: "1",
     provinceName: "",
-    cityId: "1",
     cityName: "",
-    zoneId: "1",
     zoneName: "",
 };
 
@@ -84,6 +81,7 @@ function AddAddressContent() {
         if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
         if (!formData.email.trim()) newErrors.email = "Email is required";
         if (!formData.mobile.trim()) newErrors.mobile = "Mobile number is required";
+        if (!formData.backupMobile.trim()) newErrors.backupMobile = "Backup mobile is required";
         if (!formData.addressLine1.trim()) newErrors.addressLine1 = "Address is required";
         if (!formData.postalCode.trim()) newErrors.postalCode = "Postal code is required";
 
@@ -98,7 +96,17 @@ function AddAddressContent() {
 
         try {
             setSaving(true);
-            await addAddress(formData);
+
+            // Prepare payload - convert country code to ID
+            const payload = {
+                ...formData,
+                countryId: formData.countryCode === "NP" ? "1" : "1", // Nepal has ID 1 in backend
+                provinceId: "1", // Default for now - backend should handle this
+                cityId: "1", // Default for now - backend should handle this
+                zoneId: "1", // Default for now - backend should handle this
+            };
+
+            await addAddress(payload);
             toast.success("Address added successfully!");
             router.push(redirect);
         } catch (error: any) {
@@ -228,7 +236,7 @@ function AddAddressContent() {
                         {/* Backup Mobile */}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Backup Mobile (Optional)
+                                Backup Mobile *
                             </label>
                             <input
                                 type="tel"

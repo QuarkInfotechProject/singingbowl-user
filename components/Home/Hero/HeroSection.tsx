@@ -8,6 +8,8 @@ const HeroSection = () => {
           loop
           muted
           playsInline
+          controls={false}
+          preload="auto"
           className="w-full h-[66vh] object-cover"
         />
       </div>

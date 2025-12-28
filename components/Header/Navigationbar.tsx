@@ -21,7 +21,7 @@ const NavigationBar = () => {
   const activeTab = navItems.find((item) => item.href === pathname)?.name;
 
   return (
-    <nav className="w-full bg-white">
+    <nav className="w-full bg-white hidden lg:flex">
       <div className="w-full lg:max-w-7xl mx-auto px-4">
         {/* Scrollable container for mobile, centered flex for desktop */}
         <div className="h-12 overflow-x-auto lg:overflow-x-visible scrollbar-hide">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Header/Navbar";
+import MobileBottomNav from "@/components/Header/MobileBottomNav";
 import { Inter } from "next/font/google";
 import { Providers } from "./providers";
 import Footer from "@/components/Footer/Footer";
@@ -62,12 +63,15 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode; auth: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${inter.variable} antialiased pb-0 lg:pb-0`}>
         <Providers>
           <Toaster richColors position="top-right" />
           <Navbar />
-          {children}
-          {auth}
+          <MobileBottomNav />
+          <div className="pb-16 lg:pb-0">
+            {children}
+            {auth}
+          </div>
           <Footer />
         </Providers>
       </body>
