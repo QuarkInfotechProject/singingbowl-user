@@ -138,7 +138,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         <div className="space-y-3">
           {product.description ? (
             <div
-              className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
+              className="text-gray-700 leading-relaxed prose prose-sm max-w-none line-clamp-7"
               dangerouslySetInnerHTML={{ __html: product.description }}
             />
           ) : (
