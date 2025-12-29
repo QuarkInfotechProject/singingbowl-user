@@ -11,7 +11,7 @@ interface ProductDetailsPageProps {
 
 export default function ProductDetailsPage({ description, additionalDescription }: ProductDetailsPageProps) {
   return (
-    <div className="w-full md:max-w-4xl mx-auto p-6 bg-gradient-to-b from-white to-gray-50 h-auto md:min-h-screen">
+    <div className="w-full md:max-w-4xl mx-auto p-6 bg-gradient-to-b from-white to-gray-50 ">
       <Header />
 
       <TabNavigation>

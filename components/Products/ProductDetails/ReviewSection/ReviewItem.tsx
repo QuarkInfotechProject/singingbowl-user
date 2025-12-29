@@ -107,7 +107,7 @@ const ReviewItem = ({ review }: ReviewItemProps) => {
               <div className="mt-4 ml-4 pl-4 border-l-2 border-purple-200 bg-purple-50 p-4 rounded-r-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="bg-purple-600 text-white text-xs px-2 py-0.5 rounded font-medium">
-                    Owner
+                    Singing Bowl Village Nepal
                   </span>
                   {review.repliedAt && (
                     <span className="text-sm text-gray-500">

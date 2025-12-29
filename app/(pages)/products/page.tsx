@@ -9,15 +9,21 @@ import ProductSection, { CategoryData } from "@/components/Products/ProductInfo/
 import { fetchProductsByCategory, fetchCategories } from "@/lib/apiItems";
 import { ChevronDown } from "lucide-react";
 import BestSellers from "@/components/Home/Product/BestSellers";
+import { FilterSectionSkeleton, ProductListSkeleton } from "@/components/ui/skeletons";
 
 // Category filter sidebar component
 interface CategoryFilterProps {
   categories: CategoryData[];
   selectedCategoryId: number | string | undefined;
   onCategorySelect: (category: CategoryData | undefined) => void;
+  isLoading?: boolean;
 }
 
-const CategoryFilter = ({ categories, selectedCategoryId, onCategorySelect }: CategoryFilterProps) => {
+const CategoryFilter = ({ categories, selectedCategoryId, onCategorySelect, isLoading }: CategoryFilterProps) => {
+  if (isLoading) {
+    return <FilterSectionSkeleton />;
+  }
+
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
@@ -204,7 +210,7 @@ const ProductContent = () => {
   const productsToDisplay = selectedCategory?.products || categories.flatMap((cat) => cat.products || []);
 
   return (
-    <div className="px-4 md:px-26 mx-auto w-full">
+    <div className="px-4 md:px-8 xl:px-12 max-w-[1440px] mx-auto w-full">
       <div className="w-full flex flex-col gap-12 py-6">
         <BreadCrumbs />
 
@@ -222,6 +228,7 @@ const ProductContent = () => {
               categories={categories}
               selectedCategoryId={selectedCategory?.id}
               onCategorySelect={handleSelectCategory}
+              isLoading={loading}
             />
           </div>
 
@@ -245,23 +252,8 @@ const ProductContent = () => {
 const Product = () => {
   return (
     <Suspense fallback={
-      <div className="px-4 md:px-26 mx-auto w-full">
-        <div className="w-full flex flex-col gap-12 py-6">
-          <div className="h-8 bg-gray-200 rounded animate-pulse w-48" />
-          <div className="flex gap-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="w-36 h-40 bg-gray-200 rounded-full animate-pulse" />
-            ))}
-          </div>
-          <div className="flex gap-8">
-            <div className="hidden md:block w-1/5 h-96 bg-gray-200 rounded animate-pulse" />
-            <div className="w-full md:w-4/5 grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-64 bg-gray-200 rounded animate-pulse" />
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="px-4 md:px-8 xl:px-12 max-w-[1440px] mx-auto w-full">
+        <ProductListSkeleton />
       </div>
     }>
       <ProductContent />

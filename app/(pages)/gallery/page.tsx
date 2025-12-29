@@ -207,10 +207,15 @@ const GalleryPage = () => {
             >
               <div className="relative w-full h-full bg-gray-100">
                 <Image
-                  src={image.thumbnailUrl}
+                  src={image.imageUrl}
                   alt={`Gallery Image ${imageIndex + 1}`}
                   fill
-                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                  sizes={
+                    image.width / image.height > 1.5
+                      ? "(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
+                      : "(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                  }
+                  quality={90}
                   className="object-cover transition-all duration-700 group-hover:scale-110 group-hover:rotate-1"
                   loading="lazy"
                 />
@@ -249,13 +254,6 @@ const GalleryPage = () => {
                 <span>Loading more images...</span>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Showing count */}
-        {pagination && (
-          <div className="text-center py-4 text-gray-600">
-            Showing {images.length} of {pagination.total} images
           </div>
         )}
 
@@ -318,6 +316,7 @@ const GalleryPage = () => {
                       alt={`Gallery image ${selectedImage + 1}`}
                       width={1920}
                       height={1080}
+                      quality={100}
                       className="max-w-full max-h-[80vh] w-auto h-auto object-contain rounded-lg shadow-2xl"
                       style={{
                         boxShadow:

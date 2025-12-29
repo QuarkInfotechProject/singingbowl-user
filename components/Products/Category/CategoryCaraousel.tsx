@@ -7,19 +7,13 @@ import {
 } from "@/components/ui/carousel";
 import { CategoryCard, Category } from "./CategoryCard";
 
+import { CategoryCarouselSkeleton } from "@/components/ui/skeletons";
+
 interface CategoryCarouselProps {
   categories: Category[];
   onSelectCategory?: (category: Category) => void;
   isLoading?: boolean;
 }
-
-// Skeleton for a single category card
-const CategoryCardSkeleton = () => (
-  <div className="w-36 flex flex-col gap-3 items-center justify-center animate-pulse">
-    <div className="w-36 h-36 rounded-full bg-gray-200" />
-    <div className="w-20 h-4 bg-gray-200 rounded" />
-  </div>
-);
 
 const CategoryCarousel = ({
   categories,
@@ -29,13 +23,7 @@ const CategoryCarousel = ({
   if (isLoading) {
     return (
       <div className="w-full">
-        <div className="flex gap-4 overflow-hidden -ml-2 md:-ml-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="pl-2 md:pl-4 flex-shrink-0">
-              <CategoryCardSkeleton />
-            </div>
-          ))}
-        </div>
+        <CategoryCarouselSkeleton />
       </div>
     );
   }

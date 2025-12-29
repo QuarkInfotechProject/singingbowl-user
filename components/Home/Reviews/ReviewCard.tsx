@@ -39,12 +39,12 @@ const ReviewCard = ({
 
   return (
     <div className="w-full overflow-hidden">
-      <div className="flex flex-col rounded-xl bg-[#F9FAFB] gap-4 sm:gap-6 md:gap-10 items-start justify-start p-4 sm:p-6 md:p-4 border border-gray-200 min-w-0 min-h-[280px]">
+      <div className="flex flex-col rounded-xl bg-[#F9FAFB] gap-4 md:gap-6 items-start justify-start p-4 sm:p-6 md:p-4 border border-gray-200 min-w-0 min-h-[280px]">
         <div className="flex items-center gap-1 justify-start flex-shrink-0">
           {renderStars()}
         </div>
 
-        <span className="text-start font-semibold text-sm sm:text-base md:text-lg leading-relaxed break-words w-full line-clamp-4">
+        <span className="text-start font-semibold text-sm  leading-relaxed break-words w-full line-clamp-6">
           {comment}
         </span>
 

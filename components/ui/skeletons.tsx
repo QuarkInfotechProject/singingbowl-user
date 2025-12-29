@@ -31,7 +31,7 @@ export function ProductCarouselSkeleton() {
 // Product Grid Skeleton for product list page
 export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
     return (
-        <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="w-full grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
             {[...Array(count)].map((_, i) => (
                 <div key={i} className="animate-pulse">
                     {/* Image skeleton - rectangular */}
@@ -53,9 +53,9 @@ export function CategoryCarouselSkeleton() {
     return (
         <div className="w-full flex gap-4 overflow-hidden animate-pulse">
             {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex flex-col items-center gap-2 flex-shrink-0">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200" />
-                    <div className="w-16 h-3 bg-gray-200 rounded" />
+                <div key={i} className="flex flex-col items-center gap-3 flex-shrink-0">
+                    <div className="w-36 h-36 rounded-full bg-gray-200" />
+                    <div className="w-20 h-4 bg-gray-200 rounded" />
                 </div>
             ))}
         </div>
@@ -65,14 +65,13 @@ export function CategoryCarouselSkeleton() {
 // Filter Section Skeleton
 export function FilterSectionSkeleton() {
     return (
-        <div className="w-full space-y-4 animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-1/2" />
-            {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-gray-200 rounded" />
-                    <div className="h-4 bg-gray-200 rounded w-3/4" />
-                </div>
-            ))}
+        <div className="w-full bg-white rounded-lg shadow-sm border border-gray-200 p-4 animate-pulse h-[80vh]">
+            <div className="h-6 bg-gray-200 rounded w-1/3 mb-6" />
+            <div className="space-y-4">
+                {[...Array(8)].map((_, i) => (
+                    <div key={i} className="h-8 bg-gray-200 rounded w-full" />
+                ))}
+            </div>
         </div>
     );
 }
@@ -115,7 +114,7 @@ export function ProductDetailSkeleton() {
     return (
         <div className="w-full animate-pulse">
             <div className="w-full flex flex-col gap-12 py-6">
-                <div className="px-4 md:px-26 mx-auto w-full flex flex-col gap-12">
+                <div className="px-4 md:px-8 xl:px-12 max-w-[1440px] mx-auto w-full flex flex-col gap-12">
                     {/* Breadcrumb skeleton */}
                     <div className="flex gap-2">
                         <div className="h-4 bg-gray-200 rounded w-12" />
@@ -172,7 +171,7 @@ export function ProductDetailSkeleton() {
                 </div>
 
                 {/* Related products skeleton */}
-                <div className="px-4 md:px-26 mx-auto w-full">
+                <div className="px-4 md:px-8 xl:px-12 max-w-[1440px] mx-auto w-full">
                     <div className="h-6 bg-gray-200 rounded w-48 mb-4" />
                     <ProductGridSkeleton count={4} />
                 </div>

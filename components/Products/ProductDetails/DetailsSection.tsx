@@ -64,7 +64,7 @@ const DetailsSection = ({
 
   return (
     <div id="product-details" className="w-full">
-      <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-12 h-auto">
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-12">
         <ReviewsAndRating
           reviews={reviewsData?.reviews || []}
           totalReviews={reviewsData?.totalReviews || 0}

@@ -100,12 +100,12 @@ const ProductDetail = () => {
   return (
     <div className="w-full">
       <div className="w-full flex flex-col gap-12 py-6">
-        <div className="px-4 md:px-26 mx-auto w-full flex flex-col gap-12">
+        <div className="px-4 md:px-8 xl:px-12 max-w-[1440px] mx-auto w-full flex flex-col gap-12">
           <DetailBreadCrumbs productName={product.productName} />
           <ProductHeroSection product={product} />
         </div>
         <IconCard specifications={product.specifications} />
-        <div className="px-4 md:px-26 mx-auto w-full flex flex-col gap-12">
+        <div className="px-4 md:px-8 xl:px-12 max-w-[1440px] mx-auto w-full flex flex-col gap-8">
           <SimilarProductsGrid
             title="You Might Also Like"
             products={similarProducts}
