@@ -23,6 +23,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { createOrder } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 type PaymentMethod = "cod" | "getPay";
 
@@ -400,7 +401,7 @@ const Checkout = () => {
                     <button
                       type="button"
                       onClick={() => setSelectedPaymentMethod("getPay")}
-                      className={`w-full p-4 rounded-xl border-2 transition-all text-left ${selectedPaymentMethod === "getPay"
+                      className={`w-full p-4 rounded-xl border-2 flex items-center justify-between transition-all text-left ${selectedPaymentMethod === "getPay"
                         ? "border-blue-500 bg-blue-50/50"
                         : "border-slate-200 hover:border-slate-300"
                         }`}
@@ -412,7 +413,9 @@ const Checkout = () => {
                             <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
                           )}
                         </div>
-                        <CreditCard className={`w-6 h-6 ${selectedPaymentMethod === "getPay" ? "text-blue-600" : "text-slate-400"}`} />
+                        {/* <CreditCard className={`w-6 h-6 ${selectedPaymentMethod === "getPay" ? "text-blue-600" : "text-slate-400"}`} /> */}
+                        <Image src="/assets/images/logo/getpay.webp" alt="Mastercard" width={50} height={50} />
+
                         <div>
                           <div className="font-semibold text-slate-900">
                             Pay with Card
@@ -422,18 +425,25 @@ const Checkout = () => {
                           </div>
                         </div>
                       </div>
+
+                      {/* Card images */}
+                      <div className="flex gap-3 items-center">
+                        <Image src="/assets/images/logo/mastercard.png" alt="Mastercard" width={50} height={50} />
+                        <Image src="/assets/images/logo/visa.png" alt="Visa" width={50} height={50} />
+                        <Image src="/assets/images/logo/union.png" alt="unionpay" width={50} height={50} />
+                      </div>
                     </button>
                   </div>
 
                   {/* Payment Info Box */}
                   <div className="mt-4 bg-slate-50 rounded-lg p-4 border border-slate-200 text-sm text-slate-600">
                     {selectedPaymentMethod === "cod" ? (
-                      <p className="flex items-start gap-2">
+                      <p className="flex items-center gap-2">
                         <span className="text-lg">💵</span>
                         <span>Pay cash when your order is delivered. Please have the exact amount ready.</span>
                       </p>
                     ) : (
-                      <p className="flex items-start gap-2">
+                      <p className="flex items-center gap-2">
                         <span className="text-lg">💳</span>
                         <span>You will be prompted to enter your card details in a secure form after clicking &quot;Complete Purchase&quot;.</span>
                       </p>
@@ -537,8 +547,8 @@ const Checkout = () => {
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600"><span>Standard shipping rate from Nepal</span>
-                      </span>
-                      <span className="font-medium"></span>
+                    </span>
+                    <span className="font-medium"></span>
                     <span className="font-medium text-slate-900">{shippingCharge === 0 ? "Free" : `$${shippingCharge.toFixed(2)}`}</span>
                   </div>
                 </div>

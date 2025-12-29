@@ -174,20 +174,20 @@ const GalleryPage = () => {
     <div className="min-h-screen bg-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Gallery Header */}
-        <div className="text-start mb-12">
+        <div className="text-start mb-8">
           <h1
             className="text-4xl md:text-6xl font-bold mb-4"
             style={{ color: "#A12717" }}
           >
             Our Gallery
           </h1>
-          <p className="text-gray-600 text-lg max-w-2xl">
-            Explore our collection of beautiful singing bowls and craftsmanship
+          <p className="text-gray-600 text-lg">
+            All images are published by Singing Bowl Village is legally sourced and protected. Any infringement will be met with legal action.
           </p>
         </div>
 
         {/* Masonry-style Gallery Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[200px] gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[200px] gap-3">
           {images.map((image, imageIndex) => (
             <div
               key={image.id}

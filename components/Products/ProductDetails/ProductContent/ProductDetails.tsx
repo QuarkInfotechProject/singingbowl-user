@@ -28,7 +28,7 @@ export default function ProductDetailsPage({ description, additionalDescription 
         <TabContent
           value="shipping"
           title="Shipping Details"
-          description="Ships within 2-3 business days. Free shipping on orders over $50. Standard delivery: 5-7 business days. Express shipping available. All items tracked with insurance coverage."
+          description="We try our best to home deliver your goods in the shortest time possible. Our expert shipping partners Freedom Export has over 20 years of experience in cargo worldwide."
         />
       </TabNavigation>
     </div>
