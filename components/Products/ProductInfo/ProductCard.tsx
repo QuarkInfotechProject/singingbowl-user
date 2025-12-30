@@ -1,10 +1,16 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
-import { Heart, Star } from "lucide-react";
+import { Heart, Star, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useWishlist } from "@/context/WishlistContext";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export interface Product {
   id: number | string;
+  uuid?: string;
   url: string;
   name: string;
   price: string;
@@ -24,6 +30,25 @@ interface ProductCardProps {
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const hasDiscount = product.originalPrice && product.price !== product.originalPrice;
+  const { isInWishlist, toggleWishlist, loadingProductId } = useWishlist();
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
+
+  const productId = product.uuid || String(product.id);
+  const inWishlist = isInWishlist(productId);
+  const isToggling = loadingProductId === productId;
+
+  const handleWishlistClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
+    await toggleWishlist(productId);
+  };
 
   return (
     <div className="w-full">
@@ -48,9 +73,20 @@ const ProductCard = ({ product }: ProductCardProps) => {
                   {product.discount}
                 </Badge>
               )}
-              <div className="p-1 bg-white rounded-full">
-                <Heart size={16} />
-              </div>
+              <button
+                onClick={handleWishlistClick}
+                disabled={isToggling}
+                className="p-1 bg-white rounded-full hover:bg-gray-100 cursor-pointer transition-colors disabled:opacity-50 ml-auto"
+              >
+                {isToggling ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Heart
+                    size={16}
+                    className={inWishlist ? "fill-red-500 text-red-500" : ""}
+                  />
+                )}
+              </button>
             </div>
           </div>
           <div className="flex flex-col gap-1 items-start justify-start text-start px-4">
@@ -75,4 +111,5 @@ const ProductCard = ({ product }: ProductCardProps) => {
   );
 };
 export default ProductCard;
+
 

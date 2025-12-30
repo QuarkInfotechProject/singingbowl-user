@@ -1,15 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Star, Heart, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Star, Heart, Loader2, Plus, Minus } from "lucide-react";
+import { useState } from "react";
 import CartSheet from "../Cart/CartSlide";
 import { ProductDetail } from "@/app/(pages)/products/[slug]/page";
 import { useCart } from "@/context/CartContext";
-import { addToWishlist, fetchWishlist } from "@/lib/apiItems";
+import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 interface ProductInfoProps {
   product: ProductDetail;
@@ -17,39 +16,21 @@ interface ProductInfoProps {
 
 const ProductInfo = ({ product }: ProductInfoProps) => {
   const [quantity, setQuantity] = useState(1);
-  const [wishlistLoading, setWishlistLoading] = useState(false);
-  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [buyNowLoading, setBuyNowLoading] = useState(false);
   const { addToCart, isLoading } = useCart();
+  const { isInWishlist, toggleWishlist, loadingProductId } = useWishlist();
   const { isLoggedIn } = useAuth();
   const router = useRouter();
 
-  // Check if product is in wishlist on mount
-  useEffect(() => {
-    const checkWishlist = async () => {
-      if (!isLoggedIn) {
-        console.log("Not logged in, skipping wishlist check");
-        return;
-      }
-      try {
-        console.log("Checking wishlist for product:", product.uuid);
-        const res = await fetchWishlist();
-        console.log("Wishlist API response:", res);
-        const items = res?.data || res || [];
-        console.log("Wishlist items:", items);
-        if (Array.isArray(items)) {
-          const inWishlist = items.some((item: any) => item.uuid === product.uuid);
-          console.log("Product in wishlist:", inWishlist);
-          setIsInWishlist(inWishlist);
-        }
-      } catch (error) {
-        console.error("Failed to check wishlist", error);
-      }
-    };
-    checkWishlist();
-  }, [isLoggedIn, product.uuid]);
+  const inWishlist = isInWishlist(product.uuid);
+  const wishlistLoading = loadingProductId === product.uuid;
 
 
-  const incrementQuantity = () => setQuantity(quantity + 1);
+  const incrementQuantity = () => {
+    if (quantity < product.quantity) {
+      setQuantity(quantity + 1);
+    }
+  };
   const decrementQuantity = () => quantity > 1 && setQuantity(quantity - 1);
 
   // Generate star rating
@@ -69,32 +50,18 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       lineTotal: price * quantity, // calculated lineTotal
       quantity: quantity,
       image: product.files.baseImage?.url || "/assets/images/product/1.jpg", // Correct image path
-      stock: product.inStock ? 100 : 0,
+      stock: product.quantity, // Use actual product quantity
       discount: product.discountPercentage
     };
     await addToCart(cartItem, openCart);
   };
 
-  const handleAddToWishlist = async () => {
+  const handleToggleWishlist = async () => {
     if (!isLoggedIn) {
       router.push("/login");
       return;
     }
-    if (isInWishlist) {
-      toast.info("Already in wishlist");
-      return;
-    }
-    try {
-      setWishlistLoading(true);
-      await addToWishlist(product.uuid);
-      setIsInWishlist(true);
-      toast.success("Added to wishlist!");
-    } catch (error) {
-      console.error("Failed to add to wishlist", error);
-      toast.error("Failed to add to wishlist");
-    } finally {
-      setWishlistLoading(false);
-    }
+    await toggleWishlist(product.uuid);
   };
 
   return (
@@ -158,32 +125,73 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           </Button>
         </div>
 
+        {/* Quantity Selector - Only show if product has more than 1 in stock */}
+        {product.quantity > 1 && (
+          <div className="flex items-center gap-4 mt-4">
+            <span className="text-gray-700 font-medium">Quantity:</span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={decrementQuantity}
+                disabled={quantity <= 1}
+                className="h-9 w-9 rounded-full border-gray-300 hover:bg-gray-100 cursor-pointer disabled:opacity-50"
+              >
+                <Minus size={16} />
+              </Button>
+              <span className="w-12 text-center font-semibold text-lg">{quantity}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={incrementQuantity}
+                disabled={quantity >= product.quantity}
+                className="h-9 w-9 rounded-full border-gray-300 hover:bg-gray-100 cursor-pointer disabled:opacity-50"
+              >
+                <Plus size={16} />
+              </Button>
+            </div>
+            {/* <span className="text-sm text-gray-500">({product.quantity} available)</span> */}
+          </div>
+        )}
+
         <div className="flex items-center gap-4 mt-4">
           <Button
             onClick={async () => {
-              await handleAddToCart(false); // Add to cart without opening sidebar
-              router.push('/checkout');
+              setBuyNowLoading(true);
+              try {
+                await handleAddToCart(false); // Add to cart without opening sidebar
+                router.push('/checkout');
+              } finally {
+                setBuyNowLoading(false);
+              }
             }}
-            disabled={!product.inStock}
+            disabled={buyNowLoading || !product.inStock}
             className="flex-1 bg-transparent border border-[#A12717] hover:bg-transparent cursor-pointer text-[#A12717] rounded-full py-6 font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Buy Now
+            {buyNowLoading ? (
+              <>
+                <Loader2 size={18} className="animate-spin mr-2" />
+                Processing...
+              </>
+            ) : (
+              "Buy Now"
+            )}
           </Button>
           <Button
             onClick={() => handleAddToCart()}
-            disabled={isLoading || !product.inStock}
+            disabled={(isLoading && !buyNowLoading) || !product.inStock}
             className="flex-1 bg-[#A12717] hover:bg-[#A12717] cursor-pointer text-white rounded-full py-6 font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Adding..." : !product.inStock ? "Out of Stock" : "Add to cart"}
+            {isLoading && !buyNowLoading ? "Adding..." : !product.inStock ? "Out of Stock" : "Add to cart"}
           </Button>
         </div>
 
         {/* Wishlist & Stock Status */}
         <div className="flex items-center gap-8 mt-2">
           <button
-            onClick={handleAddToWishlist}
+            onClick={handleToggleWishlist}
             disabled={wishlistLoading}
-            className={`flex items-center gap-2 font-medium cursor-pointer disabled:opacity-50 transition-colors ${isInWishlist ? "text-orange-500" : "text-gray-700 hover:text-gray-900"
+            className={`flex items-center gap-2 font-medium cursor-pointer disabled:opacity-50 transition-colors ${inWishlist ? "text-red-500" : "text-gray-700 hover:text-gray-900"
               }`}
           >
             {wishlistLoading ? (
@@ -191,10 +199,10 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
             ) : (
               <Heart
                 size={20}
-                className={isInWishlist ? "fill-orange-500" : ""}
+                className={inWishlist ? "fill-red-500" : ""}
               />
             )}
-            {wishlistLoading ? "Adding..." : isInWishlist ? "In Wishlist" : "Add to wishlist"}
+            {wishlistLoading ? "Updating..." : inWishlist ? "In Wishlist" : "Add to wishlist"}
           </button>
           <span className="flex items-center gap-2 text-gray-700 font-medium ">
             <span className={`text-[#EB5930] ${product.inStock ? "bg-[#FAE8E3]" : "bg-gray-200"} p-1 w-6 h-6 rounded-full flex items-center justify-center`}>
