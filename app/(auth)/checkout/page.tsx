@@ -106,106 +106,111 @@ const Checkout = () => {
         callbackUrl: backendCallbackUrl
       };
 
-      // Create iframe
+      // Create iframe with explicit loading handling
       const iframe = document.createElement('iframe');
       iframe.style.width = '100%';
       iframe.style.minHeight = '500px';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '12px';
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
       iframeRef.current = iframe;
-      container.appendChild(iframe);
 
-      // Write content to iframe after it's in the DOM
-      const writeContent = () => {
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (!iframeDoc) {
-          setTimeout(writeContent, 50);
-          return;
-        }
-
-        const iframeHtml = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              html, body { height: 100%; width: 100%; }
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
-              #checkout { width: 100%; min-height: 600px; padding: 16px; }
-            </style>
-          </head>
-          <body>
-            <div id="checkout"></div>
-            <script>
-              (function() {
-                var script = document.createElement('script');
-                script.src = '${GETPAY_SDK_URL}';
-                script.onload = function() {
-                  initGetPay();
-                };
-                script.onerror = function() {
-                  window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'Failed to load payment SDK' } }, '*');
-                };
-                document.head.appendChild(script);
+      // Generate HTML content
+      const iframeHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body { height: 100%; width: 100%; }
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
+            #checkout { width: 100%; min-height: 600px; padding: 16px; }
+          </style>
+        </head>
+        <body>
+          <div id="checkout"></div>
+          <script>
+            (function() {
+              var script = document.createElement('script');
+              script.src = '${GETPAY_SDK_URL}';
+              script.onload = function() {
+                initGetPay();
+              };
+              script.onerror = function() {
+                window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'Failed to load payment SDK' } }, '*');
+              };
+              document.head.appendChild(script);
+              
+              function initGetPay() {
+                var retryCount = 0;
+                var maxRetries = 50;
                 
-                function initGetPay() {
-                  var retryCount = 0;
-                  var maxRetries = 50;
-                  
-                  function tryInit() {
-                    retryCount++;
-                    if (typeof GetPay === 'undefined') {
-                      if (retryCount < maxRetries) {
-                        setTimeout(tryInit, 100);
-                      } else {
-                        window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'SDK initialization timeout' } }, '*');
-                      }
-                      return;
+                function tryInit() {
+                  retryCount++;
+                  if (typeof GetPay === 'undefined') {
+                    if (retryCount < maxRetries) {
+                      setTimeout(tryInit, 100);
+                    } else {
+                      window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'SDK initialization timeout' } }, '*');
                     }
-                    
-                    try {
-                      var options = ${JSON.stringify(getPayOptions)};
-                      options.baseUrl = '${paymentConfig.getPayOptions.baseUrl}';
-                      options.onSuccess = function(data) {
-                        if (data && data.transactionId) {
-                          window.parent.postMessage({ type: 'GETPAY_SUCCESS', data: data }, '*');
-                        }
-                      };
-                      options.onError = function(err) {
-                        if (err && (err.code || err.message)) {
-                          window.parent.postMessage({ type: 'GETPAY_ERROR', error: err }, '*');
-                        }
-                      };
-                      
-                      var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
-                      getpay.initialize();
-                      window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
-                    } catch (e) {
-                      window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
-                    }
+                    return;
                   }
                   
-                  tryInit();
+                  try {
+                    var options = ${JSON.stringify(getPayOptions)};
+                    options.baseUrl = '${paymentConfig.getPayOptions.baseUrl}';
+                    options.onSuccess = function(data) {
+                      if (data && data.transactionId) {
+                        window.parent.postMessage({ type: 'GETPAY_SUCCESS', data: data }, '*');
+                      }
+                    };
+                    options.onError = function(err) {
+                      if (err && (err.code || err.message)) {
+                        window.parent.postMessage({ type: 'GETPAY_ERROR', error: err }, '*');
+                      }
+                    };
+                    
+                    var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
+                    getpay.initialize();
+                    window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
+                  } catch (e) {
+                    window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
+                  }
                 }
-              })();
-            <\/script>
-          </body>
-          </html>
-        `;
+                
+                tryInit();
+              }
+            })();
+          <\/script>
+        </body>
+        </html>
+      `;
 
-        iframeDoc.open();
-        iframeDoc.write(iframeHtml);
-        iframeDoc.close();
+      // Use srcdoc for more reliable content loading
+      iframe.srcdoc = iframeHtml;
+
+      // Fallback: write content directly if srcdoc doesn't work in some browsers
+      iframe.onload = () => {
+        // srcdoc will trigger onload when content is ready
+        // If srcdoc worked, the content is already there
+        // This is just a safety fallback
+        if (!iframe.srcdoc) {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+          if (iframeDoc) {
+            iframeDoc.open();
+            iframeDoc.write(iframeHtml);
+            iframeDoc.close();
+          }
+        }
       };
 
-      // Give the iframe a moment to attach to DOM before writing
-      setTimeout(writeContent, 100);
+      container.appendChild(iframe);
     };
 
     // Start initialization with delay to ensure React has fully rendered
-    const timeoutId = setTimeout(initPayment, 200);
+    const timeoutId = setTimeout(initPayment, 300);
 
     window.addEventListener('message', handleMessage);
 
@@ -217,7 +222,7 @@ const Checkout = () => {
       }
     };
 
-  }, [activeTab, paymentConfig, handleMessage]);
+  }, [activeTab, paymentConfig, handleMessage, GETPAY_SDK_URL]);
 
   const handleAddressSelect = (address: Address | null) => {
     setSelectedAddress(address);

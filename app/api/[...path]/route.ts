@@ -48,13 +48,17 @@ export async function GET(
     return Response.json(response.data);
   } catch (error: any) {
     const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as any;
 
     return Response.json(
       {
         error:
-          (axiosError.response?.data as any)?.message ||
+          errorData?.error ||
+          errorData?.message ||
           axiosError.message ||
           "Something went wrong",
+        errors: errorData?.errors || null,
+        message: errorData?.message || null,
         success: false,
       },
       { status: axiosError.response?.status || 500 }
@@ -94,18 +98,22 @@ export async function POST(
     return Response.json(response.data);
   } catch (error: any) {
     const axiosError = error as AxiosError;
+    const errorData = axiosError.response?.data as any;
 
     console.log("=== API POST Error ===");
     console.log("Status:", axiosError.response?.status);
-    console.log("Error Response Data:", JSON.stringify(axiosError.response?.data, null, 2));
+    console.log("Error Response Data:", JSON.stringify(errorData, null, 2));
     console.log("Error Message:", axiosError.message);
 
     return Response.json(
       {
         error:
-          (axiosError.response?.data as any)?.message ||
+          errorData?.error ||
+          errorData?.message ||
           axiosError.message ||
           "Something went wrong",
+        errors: errorData?.errors || null,
+        message: errorData?.message || null,
         success: false,
       },
       { status: axiosError.response?.status || 500 }

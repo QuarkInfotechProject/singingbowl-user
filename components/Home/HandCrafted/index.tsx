@@ -15,7 +15,7 @@ const SingingBowlComponent: React.FC = () => {
   } = singingBowlData;
 
   return (
-    <div className="bg-white rounded-lg p-2 md:px-20 ">
+    <div className="bg-white rounded-lg p-2 md:px-20 mb-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 shadow-sm border border-gray-200 rounded-lg px-4 py-3 md:p-6 items-center">
         {/* Left Content Section */}
         <ProductInfo

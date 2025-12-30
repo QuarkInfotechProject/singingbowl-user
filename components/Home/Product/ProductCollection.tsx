@@ -70,7 +70,7 @@ export default function ProductCollection() {
           {categories.map((category) => (
             <CarouselItem
               key={category.id}
-              className="basis-2/5 md:basis-1/3 lg:basis-1/4 xl:basis-1/5 pl-4"
+              className="basis-2/5 md:basis-1/3 lg:basis-1/4 xl:basis-1/6 pl-4"
             >
               <Link
                 href={`/products?category=${category.slug}`}
