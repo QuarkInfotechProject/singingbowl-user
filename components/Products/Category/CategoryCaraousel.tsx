@@ -34,7 +34,7 @@ const CategoryCarousel = ({
         {categories.map((category) => (
           <CarouselItem
             key={category.id}
-            className="pl-2 md:pl-4 basis-1/2 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/6"
+            className="pl-2 md:pl-4 basis-1/2 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-[15%]"
             onClick={() => onSelectCategory && onSelectCategory(category)}
           >
             <div className="cursor-pointer">

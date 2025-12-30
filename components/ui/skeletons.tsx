@@ -48,16 +48,23 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
     );
 }
 
-// Category Carousel Skeleton
+// Category Carousel Skeleton - matches CategoryCarousel layout
 export function CategoryCarouselSkeleton() {
     return (
-        <div className="w-full flex gap-4 overflow-hidden animate-pulse">
-            {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex flex-col items-center gap-3 flex-shrink-0">
-                    <div className="w-36 h-36 rounded-full bg-gray-200" />
-                    <div className="w-20 h-4 bg-gray-200 rounded" />
-                </div>
-            ))}
+        <div className="w-full animate-pulse">
+            <div className="flex gap-2 md:gap-4 overflow-hidden">
+                {[...Array(8)].map((_, i) => (
+                    <div
+                        key={i}
+                        className="flex-shrink-0 basis-1/2 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-[15%]"
+                    >
+                        <div className="w-36 flex flex-col gap-3 items-center justify-center mx-auto">
+                            <div className="w-36 h-36 rounded-full bg-gray-200" />
+                            <div className="w-24 h-4 bg-gray-200 rounded" />
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
@@ -174,6 +181,88 @@ export function ProductDetailSkeleton() {
                 <div className="px-4 md:px-8 xl:px-12 max-w-[1440px] mx-auto w-full">
                     <div className="h-6 bg-gray-200 rounded w-48 mb-4" />
                     <ProductGridSkeleton count={4} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// HandCrafted Gallery Skeleton - matches ImageGallery layout
+export function HandCraftedGallerySkeleton() {
+    return (
+        <div className="grid grid-cols-1 gap-2 h-full animate-pulse">
+            {/* Main large image */}
+            <div className="rounded-lg overflow-hidden">
+                <div className="w-full aspect-[4/3] bg-gray-200 rounded-lg" />
+            </div>
+
+            {/* Secondary images - Hidden on mobile, shown on lg */}
+            <div className="hidden lg:grid grid-cols-2 gap-2 h-full">
+                <div className="rounded-lg overflow-hidden">
+                    <div className="w-full aspect-square bg-gray-200 rounded-lg" />
+                </div>
+                <div className="rounded-lg overflow-hidden">
+                    <div className="w-full aspect-square bg-gray-200 rounded-lg" />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// HandCrafted Section Skeleton - matches SingingBowlComponent layout
+export function HandCraftedSkeleton() {
+    return (
+        <div className="bg-white rounded-lg p-2 md:px-20 mb-6 animate-pulse">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 shadow-sm border border-gray-200 rounded-lg px-4 py-3 md:p-6 items-center">
+                {/* Left Content Section */}
+                <div className="flex flex-col gap-4">
+                    <div className="h-8 bg-gray-200 rounded w-3/4" />
+                    <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-full" />
+                        <div className="h-4 bg-gray-200 rounded w-full" />
+                        <div className="h-4 bg-gray-200 rounded w-2/3" />
+                    </div>
+                    <div className="flex gap-4 mt-4">
+                        <div className="h-4 bg-gray-200 rounded w-24" />
+                        <div className="h-4 bg-gray-200 rounded w-32" />
+                    </div>
+                    <div className="h-12 bg-gray-200 rounded w-40 mt-4" />
+                </div>
+
+                {/* Right Image Section */}
+                <HandCraftedGallerySkeleton />
+            </div>
+        </div>
+    );
+}
+
+// Gallery Page Skeleton - matches masonry-style gallery grid
+export function GalleryPageSkeleton() {
+    // Pattern for varying skeleton sizes to mimic masonry layout
+    const skeletonItems = [
+        "", "row-span-2", "", "col-span-2",
+        "row-span-2", "", "", "row-span-2",
+        "", "col-span-2", "row-span-2", "",
+        "", "", "row-span-2", ""
+    ];
+
+    return (
+        <div className="min-h-screen bg-white p-4 md:p-8 animate-pulse">
+            <div className="max-w-7xl mx-auto">
+                {/* Header skeleton */}
+                <div className="text-start mb-8">
+                    <div className="h-12 md:h-16 w-64 bg-gray-200 rounded mb-4" />
+                    <div className="h-5 w-full max-w-2xl bg-gray-200 rounded" />
+                </div>
+
+                {/* Masonry-style grid skeleton */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[200px] gap-3">
+                    {skeletonItems.map((spanClass, i) => (
+                        <div
+                            key={i}
+                            className={`bg-gray-200 rounded-2xl ${spanClass}`}
+                        />
+                    ))}
                 </div>
             </div>
         </div>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { fetchGalleries } from "@/lib/apiItems";
+import { GalleryPageSkeleton } from "@/components/ui/skeletons";
 
 interface GalleryImage {
   id: number;
@@ -142,24 +143,7 @@ const GalleryPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="h-12 w-64 bg-gray-200 animate-pulse rounded mx-auto mb-4" />
-            <div className="h-6 w-48 bg-gray-200 animate-pulse rounded mx-auto" />
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[200px] gap-4">
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-gray-200 animate-pulse rounded-2xl"
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <GalleryPageSkeleton />;
   }
 
   if (!images || images.length === 0) {
