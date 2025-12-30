@@ -25,6 +25,8 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
     const [mode, setMode] = useState<"login" | "signup" | "reset-password">(initialMode);
     const [resetEmail, setResetEmail] = useState("");
 
+    const [googleLoading, setGoogleLoading] = useState(false);
+
     const {
         state,
         updateField,
@@ -79,13 +81,13 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
     };
 
     const handleGoogleSignIn = async () => {
-        setLoading(true);
+        setGoogleLoading(true);
         try {
             await authService.googleSignIn();
             if (onClose) onClose();
             else router.push("/");
         } finally {
-            setLoading(false);
+            setGoogleLoading(false);
         }
     };
 
@@ -180,6 +182,7 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
                         email={state.loginEmail}
                         password={state.loginPassword}
                         loading={state.loading}
+                        googleLoading={googleLoading}
                         onEmailChange={(value) => updateField("loginEmail", value)}
                         onPasswordChange={(value) =>
                             updateField("loginPassword", value)

@@ -10,6 +10,7 @@ interface LoginFormProps {
   email: string;
   password: string;
   loading: boolean;
+  googleLoading?: boolean;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmit: () => void;
@@ -22,6 +23,7 @@ export const LoginForm = ({
   email,
   password,
   loading,
+  googleLoading = false,
   onEmailChange,
   onPasswordChange,
   onSubmit,
@@ -130,8 +132,10 @@ export const LoginForm = ({
       <Button
         type="submit"
         className="w-full bg-[#A12717] cursor-pointer hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-70 text-sm h-9"
-        disabled={loading}
+        // Disable if main login is loading OR google is loading
+        disabled={loading || googleLoading}
       >
+        {/* Only show "Loading..." if main login is loading */}
         {loading ? "Loading..." : "Sign In"}
       </Button>
 
@@ -143,7 +147,7 @@ export const LoginForm = ({
         </div>
       </div>
 
-      <GoogleSignIn loading={loading} onSignIn={onGoogleSignIn} />
+      <GoogleSignIn loading={googleLoading} disabled={loading} onSignIn={onGoogleSignIn} />
     </form>
   );
 };

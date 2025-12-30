@@ -6,16 +6,25 @@ interface GoogleSignInProps {
   onSignIn: () => void;
 }
 
-export const GoogleSignIn = ({ loading, onSignIn }: GoogleSignInProps) => {
+export const GoogleSignIn = ({ loading, disabled, onSignIn }: { loading: boolean; disabled?: boolean; onSignIn: () => void }) => {
   return (
     <Button
       onClick={onSignIn}
       variant="outline"
       className="w-full bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-900 font-medium text-sm py-2 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md h-9"
-      disabled={loading}
+      disabled={loading || disabled}
     >
-      <GoogleIcon className="w-4 h-4 mr-2 text-[#A12717]" />
-      Google
+      {loading ? (
+        <span className="flex items-center gap-2">
+          <GoogleIcon className="w-4 h-4 mr-2 text-[#A12717] animate-spin" />
+          Signing in...
+        </span>
+      ) : (
+        <>
+          <GoogleIcon className="w-4 h-4 mr-2 text-[#A12717]" />
+          Google
+        </>
+      )}
     </Button>
   );
 };
