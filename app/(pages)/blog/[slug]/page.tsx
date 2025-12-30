@@ -110,7 +110,6 @@ const BlogDetailPage = () => {
             items.push({ id, text, level: 2 });
         });
 
-        console.log("TOC Items (h2 only, excluding title):", items);
         setTocItems(items);
         if (items.length > 0) {
             setActiveId(items[0].id);

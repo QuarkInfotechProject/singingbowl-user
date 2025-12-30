@@ -17,9 +17,6 @@ interface ProductImageProps {
 const ProductImage = ({ images = [] }: ProductImageProps) => {
   const [activeImage, setActiveImage] = useState(0);
 
-  // Debug: Log the images being passed
-  console.log("ProductImage received images:", images);
-
   // Use provided images or fallback
   const displayImages = images.length > 0
     ? images.map((src, id) => ({ id, src }))

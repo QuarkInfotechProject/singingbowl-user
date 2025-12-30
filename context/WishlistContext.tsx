@@ -38,12 +38,9 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
             try {
                 setIsLoading(true);
                 const res = await fetchWishlist();
-                console.log("Wishlist API response:", res);
                 const items = res?.data || res || [];
                 if (Array.isArray(items)) {
-                    // API returns 'id' field, not 'uuid' for wishlist items
                     const ids = items.map((item: any) => item.id);
-                    console.log("Wishlist IDs loaded:", ids);
                     setWishlistIds(ids);
                 }
             } catch (error) {

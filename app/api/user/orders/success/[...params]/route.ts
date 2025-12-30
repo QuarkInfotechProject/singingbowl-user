@@ -38,12 +38,6 @@ export async function GET(
         // Get token from query params (added by GetPay after 3DS/payment)
         const getPayToken = request.nextUrl.searchParams.get("token");
 
-        console.log("=== Payment Success Callback ===");
-        console.log("Full URL:", request.nextUrl.toString());
-        console.log("Payment Method:", paymentMethod);
-        console.log("Order ID:", orderId);
-        console.log("GetPay Token present:", !!getPayToken);
-        console.log("Raw params:", paramsArray);
 
         // Decode the GetPay token to extract transaction info
         // The token is base64 encoded JSON: {"id": "transactionId", "oprSecret": "..."}
@@ -53,10 +47,7 @@ export async function GET(
                 const decoded = Buffer.from(getPayToken, 'base64').toString('utf-8');
                 const decodedData = JSON.parse(decoded);
                 transactionId = decodedData.id || null;
-                console.log("Decoded GetPay token:", decodedData);
-                console.log("Transaction ID extracted:", transactionId);
-            } catch (e) {
-                console.log("Token decode error (may not be base64):", e);
+            } catch {
                 // If not base64, the token itself might be the transaction ID
                 transactionId = getPayToken;
             }
@@ -66,19 +57,13 @@ export async function GET(
         const cookieStore = await cookies();
         const authToken = cookieStore.get("token")?.value;
 
-        // Log cookies for debugging
         const allCookies = cookieStore.getAll();
-        console.log("All cookies names:", allCookies.map(c => c.name));
-        console.log("Auth token found:", !!authToken);
-        if (authToken) {
-            console.log("Auth token (first 50 chars):", authToken.substring(0, 50) + "...");
-        }
 
         const headers: Record<string, string> = {};
         if (authToken) {
             headers["Authorization"] = `Bearer ${authToken}`;
-            console.log("Authorization header set");
-        } else {
+        }
+        else {
             console.error("WARNING: No auth token found in cookies!");
         }
 
@@ -91,11 +76,8 @@ export async function GET(
 
         // Build the correct backend URL with path parameters
         const backendUrl = `/user/orders/success/${paymentMethod}/${orderId}`;
-        console.log("Sending POST to backend:", backendUrl);
-        console.log("Token being sent (first 50 chars):", getPayToken?.substring(0, 50) + "...");
 
         const response = await apiClient.post(backendUrl, requestBody, { headers });
-        console.log("Backend response:", response.data);
 
         // Return HTML that redirects the TOP window (breaks out of iframe)
         const successUrl = `${prodOrigin}/profile?tab=orders&payment=success`;

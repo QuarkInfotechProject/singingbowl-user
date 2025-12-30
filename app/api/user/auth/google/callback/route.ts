@@ -61,7 +61,6 @@ export async function GET(request: NextRequest) {
     const redirectUri = `${siteOrigin}/api/user/auth/google/callback`;
 
     // Exchange authorization code for tokens
-    console.log("Exchanging code for tokens...");
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: {
@@ -83,10 +82,8 @@ export async function GET(request: NextRequest) {
     }
 
     const tokens: GoogleTokenResponse = await tokenResponse.json();
-    console.log("Token exchange successful");
 
     // Get user info from Google
-    console.log("Fetching user info from Google...");
     const userInfoResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
       headers: {
         Authorization: `Bearer ${tokens.access_token}`,
@@ -99,10 +96,8 @@ export async function GET(request: NextRequest) {
     }
 
     const userInfo: GoogleUserInfo = await userInfoResponse.json();
-    console.log("Got Google user info:", { email: userInfo.email, name: userInfo.name });
 
     // Send user info to backend for authentication/registration
-    console.log("Authenticating with backend...");
     const { data } = await server.post("/user/auth/google/login", {
       email: userInfo.email,
       name: userInfo.name,
@@ -111,8 +106,6 @@ export async function GET(request: NextRequest) {
       id_token: tokens.id_token,
       access_token: tokens.access_token,
     });
-
-    console.log("Backend authentication response:", data);
 
     // Parse state to get return URL
     const parsedState: State | null = state ? JSON.parse(Buffer.from(state, 'base64').toString('utf-8')) : null;
@@ -141,7 +134,6 @@ export async function GET(request: NextRequest) {
       expires: expiresAt,
     });
 
-    console.log("Authentication successful, redirecting to:", returnUrl);
     return response;
   } catch (error: any) {
     console.error("Google callback error:", error?.response?.data || error);

@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.log(error);
     const axiosError: AxiosError = error;
     return NextResponse.json(axiosError.response?.data, { status: error?.response?.status });
   }

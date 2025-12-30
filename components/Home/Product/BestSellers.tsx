@@ -23,7 +23,6 @@ const BestSellers = () => {
                 setLoading(true);
                 setError(null);
                 const response = await fetchBestSellers();
-                console.log("Best Sellers API Response:", response);
 
                 // Handle different response formats
                 if (response.success && response.data) {
@@ -35,7 +34,7 @@ const BestSellers = () => {
                     // Handle direct array response
                     setProducts(response);
                 } else {
-                    console.log("Unexpected response format:", response);
+                    // Unexpected response format
                 }
             } catch (err: any) {
                 console.error("Failed to fetch best sellers:", err);

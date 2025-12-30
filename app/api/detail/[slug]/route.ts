@@ -27,9 +27,6 @@ export async function GET(
 
     // Make API call
     const fullUrl = `${baseURL}/products/show/${encodeURIComponent(slug)}`;
-    console.log("=== PRODUCT API DEBUG ===");
-    console.log("Fetching product from:", fullUrl);
-    console.log("=========================");
 
     const response = await fetch(
       fullUrl,

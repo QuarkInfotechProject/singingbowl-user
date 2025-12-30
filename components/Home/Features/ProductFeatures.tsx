@@ -64,14 +64,14 @@ const ProductFeatures = () => {
               recalibrate. Feel the profound resonance of bowls and sacred
               instruments guide your brainwaves from chaos to coherence,
               releasing stored anxiety, mental fog, and emotional weight.
-              
+               <br />
+              <br />
               This is a homecoming for your soul. It's time to remember what it feels
               like to be vibrantly, authentically you. Your journey back to
               balance starts with a single, powerful note.
               <br />
               <br />
-              we honor the timeless harmony between ancient sound traditions and modern wellness practices. Each vibration is thoughtfully crafted to restore balance, awaken inner clarity, and promote deep emotional release. Through resonant frequencies and sacred instruments, we create transformative experiences that calm the mind and realign the spirit. This is more than sound—it is a therapeutic journey toward wholeness. Step into a space where resonance becomes healing, and stillness becomes strength. Your path to inner equilibrium begins here.
-
+We honor the timeless harmony of ancient sound traditions blended with modern wellness practices. Every vibration is intentionally crafted to restore balance, awaken inner clarity, and encourage deep emotional release. Through resonant frequencies and sacred instruments, we create transformative experiences that calm the mind and realign the spirit.
             </p>
           </div>
         </div>

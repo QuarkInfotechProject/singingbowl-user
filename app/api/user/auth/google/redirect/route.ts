@@ -47,9 +47,6 @@ export async function GET(request: NextRequest) {
         googleAuthUrl.searchParams.set("access_type", "offline");
         googleAuthUrl.searchParams.set("prompt", "consent");
 
-        console.log("Google OAuth redirect URI:", redirectUri);
-        console.log("Generated Google OAuth URL:", googleAuthUrl.toString());
-
         return NextResponse.json({ redirectUrl: googleAuthUrl.toString() });
     } catch (error: any) {
         console.error("Google redirect error:", error);

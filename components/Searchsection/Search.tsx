@@ -57,7 +57,6 @@ const Search = () => {
     const delayDebounceFn = setTimeout(async () => {
       try {
         const response = await searchProducts(searchQuery);
-        console.log("Search API Response:", response);
 
         // Handle different response formats
         if (response.success && response.data?.products) {
@@ -162,7 +161,6 @@ const Search = () => {
   // Determine if dropdown should show
   const showDropdown = searchQuery.trim().length > 0 && (isSearching || hasSearched);
 
-  console.log("Search State:", { searchQuery, isSearching, hasSearched, showDropdown, resultsCount: searchResults.length });
 
   return (
     <>

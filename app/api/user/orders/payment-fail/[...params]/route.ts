@@ -22,11 +22,6 @@ export async function GET(
         // Get token from query params (added by GetPay)
         const token = request.nextUrl.searchParams.get("token");
 
-        console.log("=== Payment Fail Callback ===");
-        console.log("Order ID:", orderId);
-        console.log("Amount:", amount);
-        console.log("UUID:", uuid);
-        console.log("Token present:", !!token);
 
         // Forward to backend with the correct format
         const cookieStore = await cookies();
@@ -39,13 +34,11 @@ export async function GET(
 
         // Call backend fail endpoint
         const backendUrl = `/user/orders/payment-fail?orderId=${orderId}&amount=${amount}&uuid=${uuid}${token ? `&token=${token}` : ""}`;
-        console.log("Backend URL:", backendUrl);
 
         try {
             await apiClient.get(backendUrl, { headers });
-        } catch (e) {
+        } catch {
             // Backend might not have a fail endpoint, that's ok
-            console.log("Backend fail endpoint error (may be ok):", e);
         }
 
         // Return HTML that redirects the TOP window (breaks out of iframe)
