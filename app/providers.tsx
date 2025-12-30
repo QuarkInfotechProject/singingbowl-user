@@ -5,6 +5,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import { ReactNode } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
+import { WishlistProvider } from "@/context/WishlistContext";
 
 const theme = createTheme({
   typography: {
@@ -31,11 +32,14 @@ export function Providers({ children }: { children: ReactNode }) {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <AuthProvider>
-          <CartProvider>
-            {children}
-          </CartProvider>
+          <WishlistProvider>
+            <CartProvider>
+              {children}
+            </CartProvider>
+          </WishlistProvider>
         </AuthProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );
 }
+

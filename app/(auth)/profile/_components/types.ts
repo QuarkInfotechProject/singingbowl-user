@@ -13,7 +13,7 @@ export interface PurchaseItem {
 }
 
 export interface WishlistItem {
-    uuid: string;
+    id: string;
     productName: string;
     slug?: string;
     url?: string;

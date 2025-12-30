@@ -5,13 +5,14 @@ import { Heart, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
-import { fetchWishlist, removeFromWishlist } from "@/lib/apiItems";
+import { fetchWishlist } from "@/lib/apiItems";
+import { useWishlist } from "@/context/WishlistContext";
 import { WishlistItem } from "./types";
 
 export default function WishlistSection() {
     const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
     const [wishlistLoading, setWishlistLoading] = useState(false);
-    const [removingIds, setRemovingIds] = useState<string[]>([]);
+    const { removeFromWishlistById, loadingProductId } = useWishlist();
 
     useEffect(() => {
         loadWishlist();
@@ -34,15 +35,9 @@ export default function WishlistSection() {
     };
 
     const handleRemoveFromWishlist = async (productId: string) => {
-        try {
-            setRemovingIds((prev) => [...prev, productId]);
-            await removeFromWishlist(productId);
-            setWishlistItems((prev) => prev.filter((item) => item.uuid !== productId));
-        } catch (error) {
-            console.error("Failed to remove from wishlist", error);
-        } finally {
-            setRemovingIds((prev) => prev.filter((id) => id !== productId));
-        }
+        await removeFromWishlistById(productId);
+        // Update local state to remove the item from the list
+        setWishlistItems((prev) => prev.filter((item) => item.id !== productId));
     };
 
     return (
@@ -67,8 +62,8 @@ export default function WishlistSection() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {wishlistItems.map((item) => (
                         <div
-                            key={item.uuid}
-                            className={`relative border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow ${removingIds.includes(item.uuid) ? "opacity-50" : ""
+                            key={item.id}
+                            className={`relative border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow ${loadingProductId === item.id ? "opacity-50" : ""
                                 }`}
                         >
                             <Link href={`/products/${item.slug || item.url}`}>
@@ -98,12 +93,12 @@ export default function WishlistSection() {
                                     )}
                                 </div>
                                 <Button
-                                    onClick={() => handleRemoveFromWishlist(item.uuid)}
-                                    disabled={removingIds.includes(item.uuid)}
+                                    onClick={() => handleRemoveFromWishlist(item.id)}
+                                    disabled={loadingProductId === item.id}
                                     variant="outline"
                                     className="w-full flex items-center justify-center gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
                                 >
-                                    {removingIds.includes(item.uuid) ? (
+                                    {loadingProductId === item.id ? (
                                         <Loader2 className="animate-spin h-4 w-4" />
                                     ) : (
                                         <Trash2 size={16} />
