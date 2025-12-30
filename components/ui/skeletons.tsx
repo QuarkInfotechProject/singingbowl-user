@@ -19,7 +19,7 @@ export function ProductCarouselSkeleton() {
         <div className="w-full">
             <div className="flex gap-4 overflow-hidden">
                 {[...Array(4)].map((_, i) => (
-                    <div key={i} className="basis-1/2 sm:basis-1/3 md:basis-1/3 lg:basis-1/4 flex-shrink-0">
+                    <div key={i} className="basis-1/2 sm:basis-1/3 md:basis-1/3 lg:basis-1/4 xl:basis-[15%] flex-shrink-0">
                         <ProductCardSkeleton />
                     </div>
                 ))}

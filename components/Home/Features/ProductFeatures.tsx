@@ -28,7 +28,7 @@ const ProductFeatures = () => {
         <div className="w-full lg:w-3/5 flex flex-col gap-6 sm:gap-8 px-2 sm:px-6 lg:px-0 py-8 lg:pr-20">
           {/* Titles aligned together */}
           <div className="text-center lg:text-left flex flex-col gap-3 sm:gap-4">
-            <div>
+            <div className="flex flex-col gap-2">
               <h3 className="text-[#A12717] text-xl font-bold leading-tight sm:text-3xl md:text-4xl text-center md:text-start lg:text-4xl">
                 SINGING BOWL VILLAGE
               </h3>
@@ -64,11 +64,14 @@ const ProductFeatures = () => {
               recalibrate. Feel the profound resonance of bowls and sacred
               instruments guide your brainwaves from chaos to coherence,
               releasing stored anxiety, mental fog, and emotional weight.
-              <br />
-              <br />
+              
               This is a homecoming for your soul. It's time to remember what it feels
               like to be vibrantly, authentically you. Your journey back to
               balance starts with a single, powerful note.
+              <br />
+              <br />
+              we honor the timeless harmony between ancient sound traditions and modern wellness practices. Each vibration is thoughtfully crafted to restore balance, awaken inner clarity, and promote deep emotional release. Through resonant frequencies and sacred instruments, we create transformative experiences that calm the mind and realign the spirit. This is more than sound—it is a therapeutic journey toward wholeness. Step into a space where resonance becomes healing, and stillness becomes strength. Your path to inner equilibrium begins here.
+
             </p>
           </div>
         </div>
