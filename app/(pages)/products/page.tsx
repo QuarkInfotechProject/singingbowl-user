@@ -198,12 +198,11 @@ const ProductContent = () => {
   const handleSelectCategory = (category: CategoryData | undefined) => {
     setSelectedCategory(category);
 
-    // Update URL with selected category
-    if (category?.url) {
-      router.push(`/products?category=${category.url}`, { scroll: false });
-    } else {
-      router.push("/products", { scroll: false });
-    }
+    // Update URL without triggering navigation/reload using replaceState
+    const newUrl = category?.url
+      ? `/products?category=${category.url}`
+      : "/products";
+    window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
   };
 
   // Get products to display

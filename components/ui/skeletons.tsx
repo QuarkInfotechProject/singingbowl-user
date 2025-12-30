@@ -52,15 +52,17 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
 export function CategoryCarouselSkeleton() {
     return (
         <div className="w-full animate-pulse">
-            <div className="flex gap-2 md:gap-4 overflow-hidden">
+            <div className="flex gap-4 overflow-hidden pl-4">
                 {[...Array(8)].map((_, i) => (
                     <div
                         key={i}
-                        className="flex-shrink-0 basis-1/2 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-[15%]"
+                        className="flex-shrink-0 basis-2/5 md:basis-1/3 lg:basis-1/4 xl:basis-[15%]"
                     >
-                        <div className="w-36 flex flex-col gap-3 items-center justify-center mx-auto">
-                            <div className="w-36 h-36 rounded-full bg-gray-200" />
-                            <div className="w-24 h-4 bg-gray-200 rounded" />
+                        <div className="flex flex-col items-center">
+                            <div className="flex justify-center mb-3">
+                                <div className="aspect-square w-full max-w-[120px] md:max-w-[160px] lg:max-w-[180px] rounded-full bg-gray-200" />
+                            </div>
+                            <div className="w-20 h-4 bg-gray-200 rounded" />
                         </div>
                     </div>
                 ))}
