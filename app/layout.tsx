@@ -5,6 +5,7 @@ import MobileBottomNav from "@/components/Header/MobileBottomNav";
 import { Inter } from "next/font/google";
 import { Providers } from "./providers";
 import Footer from "@/components/Footer/Footer";
+import FloatingButtons from "@/components/FloatingButtons/FloatingButtons";
 import { Toaster } from "sonner";
 
 
@@ -72,6 +73,7 @@ export default function RootLayout({
             {children}
             {auth}
           </div>
+          <FloatingButtons />
           <Footer />
         </Providers>
       </body>
