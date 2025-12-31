@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { fetchUserProfile } from "@/lib/apiItems";
 import { ActiveSection, ProfileFormData } from "./types";
+import Image from "next/image";
 
 interface ProfileSidebarProps {
     activeSection: ActiveSection;
@@ -75,7 +76,14 @@ export default function ProfileSidebar({
                     <div className="mb-4">
                         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mx-auto flex items-center justify-center text-white overflow-hidden">
                             {formData.profilePicture ? (
-                                <img src={formData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                                <div className="relative w-full h-full">
+                                    <Image
+                                        src={formData.profilePicture}
+                                        alt="Profile"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </div>
                             ) : (
                                 <User size={40} />
                             )}

@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import DOMPurify from "isomorphic-dompurify";
 
 interface DetailsSectionProps {
   description?: string;
@@ -58,7 +59,7 @@ export function DetailsSection({ description, additionalDescription }: DetailsSe
             {item.isHtml ? (
               <div
                 className="text-gray-600 text-sm leading-relaxed font-light prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: item.content }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.content) }}
               />
             ) : (
               <p className="text-gray-600 text-sm leading-relaxed font-light">

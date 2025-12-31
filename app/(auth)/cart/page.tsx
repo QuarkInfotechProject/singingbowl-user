@@ -11,6 +11,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo } from "react";
 
 const Cart = () => {
@@ -53,8 +54,8 @@ const Cart = () => {
       <div
         key={item.id}
         className={`bg-white rounded-lg border p-4 transition-all relative ${isOutOfStock
-            ? 'border-red-200 bg-red-50/50 opacity-75'
-            : 'border-slate-200 hover:shadow-lg'
+          ? 'border-red-200 bg-red-50/50 opacity-75'
+          : 'border-slate-200 hover:shadow-lg'
           } ${isRemoving ? 'opacity-50 pointer-events-none' : ''}`}
       >
         {isRemoving && (
@@ -69,10 +70,11 @@ const Cart = () => {
             className={`relative flex-shrink-0 w-24 h-24 bg-slate-100 rounded-lg overflow-hidden block ${isOutOfStock ? 'grayscale' : ''
               }`}
           >
-            <img
+            <Image
               src={item.image}
               alt={item.name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
             {!isOutOfStock && item.originalPrice > item.price && (
               <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
@@ -94,8 +96,8 @@ const Cart = () => {
               <div>
                 <Link href={item.url ? `/products/${item.url}` : "#"}>
                   <h3 className={`font-semibold text-lg transition-colors ${isOutOfStock
-                      ? 'text-slate-500'
-                      : 'text-slate-900 hover:text-[#A12717]'
+                    ? 'text-slate-500'
+                    : 'text-slate-900 hover:text-[#A12717]'
                     }`}>
                     {item.name}
                   </h3>

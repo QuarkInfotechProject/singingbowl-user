@@ -17,8 +17,12 @@ const ScrollToTop = () => {
             }
         };
 
-        window.addEventListener("scroll", toggleVisibility);
-        return () => window.removeEventListener("scroll", toggleVisibility);
+        const onScroll = () => {
+            requestAnimationFrame(toggleVisibility);
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
     const scrollToTop = () => {

@@ -1,13 +1,17 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 
+import Image from "next/image";
+
 const ChairmanMessage = () => (
   <section className="py-24 md:py-32 px-6 md:px-12 bg-stone-100 border-y border-stone-200">
     <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-16">
       <div className="md:w-2/5 flex-shrink-0 flex flex-col items-center">
-        <img
+        <Image
           src="/assets/images/md/4.avif"
           alt="Chairman Narendra Lama"
+          width={192}
+          height={192}
           className="w-48 h-48 md:w-120 md:h-120 object-cover rounded-3xl mx-auto shadow-xl border-4 border-white"
         />
         <div className="mt-6 text-center">

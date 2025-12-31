@@ -7,6 +7,7 @@ import Link from "next/link";
 import { fetchPostBySlug } from "@/lib/apiItems";
 import { BlogDetail } from "@/types/blog";
 import { Calendar, Clock, ChevronLeft, ChevronRight, List } from "lucide-react";
+import DOMPurify from "isomorphic-dompurify";
 
 // Table of contents item
 interface TOCItem {
@@ -179,7 +180,7 @@ const BlogDetailPage = () => {
             <div
                 ref={contentRef}
                 className="prose prose-lg max-w-none"
-                dangerouslySetInnerHTML={{ __html: contentWithIds }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contentWithIds) }}
             />
         );
     };

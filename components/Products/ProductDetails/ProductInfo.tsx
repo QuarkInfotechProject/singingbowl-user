@@ -9,6 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import DOMPurify from "isomorphic-dompurify";
 
 interface ProductInfoProps {
   product: ProductDetail;
@@ -106,7 +107,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           {product.description ? (
             <div
               className="text-gray-700 leading-relaxed prose prose-sm max-w-none line-clamp-7"
-              dangerouslySetInnerHTML={{ __html: product.description }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
             />
           ) : (
             <p className="text-gray-700 leading-relaxed">No description available.</p>

@@ -1,6 +1,7 @@
 import ProductGrid from "./ProductGrid";
 import { Product } from "./ProductCard";
 import { ProductGridSkeleton } from "@/components/ui/skeletons";
+import DOMPurify from "isomorphic-dompurify";
 
 export interface CategoryData {
   id: number;
@@ -51,7 +52,7 @@ const ProductSection = ({ category, isLoading, allProducts = [] }: ProductSectio
       <div className="w-full flex flex-col gap-4 items-start justify-start text-start">
         <p className="font-bold text-3xl">{category.name}</p>
         {category.description ? (
-          <div dangerouslySetInnerHTML={{ __html: category.description }} />
+          <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(category.description) }} />
         ) : (
           <p>Explore our exclusive collection of {category.name}. Crafted with precision and care, these items represent the finest quality and tradition.</p>
         )}

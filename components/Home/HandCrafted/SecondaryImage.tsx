@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface SecondaryImageProps {
   src: string;
   alt: string;
@@ -5,11 +7,15 @@ interface SecondaryImageProps {
 
 const SecondaryImage: React.FC<SecondaryImageProps> = ({ src, alt }) => {
   return (
-    <div className="rounded-lg overflow-hidden h-full">
-      <img
+    <div className="w-full rounded-lg overflow-hidden">
+      <Image
         src={src}
         alt={alt}
-        className="w-full h-auto md:h-[204px] object-cover rounded-lg"
+        className="object-cover rounded-lg"
+        width={1000}
+        height={1000}
+        style={{ width: "100%", height: "180px" }}
+        sizes="(max-width: 768px) 100vw, 50vw"
       />
     </div>
   );

@@ -1,4 +1,6 @@
 
+import Image from "next/image";
+
 interface FeaturedImageProps {
   src: string;
   alt: string;
@@ -10,11 +12,15 @@ const FeaturedImage: React.FC<FeaturedImageProps> = ({
   alt,
 }) => {
   return (
-    <div className="relative rounded-lg overflow-hidden h-full">
-      <img
+    <div className="w-full rounded-lg overflow-hidden">
+      <Image
         src={src}
         alt={alt}
-        className="w-full h-[458px] object-cover rounded-lg"
+        className="object-cover rounded-lg"
+        width={1000}
+        height={1000}
+        style={{ width: "100%", height: "auto" }}
+        sizes="(max-width: 768px) 100vw, 50vw"
       />
     </div>
   );
