@@ -37,7 +37,7 @@ const ScrollToTop = () => {
                     exit={{ opacity: 0, scale: 0 }}
                     onClick={scrollToTop}
                     className={cn(
-                        "p-3 rounded-full shadow-lg text-white bg-primary hover:bg-primary/90 transition-colors"
+                        "p-3 rounded-full shadow-lg text-white bg-red-800 hover:bg-red-700/90 transition-colors"
                     )}
                     aria-label="Scroll to top"
                 >

@@ -433,8 +433,8 @@ const Checkout = () => {
 
                       {/* Card images */}
                       <div className="flex gap-3 items-center">
-                        <Image src="/assets/images/logo/mastercard.png" alt="Mastercard" width={50} height={50} />
-                        <Image src="/assets/images/logo/visa.png" alt="Visa" width={50} height={50} />
+                        <Image src="/assets/images/logo/ime.jpeg" alt="Mastercard" width={130} height={50} />
+                        {/* <Image src="/assets/images/logo/visa.png" alt="Visa" width={50} height={50} /> */}
                         {/* <Image src="/assets/images/logo/union.png" alt="unionpay" width={50} height={50} /> */}
                       </div>
                     </button>
