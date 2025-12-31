@@ -423,7 +423,7 @@ const Checkout = () => {
 
                         <div>
                           <div className="font-semibold text-slate-900">
-                            Pay with Card
+                            Pay via Debit/Credit Card
                           </div>
                           <div className="text-xs text-slate-500">
                             Secure payment via GetPay
@@ -435,7 +435,7 @@ const Checkout = () => {
                       <div className="flex gap-3 items-center">
                         <Image src="/assets/images/logo/mastercard.png" alt="Mastercard" width={50} height={50} />
                         <Image src="/assets/images/logo/visa.png" alt="Visa" width={50} height={50} />
-                        <Image src="/assets/images/logo/union.png" alt="unionpay" width={50} height={50} />
+                        {/* <Image src="/assets/images/logo/union.png" alt="unionpay" width={50} height={50} /> */}
                       </div>
                     </button>
                   </div>

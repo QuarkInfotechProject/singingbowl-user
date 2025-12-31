@@ -62,7 +62,7 @@ const CategoryFilter = ({ categories, selectedCategoryId, onCategorySelect, isLo
               <button
                 key={category.id}
                 onClick={() => onCategorySelect(category)}
-                className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${selectedCategoryId === category.id
+                className={`w-full text-left px-3 py-2 cursor-pointer rounded-lg transition-colors text-sm ${selectedCategoryId === category.id
                   ? "bg-[#A12717] text-white font-medium"
                   : "text-gray-700 hover:bg-gray-100"
                   }`}

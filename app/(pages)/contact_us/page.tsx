@@ -311,7 +311,7 @@ export default function ContactPage() {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="w-full py-3 rounded-lg font-medium text-white transition-all duration-300 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-lg cursor-pointer font-medium text-white transition-all duration-300 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{
                     backgroundColor: "#A12717",
                     backgroundImage:

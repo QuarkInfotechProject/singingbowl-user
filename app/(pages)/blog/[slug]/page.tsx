@@ -246,7 +246,7 @@ const BlogDetailPage = () => {
                                         <button
                                             key={item.id}
                                             onClick={() => scrollToHeading(item.id)}
-                                            className={`block text-left text-sm transition-colors w-full ${activeId === item.id
+                                            className={`block text-left cursor-pointer text-sm transition-colors w-full ${activeId === item.id
                                                 ? "text-[#A12717] font-medium border-l-2 border-[#A12717] -ml-[18px] pl-4"
                                                 : "text-gray-600 hover:text-[#A12717]"
                                                 }`}

@@ -25,7 +25,7 @@ const Find = () => {
             </p>
             <div className=" flex items-start justify-start text-start">
               <Link href="https://singingbowlvillagenepal.com/products?category=investment-pieces">
-                <Button className="mx-auto bg-[#802010] rounded-full flex items-start justify-start text-start">
+                <Button className="mx-auto cursor-pointer bg-[#802010] rounded-full flex items-start justify-start text-start">
                   Visit Store
                 </Button>
               </Link>

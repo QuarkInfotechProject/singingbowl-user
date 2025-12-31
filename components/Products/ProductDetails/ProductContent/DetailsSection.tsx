@@ -49,7 +49,7 @@ export function DetailsSection({ description, additionalDescription }: DetailsSe
     <Accordion type="single" collapsible className="space-y-3">
       {DETAIL_ITEMS.map((item) => (
         <AccordionItem key={item.id} value={item.id}>
-          <AccordionTrigger className="hover:no-underline">
+          <AccordionTrigger className="hover:no-underline cursor-pointer">
             <span className="text-sm font-semibold text-gray-900 tracking-wide">
               {item.title}
             </span>

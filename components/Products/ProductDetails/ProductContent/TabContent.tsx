@@ -10,7 +10,7 @@ interface TabContentProps {
 
 export function TabContent({ value, title, description }: TabContentProps) {
   return (
-    <TabsContent value={value} className="space-y-4">
+    <TabsContent value={value} className="space-y-4 ">
       <Card className="shadow-none border-none">
         <CardHeader>
           <CardTitle className="text-lg text-gray-900">{title}</CardTitle>
