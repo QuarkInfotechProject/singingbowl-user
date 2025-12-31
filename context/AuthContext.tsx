@@ -26,17 +26,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         // Check for existing login on mount
-        const checkLoginStatus = () => {
+        const checkLoginStatus = async () => {
             const loggedInCookie = Cookies.get("isLoggedIn");
-            // Since we can't easily get the full user object from just "isLoggedIn=true" cookie 
-            // without an API call, we might rely on localStorage or just decode token if available.
-            // For now, let's try to get more info or at least set state to true if cookie exists.
-            // However, the best practice is often to fetch /me or similar. 
-            // But based on the token response provided by user, the user object IS returned on login.
-            // We should persist this user object. LocalStorage is common for non-sensitive user info.
 
             if (loggedInCookie === "true") {
                 setIsLoggedIn(true);
+                // Try to get from local storage first for immediate UI
                 const storedUser = localStorage.getItem("user_data");
                 if (storedUser) {
                     try {
@@ -44,6 +39,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     } catch (e) {
                         console.error("Failed to parse user data", e);
                     }
+                }
+
+                // Always fetch fresh profile data to ensure syncing (especially after Google Login redirect)
+                try {
+                    const { fetchUserProfile } = await import("@/lib/apiItems");
+                    const res = await fetchUserProfile();
+                    if (res?.data) {
+                        const userData: User = {
+                            name: res.data.fullName,
+                            userId: res.data.id || res.data.userId || "", // Handle potential ID field names
+                            isUserLoggedIn: true
+                        };
+                        setUser(userData);
+                        localStorage.setItem("user_data", JSON.stringify(userData));
+                    }
+                } catch (error) {
+                    console.error("Failed to sync user profile", error);
+                    // If fetch fails but cookie exists, we might want to logout or just stay in 'maybe logged in' state
+                    // For now, keeping it simple - if fetch fails, we rely on storedUser or just isLoggedIn=true
                 }
             }
             setIsLoading(false);

@@ -45,7 +45,7 @@ const Middlebar = () => {
                 className="flex items-center gap-2 hover:opacity-70 text-black cursor-pointer bg-transparent hover:bg-transparent border-none p-0 transition"
               >
                 <PersonOutlineOutlinedIcon />
-                <p className="hidden sm:inline">{user?.name || "User"}</p>
+                <p className="hidden sm:inline">{user?.name?.split(" ")[0] || "User"}</p>
               </Button>
             </Link>
           ) : (
