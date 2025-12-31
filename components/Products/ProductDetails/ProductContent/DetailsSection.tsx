@@ -7,7 +7,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
 interface DetailsSectionProps {
   description?: string;
@@ -59,7 +59,16 @@ export function DetailsSection({ description, additionalDescription }: DetailsSe
             {item.isHtml ? (
               <div
                 className="text-gray-600 text-sm leading-relaxed font-light prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.content) }}
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeHtml(item.content, {
+                    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'span']),
+                    allowedAttributes: {
+                      '*': ['class', 'style', 'id'],
+                      'a': ['href', 'target'],
+                      'img': ['src', 'alt', 'width', 'height']
+                    }
+                  })
+                }}
               />
             ) : (
               <p className="text-gray-600 text-sm leading-relaxed font-light">

@@ -9,7 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
 interface ProductInfoProps {
   product: ProductDetail;
@@ -107,7 +107,16 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           {product.description ? (
             <div
               className="text-gray-700 leading-relaxed prose prose-sm max-w-none line-clamp-7"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(product.description, {
+                  allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'span']),
+                  allowedAttributes: {
+                    '*': ['class', 'style', 'id'],
+                    'a': ['href', 'target'],
+                    'img': ['src', 'alt', 'width', 'height']
+                  }
+                })
+              }}
             />
           ) : (
             <p className="text-gray-700 leading-relaxed">No description available.</p>

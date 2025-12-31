@@ -240,13 +240,15 @@ export function HandCraftedSkeleton() {
 
 // Gallery Page Skeleton - matches masonry-style gallery grid
 export function GalleryPageSkeleton() {
-    // Pattern for varying skeleton sizes to mimic masonry layout
-    const skeletonItems = [
-        "", "row-span-2", "", "col-span-2",
-        "row-span-2", "", "", "row-span-2",
-        "", "col-span-2", "row-span-2", "",
-        "", "", "row-span-2", ""
+    // Pattern to mimic random masonry layout - matches screenshot
+    const patterns = [
+        "col-span-2", "", "",        
+        "", "", "", "row-span-2",    
+        "", "", "row-span-2",      
+        "col-span-2", ""            
     ];
+    // Create enough items
+    const skeletonItems = [...patterns];
 
     return (
         <div className="min-h-screen bg-white p-4 md:p-8 animate-pulse">
@@ -257,7 +259,7 @@ export function GalleryPageSkeleton() {
                     <div className="h-5 w-full max-w-2xl bg-gray-200 rounded" />
                 </div>
 
-                {/* Masonry-style grid skeleton */}
+                {/* Grid skeleton */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[200px] gap-3">
                     {skeletonItems.map((spanClass, i) => (
                         <div
