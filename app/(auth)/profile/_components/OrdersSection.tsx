@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Package, Loader2 } from "lucide-react";
+import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { fetchOrders } from "@/lib/apiItems";
 import { Order } from "./types";
+import { OrdersSkeleton } from "@/components/ui/skeletons";
 
 export default function OrdersSection() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -40,9 +41,7 @@ export default function OrdersSection() {
             <h1 className="text-2xl font-bold text-gray-900 mb-6">Orders</h1>
 
             {ordersLoading ? (
-                <div className="flex items-center justify-center py-12">
-                    <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
-                </div>
+                <OrdersSkeleton />
             ) : orders.length === 0 ? (
                 <div className="text-center py-12">
                     <Package size={48} className="mx-auto text-gray-400 mb-4" />

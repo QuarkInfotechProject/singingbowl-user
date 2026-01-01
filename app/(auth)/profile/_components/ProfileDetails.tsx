@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { fetchUserProfile, updateUserProfile } from "@/lib/apiItems";
 import { ProfileFormData } from "./types";
 import Image from "next/image";
+import CountryCodeDropdown, { countryCodes } from "@/components/ui/CountryCodeDropdown";
+import { ProfileSkeleton } from "@/components/ui/skeletons";
 
 export default function ProfileDetails() {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -15,6 +17,7 @@ export default function ProfileDetails() {
         lastName: "",
         email: "",
         phone: "",
+        countryCode: "+977", // Default
         profilePicture: "",
         gender: "",
         dateOfBirth: "",
@@ -39,11 +42,27 @@ export default function ProfileDetails() {
                 const firstName = nameParts[0] || "";
                 const lastName = nameParts.slice(1).join(" ") || "";
 
+                // Attempt to parse country code and phone
+                let loadedCountryCode = "+977";
+                let loadedPhone = phone || "";
+
+                if (phone) {
+                    // Try to match with known dial codes
+                    const sortedCodes = [...countryCodes].sort((a, b) => b.dial_code.length - a.dial_code.length);
+                    const matched = sortedCodes.find(c => phone.startsWith(c.dial_code));
+
+                    if (matched) {
+                        loadedCountryCode = matched.dial_code;
+                        loadedPhone = phone.slice(matched.dial_code.length).trim();
+                    }
+                }
+
                 setFormData({
                     firstName,
                     lastName,
                     email: email || "",
-                    phone: phone || "",
+                    phone: loadedPhone,
+                    countryCode: loadedCountryCode,
                     profilePicture: profilePicture || "",
                     gender: gender || "",
                     dateOfBirth: dateOfBirth || "",
@@ -68,9 +87,25 @@ export default function ProfileDetails() {
         }
     };
 
+    const handlePhoneChange = (value: string) => {
+        // Only allow numbers
+        const numbersOnly = value.replace(/\D/g, '');
+        setFormData({ ...formData, phone: numbersOnly });
+    };
+
+    const handleCountryCodeChange = (value: string) => {
+        setFormData({ ...formData, countryCode: value });
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Validate file size (max 1MB)
+            if (file.size > 1024 * 1024) {
+                toast.error("Profile picture must be less than 1MB");
+                return;
+            }
+
             setSelectedFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -88,10 +123,11 @@ export default function ProfileDetails() {
         try {
             setSaving(true);
             const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+            const fullPhone = `${formData.countryCode}${formData.phone}`; // Combine
 
             const data = new FormData();
             data.append("fullName", fullName);
-            data.append("phoneNumber", formData.phone);
+            data.append("phoneNumber", fullPhone);
             data.append("gender", formData.gender || "");
             data.append("dateOfBirth", formData.dateOfBirth || "");
             data.append("offersNotification", formData.offersNotification ? "1" : "0");
@@ -117,11 +153,7 @@ export default function ProfileDetails() {
     };
 
     if (loading) {
-        return (
-            <div className="flex h-64 items-center justify-center">
-                <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
-            </div>
-        );
+        return <ProfileSkeleton />;
     }
 
     return (
@@ -211,13 +243,20 @@ export default function ProfileDetails() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Phone Number
                         </label>
-                        <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleProfileChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                        />
+                        <div className="flex gap-1">
+                            <CountryCodeDropdown
+                                value={formData.countryCode || "+977"}
+                                onChange={handleCountryCodeChange}
+                                className="[&_button]:h-[42px] [&_button]:text-sm [&_button]:min-w-[80px] [&_button]:rounded-lg flex-shrink-0"
+                            />
+                            <input
+                                type="tel"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={(e) => handlePhoneChange(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition flex-1"
+                            />
+                        </div>
                     </div>
                 </div>
 

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { fetchWishlist } from "@/lib/apiItems";
 import { useWishlist } from "@/context/WishlistContext";
 import { WishlistItem } from "./types";
+import { WishlistSkeleton } from "@/components/ui/skeletons";
 
 export default function WishlistSection() {
     const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
@@ -45,9 +46,7 @@ export default function WishlistSection() {
             <h1 className="text-2xl font-bold text-gray-900 mb-6">My Wishlist</h1>
 
             {wishlistLoading ? (
-                <div className="flex items-center justify-center py-12">
-                    <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
-                </div>
+                <WishlistSkeleton />
             ) : wishlistItems.length === 0 ? (
                 <div className="text-center py-12">
                     <Heart size={48} className="mx-auto text-gray-400 mb-4" />

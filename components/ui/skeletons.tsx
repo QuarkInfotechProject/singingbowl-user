@@ -241,10 +241,10 @@ export function HandCraftedSkeleton() {
 // Gallery Page Skeleton - matches masonry-style gallery grid
 export function GalleryPageSkeleton() {
     const patterns = [
-        "col-span-2", "", "",        
-        "", "", "", "row-span-2",    
-        "", "", "row-span-2",      
-        "col-span-2", ""            
+        "col-span-2", "", "",
+        "", "", "", "row-span-2",
+        "", "", "row-span-2",
+        "col-span-2", ""
     ];
     // Create enough items
     const skeletonItems = [...patterns];
@@ -267,6 +267,160 @@ export function GalleryPageSkeleton() {
                         />
                     ))}
                 </div>
+            </div>
+        </div>
+    );
+}
+
+// Profile Details Skeleton
+export function ProfileSkeleton() {
+    return (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8 animate-pulse">
+            {/* Title */}
+            <div className="h-8 bg-gray-200 rounded w-48 mb-6" />
+
+            {/* Profile Picture */}
+            <div className="flex flex-col items-center mb-8">
+                <div className="w-32 h-32 rounded-full bg-gray-200 mb-2" />
+                <div className="h-4 bg-gray-200 rounded w-48" />
+            </div>
+
+            {/* Form Fields */}
+            <div className="space-y-6">
+                {/* 3 rows of 2 columns */}
+                {[...Array(3)].map((_, i) => (
+                    <div key={i} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <div className="h-4 bg-gray-200 rounded w-24 mb-2" />
+                            <div className="h-10 bg-gray-200 rounded w-full" />
+                        </div>
+                        <div>
+                            <div className="h-4 bg-gray-200 rounded w-24 mb-2" />
+                            <div className="h-10 bg-gray-200 rounded w-full" />
+                        </div>
+                    </div>
+                ))}
+
+                {/* Checkbox */}
+                <div className="flex items-center space-x-2">
+                    <div className="h-4 w-4 bg-gray-200 rounded" />
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                </div>
+
+                {/* Button */}
+                <div className="h-10 bg-gray-200 rounded w-32" />
+            </div>
+        </div>
+    );
+}
+
+// Orders Skeleton
+export function OrdersSkeleton() {
+    return (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8 animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-32 mb-6" />
+
+            <div className="space-y-4">
+                {/* Header Row */}
+                <div className="hidden md:grid grid-cols-5 gap-4 px-4 py-3 bg-gray-50 rounded-lg">
+                    {[...Array(5)].map((_, i) => (
+                        <div key={i} className="h-4 bg-gray-200 rounded w-20" />
+                    ))}
+                </div>
+
+                {/* rows */}
+                {[...Array(5)].map((_, i) => (
+                    <div key={i} className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border border-gray-100 rounded-lg">
+                        <div className="col-span-1 h-5 bg-gray-200 rounded w-24" />
+                        <div className="col-span-1 h-5 bg-gray-200 rounded w-32" />
+                        <div className="col-span-1 h-5 bg-gray-200 rounded w-20" />
+                        <div className="col-span-1 h-5 bg-gray-200 rounded w-16" />
+                        <div className="col-span-1 h-5 bg-gray-200 rounded w-16 ml-auto" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// Purchase History Skeleton
+export function PurchaseHistorySkeleton() {
+    return (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8 animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-48 mb-6" />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                    <div key={i} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                        <div className="aspect-square bg-gray-200 w-full" />
+                        <div className="p-3 space-y-2">
+                            <div className="h-4 bg-gray-200 rounded w-3/4" />
+                            <div className="flex justify-between">
+                                <div className="h-4 bg-gray-200 rounded w-12" />
+                                <div className="h-4 bg-gray-200 rounded w-10" />
+                            </div>
+                            <div className="h-3 bg-gray-200 rounded w-1/2" />
+                            <div className="h-8 bg-gray-200 rounded w-full mt-2" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// Wishlist Skeleton
+export function WishlistSkeleton() {
+    return (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8 animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-32 mb-6" />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(3)].map((_, i) => (
+                    <div key={i} className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="aspect-square bg-gray-200 w-full" />
+                        <div className="p-4 space-y-3">
+                            <div className="h-5 bg-gray-200 rounded w-3/4" />
+                            <div className="h-6 bg-gray-200 rounded w-24" />
+                            <div className="h-10 bg-gray-200 rounded w-full" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// Address Skeleton
+export function AddressSkeleton() {
+    return (
+        <div className="space-y-4 animate-pulse">
+            <div className="flex items-center justify-between mb-4">
+                <div className="h-7 bg-gray-200 rounded w-32" />
+                <div className="h-9 bg-gray-200 rounded w-28" />
+            </div>
+
+            <div className="space-y-3">
+                {[...Array(2)].map((_, i) => (
+                    <div key={i} className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-3">
+                            <div className="flex items-center gap-2">
+                                <div className="h-5 bg-gray-200 rounded w-4" />
+                                <div className="h-5 bg-gray-200 rounded w-24" />
+                                {i === 0 && <div className="h-5 bg-gray-200 rounded w-16" />}
+                            </div>
+                            <div className="flex gap-2">
+                                <div className="h-8 bg-gray-200 rounded w-8" />
+                                <div className="h-8 bg-gray-200 rounded w-8" />
+                            </div>
+                        </div>
+                        <div className="space-y-2 pl-6">
+                            <div className="h-4 bg-gray-200 rounded w-full" />
+                            <div className="h-4 bg-gray-200 rounded w-3/4" />
+                            <div className="h-4 bg-gray-200 rounded w-1/2" />
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

@@ -12,39 +12,19 @@ const nextConfig: NextConfig = {
         pathname: '/modules/files/**',
       },
       {
-        protocol: 'https',
-        hostname: 'api.singingbowlvillagenepal.com',
-        pathname: '/modules/files/**',
-      },
-      {
         protocol: 'http',
         hostname: 'api.singingbowlvillagenepal.com',
-        pathname: '/modules/review/**',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'api.singingbowlvillagenepal.com',
-        pathname: '/modules/review/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'api.singingbowlvillagenepal.com',
-        pathname: '/modules/files/**',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
         pathname: '/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'api.singingbowlvillagenepal.com',
-        pathname: '/EndUserProfilePicture/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.singingbowlvillagenepal.com',
-        pathname: '/EndUserProfilePicture/**',
       },
     ],
   },

@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Plus, Loader2, MapPin } from "lucide-react";
+import { Plus, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { fetchAddresses } from "@/lib/apiItems";
 import { Address } from "@/types/address.types";
 import AddressCard from "./AddressCard";
+import { AddressSkeleton } from "@/components/ui/skeletons";
 
 interface AddressListProps {
     onAddressSelect?: (address: Address | null) => void;
@@ -77,11 +78,7 @@ const AddressList: React.FC<AddressListProps> = ({
     };
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
-            </div>
-        );
+        return <AddressSkeleton />;
     }
 
     return (

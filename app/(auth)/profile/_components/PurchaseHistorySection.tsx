@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { History, Loader2 } from "lucide-react";
+import { History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { fetchPurchases } from "@/lib/apiItems";
 import { PurchaseItem, ReviewData } from "./types";
 import ReviewModal from "./ReviewModal";
 import PurchaseHistoryCard from "./PurchaseHistoryCard";
+import { PurchaseHistorySkeleton } from "@/components/ui/skeletons";
 
 export default function PurchaseHistorySection() {
     const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([]);
@@ -157,9 +158,7 @@ export default function PurchaseHistorySection() {
             <h1 className="text-2xl font-bold text-gray-900 mb-6">Purchase History</h1>
 
             {purchaseLoading ? (
-                <div className="flex items-center justify-center py-12">
-                    <Loader2 className="animate-spin h-8 w-8 text-blue-600" />
-                </div>
+                <PurchaseHistorySkeleton />
             ) : purchaseItems.length === 0 ? (
                 <div className="text-center py-12">
                     <History size={48} className="mx-auto text-gray-400 mb-4" />

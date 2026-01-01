@@ -35,6 +35,7 @@ export interface ProfileFormData {
     lastName: string;
     email: string;
     phone: string;
+    countryCode?: string;
     profilePicture: string;
     gender?: string;
     dateOfBirth?: string;
