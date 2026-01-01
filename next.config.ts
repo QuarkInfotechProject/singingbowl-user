@@ -36,6 +36,16 @@ const nextConfig: NextConfig = {
         hostname: 'lh3.googleusercontent.com',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'api.singingbowlvillagenepal.com',
+        pathname: '/EndUserProfilePicture/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.singingbowlvillagenepal.com',
+        pathname: '/EndUserProfilePicture/**',
+      },
     ],
   },
   async headers() {

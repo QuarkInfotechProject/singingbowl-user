@@ -36,6 +36,9 @@ export interface ProfileFormData {
     email: string;
     phone: string;
     profilePicture: string;
+    gender?: string;
+    dateOfBirth?: string;
+    offersNotification?: boolean;
 }
 
 export interface PasswordFormData {

@@ -73,8 +73,10 @@ export async function POST(
   try {
     const params = await context.params;
     const endpoint = `/${params.path.join("/")}`;
-    const body = await request.json();
 
+    // Read body as ArrayBuffer to handle both JSON and Multipart data
+    const arrayBuffer = await request.arrayBuffer();
+    const body = Buffer.from(arrayBuffer);
 
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
@@ -82,6 +84,12 @@ export async function POST(
     const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    // Forward the Content-Type header if present
+    const contentType = request.headers.get("content-type");
+    if (contentType) {
+      headers["Content-Type"] = contentType;
     }
 
     // Check for guest token
@@ -96,7 +104,6 @@ export async function POST(
   } catch (error: any) {
     const axiosError = error as AxiosError;
     const errorData = axiosError.response?.data as any;
-
 
     return Response.json(
       {

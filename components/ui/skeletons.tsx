@@ -240,7 +240,6 @@ export function HandCraftedSkeleton() {
 
 // Gallery Page Skeleton - matches masonry-style gallery grid
 export function GalleryPageSkeleton() {
-    // Pattern to mimic random masonry layout - matches screenshot
     const patterns = [
         "col-span-2", "", "",        
         "", "", "", "row-span-2",    

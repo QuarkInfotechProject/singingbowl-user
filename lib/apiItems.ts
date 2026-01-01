@@ -119,7 +119,11 @@ export const fetchUserProfile = async () => {
 // Update user profile
 export const updateUserProfile = async (data: any) => {
     try {
-        const response = await api.post("/user/profile/update", data);
+        const response = await api.post("/user/profile/update", data, {
+            headers: {
+                "Content-Type": undefined,
+            } as any, 
+        });
         return response.data;
     } catch (error) {
         console.error("updateUserProfile error:", error);
