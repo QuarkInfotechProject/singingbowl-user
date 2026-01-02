@@ -206,6 +206,8 @@ const PaymentPage = () => {
                 papInfo: paymentConfig.papInfo,
                 oprKey: paymentConfig.oprKey,
                 insKey: paymentConfig.insKey,
+                // REQUIRED: websiteDomain at top level for SDK validation
+                websiteDomain: window.location.origin,
                 // CALLBACKS AT TOP LEVEL (SDK expects them here)
                 onSuccess: handleSuccess,
                 onError: handleError
