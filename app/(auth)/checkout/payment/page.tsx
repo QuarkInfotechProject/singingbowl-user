@@ -184,28 +184,15 @@ const PaymentPage = () => {
                 });
             };
 
-            // Build options - EXPLICITLY remove original URLs and set dummy ones
-            // Destructure to remove original URL fields, then add our overrides
-            const { successUrl: _, failUrl: __, callbackUrl: ___, ...cleanedOptions } = getPayOptionsFromConfig;
-
+            // KEEP THE ORIGINAL OPTIONS FROM BACKEND - they were working!
+            // Only override what's absolutely necessary
             const options = {
-                ...cleanedOptions,
+                ...getPayOptionsFromConfig,
                 containerId: "checkout",
-                // EXPLICITLY ensure required fields are present (SDK requires websiteDomain)
-                websiteDomain: getPayOptionsFromConfig.websiteDomain || window.location.origin,
-                baseUrl: getPayOptionsFromConfig.baseUrl,
-                // FORCE the SDK to stay on page
-                successUrl: dummySuccessUrl,
-                failUrl: dummyFailUrl,
-                // callbackUrl must be an OBJECT with nested successUrl/failUrl
-                callbackUrl: {
-                    successUrl: dummySuccessUrl,
-                    failUrl: dummyFailUrl
-                },
                 isRedirect: false
             };
 
-            console.log("Initializing GetPay with FORCE STAY options:", options);
+            console.log("Initializing GetPay with options:", options);
 
             // CRITICAL: onSuccess and onError at TOP LEVEL of constructor
             const getPay = new (window as any).GetPay({
@@ -217,10 +204,6 @@ const PaymentPage = () => {
                 papInfo: paymentConfig.papInfo,
                 oprKey: paymentConfig.oprKey,
                 insKey: paymentConfig.insKey,
-                // REQUIRED: baseUrl at TOP LEVEL (SDK falls back to staging without this!)
-                baseUrl: getPayOptionsFromConfig.baseUrl,
-                // REQUIRED: websiteDomain at TOP LEVEL (SDK checks here, not in getPayOptions)
-                websiteDomain: getPayOptionsFromConfig.websiteDomain || window.location.origin,
                 // CALLBACKS AT TOP LEVEL (SDK expects them here)
                 onSuccess: handleSuccess,
                 onError: handleError
