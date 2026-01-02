@@ -189,7 +189,9 @@ const PaymentPage = () => {
             const options = {
                 ...getPayOptionsFromConfig,
                 containerId: "checkout",
-                isRedirect: false
+                isRedirect: false,
+                // REQUIRED: GetPay SDK needs websiteDomain
+                websiteDomain: window.location.origin
             };
 
             console.log("Initializing GetPay with options:", options);
