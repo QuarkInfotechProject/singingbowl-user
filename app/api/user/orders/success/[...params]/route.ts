@@ -84,14 +84,16 @@ export async function GET(
             token: getPayToken,
         };
 
-        // Backend URL is fixed /user/orders/success, parameters are in body
-        const backendUrl = `/user/orders/success`;
+        // Backend expects path parameters: /user/orders/success/{paymentMethod}/{orderId}
+        const backendUrl = `/user/orders/success/${paymentMethod}/${orderId}`;
         console.log("Constructed Backend URL:", backendUrl);
 
         try {
             // Attempt 1: Standard URL
             await apiClient.post(backendUrl, requestBody, { headers });
         } catch (apiError1: any) {
+            // ... keep retry logic or simplfy ...
+            // Since we know the route structure now, retry is less critical but good for trailing slash safety
             console.warn("Attempt 1 failed. Retrying with trailing slash...");
 
             try {
@@ -100,7 +102,6 @@ export async function GET(
             } catch (apiError2: any) {
                 console.error("!!! Backend API Failed (Both Attempts) !!!");
 
-                // Use the error from the first attempt for main display, but log both
                 const finalError = apiError1;
 
                 let debugInfo = `Environment BASE_URL: ${process.env.BASE_URL}\n`;
@@ -119,10 +120,6 @@ export async function GET(
                     debugInfo += `Request Data: ${JSON.stringify(finalError.config.data)}\n`;
                 }
 
-                // Throw to render error page (preserving the debug info construction logic below)
-                // We'll reconstruct the debugInfo in the catch block below by re-throwing a custom object or modifying logic?
-                // Actually, let's just render the error page directly here or pass the info down.
-                // To keep it simple with existing structure, I'll attach the debugInfo string to the error object.
                 finalError.customDebugInfo = debugInfo;
                 throw finalError;
             }

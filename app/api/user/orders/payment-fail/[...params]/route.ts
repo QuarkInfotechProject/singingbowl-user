@@ -44,7 +44,7 @@ export async function GET(
         }
 
         // Call backend fail endpoint
-        const backendUrl = `/user/orders/payment-fail`;
+        const backendUrl = `/user/orders/payment-fail/${orderId}`;
         const requestBody = {
             orderId: orderId,
             token: token,

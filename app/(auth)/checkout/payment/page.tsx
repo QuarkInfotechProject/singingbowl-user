@@ -47,7 +47,7 @@ const PaymentPage = () => {
         .parent-div.svelte-1i24pqq {
             padding: 2rem 4rem;
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr !important;
             grid-column-gap: 0px;
             grid-row-gap: 0px;
             grid-template-areas:
