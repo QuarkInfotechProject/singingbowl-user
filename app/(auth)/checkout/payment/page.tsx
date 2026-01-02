@@ -137,10 +137,6 @@ const PaymentPage = () => {
         try {
             const getPayOptionsFromConfig = paymentConfig?.getPayOptions || {};
 
-            // SDK Redirect Prevention: Point to current page anchors so the SDK doesn't navigate away
-            const dummySuccessUrl = window.location.href.split('#')[0] + "#success_callback";
-            const dummyFailUrl = window.location.href.split('#')[0] + "#fail_callback";
-
             // Define callbacks BEFORE options (SDK expects them in the options object)
             const handleSuccess = (data: any) => {
                 console.log("🟢🟢🟢 GetPay Success Callback FIRED:", data);
@@ -184,32 +180,36 @@ const PaymentPage = () => {
                 });
             };
 
-            // KEEP THE ORIGINAL OPTIONS FROM BACKEND - they were working!
-            // Only override what's absolutely necessary
-            const options = {
+            // Access papInfo, userInfo, oprKey, insKey from getPayOptions (NOT top-level)
+            const {
+                papInfo,
+                userInfo,
+                oprKey,
+                insKey,
+                baseUrl,
+                websiteDomain,
+                clientRequestId,
+                ...restOptions
+            } = getPayOptionsFromConfig;
+
+            console.log("Initializing GetPay with config from getPayOptions:");
+            console.log("  papInfo:", papInfo ? "present" : "missing");
+            console.log("  userInfo:", userInfo);
+            console.log("  oprKey:", oprKey);
+            console.log("  baseUrl:", baseUrl);
+
+            // CRITICAL: Spread all getPayOptions and override only what's necessary
+            const getPay = new (window as any).GetPay({
+                // Spread all options from getPayOptions
                 ...getPayOptionsFromConfig,
+                // Override container and redirect settings
                 containerId: "checkout",
                 isRedirect: false,
-                // REQUIRED: GetPay SDK needs websiteDomain
-                websiteDomain: window.location.origin
-            };
-
-            console.log("Initializing GetPay with options:", options);
-
-            // CRITICAL: onSuccess and onError at TOP LEVEL of constructor
-            const getPay = new (window as any).GetPay({
+                // Use window.location.origin as websiteDomain for SDK validation
+                websiteDomain: window.location.origin,
+                // Include top-level fields that SDK might expect
                 paymentMethod: paymentConfig.paymentMethod,
                 orderId: paymentConfig.orderId,
-                getPayOptions: options,
-                userInfo: paymentConfig.userInfo,
-                clientRequestId: String(paymentConfig.orderId),
-                papInfo: paymentConfig.papInfo,
-                oprKey: paymentConfig.oprKey,
-                insKey: paymentConfig.insKey,
-                // REQUIRED: baseUrl from backend to use production API
-                baseUrl: getPayOptionsFromConfig.baseUrl,
-                // REQUIRED: websiteDomain at top level for SDK validation
-                websiteDomain: window.location.origin,
                 // CALLBACKS AT TOP LEVEL (SDK expects them here)
                 onSuccess: handleSuccess,
                 onError: handleError
