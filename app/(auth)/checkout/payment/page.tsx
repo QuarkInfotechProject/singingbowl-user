@@ -13,10 +13,10 @@ declare global {
 }
 
 interface PaymentConfig {
-    getPayOptions: {
-        baseUrl: string;
-        containerId: string;
-        callbackUrl: string | { successUrl: string; failUrl: string };
+    getPayOptions?: {
+        baseUrl?: string;
+        containerId?: string;
+        callbackUrl?: string | { successUrl?: string; failUrl?: string };
         websiteDomain?: string;
         [key: string]: any;
     };
@@ -125,34 +125,51 @@ const PaymentPage = () => {
         getpayInitializedRef.current = true;
 
         try {
-            const backendCallbackUrl = paymentConfig.getPayOptions.callbackUrl;
+            // Safely access getPayOptions
+            const getPayOptionsFromConfig = paymentConfig.getPayOptions || {};
+            const backendCallbackUrl = getPayOptionsFromConfig.callbackUrl;
 
-            // Extract success and fail URLs from the callback config
-            const successUrl = typeof backendCallbackUrl === 'object'
-                ? backendCallbackUrl.successUrl
-                : backendCallbackUrl;
-            const failUrl = typeof backendCallbackUrl === 'object'
-                ? backendCallbackUrl.failUrl
-                : undefined;
+            // Safely extract success and fail URLs from the callback config
+            let successUrl: string | undefined;
+            let failUrl: string | undefined;
 
-            const getPayOptions = {
-                ...paymentConfig.getPayOptions,
+            if (backendCallbackUrl) {
+                if (typeof backendCallbackUrl === 'object' && backendCallbackUrl !== null) {
+                    successUrl = backendCallbackUrl.successUrl;
+                    failUrl = backendCallbackUrl.failUrl;
+                } else if (typeof backendCallbackUrl === 'string') {
+                    successUrl = backendCallbackUrl;
+                }
+            }
+
+            // If no callback URLs are available, log warning but continue
+            if (!successUrl) {
+                console.warn("No successUrl found in payment config, SDK may handle callbacks internally");
+            }
+
+            const getPayOptions: Record<string, any> = {
+                ...getPayOptionsFromConfig,
                 containerId: "#checkout",
-                successUrl: successUrl,
-                failUrl: failUrl,
-                // Remove onSuccess/onError callbacks - they cause immediate triggering
-                // The backend handles success/fail via URL redirects
             };
 
+            // Only add URLs if they exist
+            if (successUrl) {
+                getPayOptions.successUrl = successUrl;
+            }
+            if (failUrl) {
+                getPayOptions.failUrl = failUrl;
+            }
+
             // Remove any existing callbacks that might have been spread from paymentConfig
-            delete (getPayOptions as any).onSuccess;
-            delete (getPayOptions as any).onError;
-            delete (getPayOptions as any).callbackUrl; // Use successUrl/failUrl instead
+            delete getPayOptions.onSuccess;
+            delete getPayOptions.onError;
+            delete getPayOptions.callbackUrl;
 
             console.log("GetPay options:", getPayOptions);
 
             // Initialize GetPay
-            const getpay = new window.GetPay(getPayOptions, paymentConfig.getPayOptions.baseUrl);
+            const baseUrl = getPayOptionsFromConfig.baseUrl;
+            const getpay = new window.GetPay(getPayOptions, baseUrl);
             getpay.initialize();
 
             console.log("GetPay initialized successfully");
@@ -179,74 +196,10 @@ const PaymentPage = () => {
         router.push('/checkout');
     };
 
-    // Inline styles for GetPay SDK container
-    const styles = {
-        // Main container wrapper
-        paymentWrapper: {
-            width: '100%',
-            maxWidth: '100%',
-            margin: '0 auto',
-            padding: '24px',
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            minHeight: '450px',
-        } as React.CSSProperties,
-
-        // SDK container styles - these will be applied to #checkout div
-        sdkContainer: {
-            width: '100%',
-            margin: '0 auto',
-            padding: '0',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-            fontSize: '16px',
-            lineHeight: '1.6',
-            color: '#1e293b',
-        } as React.CSSProperties,
-
-        // Loading overlay styles
-        loadingOverlay: {
-            position: 'absolute' as const,
-            inset: 0,
-            backgroundColor: 'rgba(255, 255, 255, 0.98)',
-            display: 'flex',
-            flexDirection: 'column' as const,
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 20,
-            borderRadius: '16px',
-            backdropFilter: 'blur(4px)',
-        } as React.CSSProperties,
-
-        // Spinner styles
-        spinner: {
-            width: '56px',
-            height: '56px',
-            border: '4px solid #e2e8f0',
-            borderTopColor: '#3b82f6',
-            borderRadius: '50%',
-            marginBottom: '20px',
-        } as React.CSSProperties,
-
-        // Loading text styles
-        loadingTitle: {
-            fontSize: '18px',
-            fontWeight: 600,
-            color: '#1e293b',
-            marginBottom: '8px',
-        } as React.CSSProperties,
-
-        loadingSubtext: {
-            fontSize: '14px',
-            color: '#94a3b8',
-        } as React.CSSProperties,
-    };
-
-
-
     // Loading state
     if (authLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="w-8 h-8 border-4 border-slate-200 border-t-[#A12717] rounded-full animate-spin" />
             </div>
         );
@@ -255,8 +208,8 @@ const PaymentPage = () => {
     // Session expired state
     if (sessionExpired) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50 flex items-center justify-center">
-                <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 max-w-md text-center">
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-xl p-8 shadow-md border border-slate-200 max-w-md w-full text-center">
                     <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
                     <h2 className="text-xl font-bold text-slate-900 mb-2">Session Expired</h2>
                     <p className="text-slate-600 mb-6">
@@ -274,221 +227,165 @@ const PaymentPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50">
-            <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <div className="min-h-screen bg-slate-50">
+            <div className="max-w-2xl mx-auto px-4 py-8">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-6">
                     <button
                         onClick={handleBackToCheckout}
-                        className="text-slate-500 hover:text-slate-700 text-sm flex items-center gap-2 mb-4 transition-colors"
+                        className="text-slate-500 hover:text-slate-700 text-sm flex items-center gap-2 mb-4"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         Back to Checkout
                     </button>
-                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Complete Your Payment</h1>
-                    <p className="text-slate-500 mt-2">Enter your card details below to finalize your order.</p>
+                    <h1 className="text-2xl font-bold text-slate-900">Complete Your Payment</h1>
+                    <p className="text-slate-500 mt-1">Enter your card details below to finalize your order.</p>
                 </div>
 
-                {/* Order Status Info Banner */}
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-                    <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-xl">⏳</span>
-                    </div>
+                {/* Status Banner */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+                    <span className="text-xl">⏳</span>
                     <div>
                         <h3 className="font-semibold text-amber-800">Payment Pending</h3>
                         <p className="text-amber-700 text-sm">
-                            Your order is reserved and waiting for payment. Please complete the payment below to confirm your order.
+                            Your order is reserved. Complete the payment below to confirm.
                         </p>
                     </div>
                 </div>
 
                 {/* Payment Container */}
-                <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     {/* Payment Header */}
-                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+                    <div className="bg-blue-600 p-5 text-white">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                                <CreditCard className="w-6 h-6" />
+                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                                <CreditCard className="w-5 h-5" />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold">Secure Card Payment</h2>
-                                <p className="text-blue-100 text-sm">Your payment information is encrypted and secure</p>
+                                <h2 className="text-lg font-bold">Secure Card Payment</h2>
+                                <p className="text-blue-100 text-sm">Your information is encrypted and secure</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Payment Form Area */}
-                    <div style={{ padding: '24px 32px' }}>
-                        {/* Inject CSS for GetPay SDK internal elements */}
+                    <div className="p-6">
+                        {/* Clean CSS for GetPay SDK */}
                         <style>{`
                             #checkout {
-                                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                                font-family: system-ui, -apple-system, sans-serif;
+                                width: 100%;
                             }
                             #checkout iframe {
                                 width: 100% !important;
-                                min-height: 400px !important;
-                                border: none !important;
-                                border-radius: 12px !important;
+                                min-height: 400px;
+                                border: none;
                             }
                             #checkout input,
                             #checkout select {
-                                width: 100% !important;
-                                padding: 14px 16px !important;
-                                border: 2px solid #e2e8f0 !important;
-                                border-radius: 10px !important;
-                                font-size: 16px !important;
-                                background-color: #f8fafc !important;
-                                transition: all 0.2s ease !important;
-                                outline: none !important;
+                                width: 100%;
+                                padding: 12px 14px;
+                                border: 1px solid #e2e8f0;
+                                border-radius: 8px;
+                                font-size: 16px;
+                                background: #fff;
+                                margin-bottom: 4px;
                             }
                             #checkout input:focus,
                             #checkout select:focus {
-                                border-color: #3b82f6 !important;
-                                background-color: #ffffff !important;
-                                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
-                            }
-                            #checkout input::placeholder {
-                                color: #94a3b8 !important;
+                                outline: none;
+                                border-color: #3b82f6;
+                                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
                             }
                             #checkout label {
-                                display: block !important;
-                                font-size: 14px !important;
-                                font-weight: 600 !important;
-                                color: #334155 !important;
-                                margin-bottom: 8px !important;
+                                display: block;
+                                font-size: 14px;
+                                font-weight: 500;
+                                color: #374151;
+                                margin-bottom: 6px;
                             }
                             #checkout button[type="submit"],
                             #checkout .pay-button,
                             #checkout .submit-btn {
-                                width: 100% !important;
-                                padding: 16px 24px !important;
-                                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-                                color: white !important;
-                                font-size: 16px !important;
-                                font-weight: 700 !important;
-                                border: none !important;
-                                border-radius: 12px !important;
-                                cursor: pointer !important;
-                                transition: all 0.3s ease !important;
-                                text-transform: uppercase !important;
-                                letter-spacing: 0.5px !important;
-                                box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4) !important;
+                                width: 100%;
+                                padding: 14px 20px;
+                                background: #3b82f6;
+                                color: white;
+                                font-size: 16px;
+                                font-weight: 600;
+                                border: none;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                margin-top: 16px;
                             }
                             #checkout button[type="submit"]:hover,
                             #checkout .pay-button:hover,
                             #checkout .submit-btn:hover {
-                                background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
-                                transform: translateY(-2px) !important;
-                                box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5) !important;
+                                background: #2563eb;
                             }
                             #checkout .error,
                             #checkout .error-message {
-                                color: #dc2626 !important;
-                                font-size: 13px !important;
-                                margin-top: 6px !important;
+                                color: #dc2626;
+                                font-size: 13px;
+                                margin-top: 4px;
                             }
                             #checkout .form-group,
                             #checkout .field-wrapper {
-                                margin-bottom: 20px !important;
-                            }
-
-                            @media (min-width: 1500px) {
-                                .parent-div.svelte-1i24pqq {
-                                    padding: 2rem 4rem;
-                                    display: grid;
-                                    grid-template-columns: 1fr;
-                                    grid-column-gap: 0px;
-                                    grid-row-gap: 0px;
-                                    grid-template-areas:
-                                    "order summary"
-                                    "information payment";
-                                }
+                                margin-bottom: 16px;
                             }
                         `}</style>
 
-                        {/* GetPay Payment Container */}
-                        <div style={{ position: 'relative', minHeight: '480px' }}>
+                        {/* GetPay Container */}
+                        <div className="relative min-h-[400px]">
                             {sdkLoading && (
-                                <div style={styles.loadingOverlay}>
-                                    <div
-                                        style={styles.spinner}
-                                        className="animate-spin"
-                                    />
-                                    <p style={styles.loadingTitle}>Loading payment form...</p>
-                                    <p style={styles.loadingSubtext}>Connecting to secure payment gateway</p>
+                                <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10">
+                                    <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-4" />
+                                    <p className="text-slate-700 font-medium">Loading payment form...</p>
+                                    <p className="text-slate-400 text-sm">Connecting to secure gateway</p>
                                 </div>
                             )}
-                            {/* This is where GetPay SDK will render the payment form */}
                             <div
                                 id="checkout"
-                                style={{
-                                    ...styles.sdkContainer,
-                                    minHeight: '450px',
-                                    opacity: sdkLoading ? 0 : 1,
-                                    transition: 'opacity 0.3s ease',
-                                }}
+                                className={`min-h-[400px] transition-opacity duration-300 ${sdkLoading ? 'opacity-0' : 'opacity-100'}`}
                             />
                         </div>
 
                         {/* Error Display */}
                         {paymentError && (
-                            <div style={{
-                                marginTop: '24px',
-                                padding: '16px',
-                                backgroundColor: '#fef2f2',
-                                borderRadius: '12px',
-                                border: '1px solid #fecaca',
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                gap: '12px',
-                            }}>
-                                <AlertCircle style={{ width: '20px', height: '20px', color: '#dc2626', flexShrink: 0, marginTop: '2px' }} />
+                            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                                 <div>
-                                    <p style={{ fontWeight: 600, color: '#b91c1c', marginBottom: '4px' }}>Payment Error</p>
-                                    <p style={{ fontSize: '14px', color: '#dc2626' }}>{paymentError}</p>
+                                    <p className="font-semibold text-red-700">Payment Error</p>
+                                    <p className="text-red-600 text-sm">{paymentError}</p>
                                 </div>
                             </div>
                         )}
 
                         {/* Security Features */}
-                        <div style={{
-                            marginTop: '32px',
-                            paddingTop: '24px',
-                            borderTop: '1px solid #e2e8f0',
-                        }}>
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(3, 1fr)',
-                                gap: '16px',
-                                textAlign: 'center',
-                            }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '28px', marginBottom: '8px' }}>🔒</span>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>SSL Encrypted</span>
+                        <div className="mt-6 pt-4 border-t border-slate-100">
+                            <div className="flex justify-center gap-8 text-center text-xs text-slate-500">
+                                <div className="flex flex-col items-center">
+                                    <span className="text-lg mb-1">🔒</span>
+                                    <span>SSL Encrypted</span>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '28px', marginBottom: '8px' }}>🛡️</span>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>Fraud Protection</span>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-lg mb-1">🛡️</span>
+                                    <span>Fraud Protection</span>
                                 </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '28px', marginBottom: '8px' }}>✅</span>
-                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>Verified Secure</span>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-lg mb-1">✅</span>
+                                    <span>Verified Secure</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Footer Security Note */}
-                <div className="mt-6 text-center">
-                    <p className="text-xs text-slate-400 flex items-center justify-center gap-2">
-                        <span>�</span>
-                        Secured by GetPay • 256-bit encryption • PCI DSS Compliant
-                    </p>
-                </div>
+                {/* Footer */}
+                <p className="text-center text-xs text-slate-400 mt-6">
+                    🔐 Secured by GetPay • 256-bit encryption • PCI DSS Compliant
+                </p>
             </div>
-
-
         </div>
     );
 };

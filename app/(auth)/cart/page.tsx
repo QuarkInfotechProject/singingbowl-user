@@ -143,33 +143,11 @@ const Cart = () => {
                     </span>
                   )}
                 </div>
-                {/* Quantity Controls */}
-                {!isOutOfStock && item.cartItemId && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <button
-                      onClick={() => updateQuantity(item.cartItemId!, item.id, item.quantity - 1)}
-                      disabled={item.quantity <= 1 || isUpdating}
-                      className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Decrease quantity"
-                    >
-                      <Minus className="w-4 h-4 text-slate-600" />
-                    </button>
-                    <span className="w-8 text-center font-medium text-slate-900">
-                      {isUpdating ? (
-                        <Loader2 className="w-4 h-4 animate-spin mx-auto text-[#A12717]" />
-                      ) : (
-                        item.quantity
-                      )}
-                    </span>
-                    <button
-                      onClick={() => updateQuantity(item.cartItemId!, item.id, item.quantity + 1)}
-                      disabled={isUpdating || (item.stock !== undefined && item.quantity >= item.stock)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title="Increase quantity"
-                    >
-                      <Plus className="w-4 h-4 text-slate-600" />
-                    </button>
-                  </div>
+                {/* Quantity Display */}
+                {!isOutOfStock && (
+                  <p className="text-sm mt-2 text-slate-600 font-medium">
+                    Qty: {item.quantity}
+                  </p>
                 )}
                 {isOutOfStock && (
                   <p className="text-sm mt-1 text-slate-400">
