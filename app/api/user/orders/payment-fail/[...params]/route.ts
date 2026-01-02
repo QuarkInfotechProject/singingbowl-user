@@ -16,12 +16,23 @@ export async function GET(
 ) {
     try {
         const routeParams = await context.params;
-        // params will be [orderId, amount, uuid]
-        const [orderId, amount, uuid] = routeParams.params;
+        const paramsArray = routeParams.params;
+
+        let paymentMethod = "getPay";
+        let orderId: string;
+        let amount = "";
+        let uuid = "";
+
+        // Standardize param extraction
+        if (paramsArray.length >= 2) {
+            paymentMethod = paramsArray[0];
+            orderId = paramsArray[1];
+        } else {
+            orderId = paramsArray[0];
+        }
 
         // Get token from query params (added by GetPay)
         const token = request.nextUrl.searchParams.get("token");
-
 
         // Forward to backend with the correct format
         const cookieStore = await cookies();
@@ -33,12 +44,20 @@ export async function GET(
         }
 
         // Call backend fail endpoint
-        const backendUrl = `/user/orders/payment-fail?orderId=${orderId}&amount=${amount}&uuid=${uuid}${token ? `&token=${token}` : ""}`;
+        const backendUrl = `/user/orders/payment-fail`;
+        const requestBody = {
+            orderId: orderId,
+            token: token,
+            productCode: "",
+            amount: amount,
+            uuid: uuid
+        };
 
         try {
-            await apiClient.get(backendUrl, { headers });
-        } catch {
-            // Backend might not have a fail endpoint, that's ok
+            await apiClient.post(backendUrl, requestBody, { headers });
+        } catch (err: any) {
+            console.error("Backend payment-fail call error:", err.message);
+            // Backend might not have a fail endpoint or it failed, that's ok, we still show error page
         }
 
         // Return HTML that redirects the TOP window (breaks out of iframe)

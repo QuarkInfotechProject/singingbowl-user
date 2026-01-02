@@ -41,19 +41,13 @@ const PaymentPage = () => {
     const [sessionExpired, setSessionExpired] = useState(false);
 
     // Payment Result Modal State
-    const styles = `
-    .payment-container iframe {
-        width: 100% !important;
-        height: 100% !important;
-        border: none !important;
-        min-height: 500px;
-    }
+    const styles = `   
     
     @media (min-width: 1000px) {
         .parent-div.svelte-1i24pqq {
             padding: 2rem 4rem;
             display: grid;
-            /* grid-template-columns: 1.2fr 1fr; */
+            grid-template-columns: 1fr;
             grid-column-gap: 0px;
             grid-row-gap: 0px;
             grid-template-areas:
@@ -504,7 +498,7 @@ const PaymentPage = () => {
                                 {/* Payment Form Area */}
                                 <div className="p-6">
                                     {/* GetPay Container */}
-                                    <div className="relative !w-full min-h-[500px]">
+                                    <div className="relative min-h-[500px]">
                                         {sdkLoading && (
                                             <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10">
                                                 <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-4" />

@@ -70,14 +70,38 @@ export async function GET(
         // Backend expects path parameters: /user/orders/success/{paymentMethod}/{orderId}
         // And the RAW GetPay token (base64 string) in the request body
         // The backend will decode and verify this token itself
+        console.log("=== Payment Success Callback Debug ===");
+        console.log("Params:", JSON.stringify(paramsArray));
+        console.log("Extracted orderId:", orderId, "PaymentMethod:", paymentMethod);
+        console.log("Raw Token from SearchParams:", getPayToken);
+        console.log("Decoded TransactionId:", transactionId);
+        console.log("Cookies present:", allCookies.map(c => c.name).join(', '));
+        console.log("Auth Token Found:", !!authToken);
+
         const requestBody = {
-            token: getPayToken, // Send the RAW token as received from GetPay
+            orderId: orderId,
+            paymentMethod: paymentMethod,
+            token: getPayToken,
         };
 
-        // Build the correct backend URL with path parameters
-        const backendUrl = `/user/orders/success/${paymentMethod}/${orderId}`;
+        // Backend URL is fixed /user/orders/success, parameters are in body
+        const backendUrl = `/user/orders/success`;
+        console.log("Constructed Backend URL:", backendUrl);
 
-        const response = await apiClient.post(backendUrl, requestBody, { headers });
+        try {
+            const response = await apiClient.post(backendUrl, requestBody, { headers });
+            console.log("Backend Response Status:", response.status);
+            // ... success handling
+        } catch (apiError: any) {
+            console.error("!!! Backend API Failed !!!");
+            if (apiError.response) {
+                console.error("Backend Status:", apiError.response.status);
+                console.error("Backend Data:", JSON.stringify(apiError.response.data));
+            } else {
+                console.error("API Error Message:", apiError.message);
+            }
+            throw apiError; // Re-throw to hit the outer catch block
+        }
 
         // Return HTML that redirects the TOP window (breaks out of iframe)
         const successUrl = `${prodOrigin}/profile?tab=orders&payment=success`;
@@ -134,14 +158,16 @@ export async function GET(
         console.error("=== Payment Success Callback ERROR ===");
         console.error("Error message:", error.message);
 
+        let debugInfo = `Error: ${error.message}\n`;
+
         if (error.response) {
             console.error("Response status:", error.response.status);
             console.error("Response data:", JSON.stringify(error.response.data));
+            debugInfo += `Status: ${error.response.status}\n`;
+            debugInfo += `Data: ${JSON.stringify(error.response.data, null, 2)}\n`;
         }
         if (error.config) {
-            console.error("Request URL:", error.config.baseURL + error.config.url);
-            console.error("Request method:", error.config.method);
-            console.error("Request body:", JSON.stringify(error.config.data));
+            debugInfo += `URL: ${error.config.url}\n`;
         }
 
         // Return HTML that redirects the TOP window with error (breaks out of iframe)
@@ -151,41 +177,74 @@ export async function GET(
             <html>
             <head>
                 <title>Payment Error</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
                     body { 
                         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                         display: flex;
+                        flex-direction: column;
                         align-items: center;
                         justify-content: center;
-                        height: 100vh;
+                        min-height: 100vh;
                         margin: 0;
-                        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                        background: #fff1f2;
+                        padding: 20px;
                     }
                     .container {
                         text-align: center;
-                        padding: 40px;
+                        padding: 30px;
                         background: white;
-                        border-radius: 16px;
+                        border-radius: 12px;
                         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                        max-width: 600px;
+                        width: 100%;
                     }
-                    .error-icon { font-size: 64px; margin-bottom: 16px; }
-                    h1 { color: #ef4444; margin-bottom: 8px; }
-                    p { color: #6b7280; }
+                    .error-icon { font-size: 48px; margin-bottom: 16px; }
+                    h1 { color: #ef4444; margin: 0 0 8px 0; font-size: 24px; }
+                    p { color: #374151; margin-bottom: 20px; }
+                    .debug-box {
+                        background: #1f2937;
+                        color: #10b981;
+                        padding: 15px;
+                        border-radius: 8px;
+                        text-align: left;
+                        font-family: monospace;
+                        font-size: 12px;
+                        overflow-x: auto;
+                        margin-bottom: 20px;
+                        white-space: pre-wrap;
+                        border: 1px solid #374151;
+                    }
+                    .btn {
+                        background-color: #ef4444;
+                        color: white;
+                        text-decoration: none;
+                        padding: 12px 24px;
+                        border-radius: 6px;
+                        font-weight: 500;
+                        display: inline-block;
+                        transition: background-color 0.2s;
+                    }
+                    .btn:hover { background-color: #dc2626; }
                 </style>
             </head>
             <body>
                 <div class="container">
                     <div class="error-icon">⚠️</div>
                     <h1>Payment Verification Failed</h1>
-                    <p>Redirecting back to checkout...</p>
+                    <p>The system could not verify your valid payment. Please save the details below and contact support.</p>
+                    
+                    <div class="debug-box"><strong>TECHNICAL DETAILS:</strong><br/>${debugInfo}</div>
+
+                    <a href="${errorUrl}" class="btn" id="continueBtn">Return to Checkout</a>
                 </div>
                 <script>
-                    // Redirect the top/parent window to break out of iframe
-                    if (window.top !== window.self) {
-                        window.top.location.href = "${errorUrl}";
-                    } else {
-                        window.location.href = "${errorUrl}";
-                    }
+                    // Manual redirect only to allow reading errors
+                    // if (window.top !== window.self) {
+                    //     window.top.location.href = "${errorUrl}";
+                    // } else {
+                    //     window.location.href = "${errorUrl}";
+                    // }
                 </script>
             </body>
             </html>
