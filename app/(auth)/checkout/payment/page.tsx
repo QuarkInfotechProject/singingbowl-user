@@ -206,6 +206,8 @@ const PaymentPage = () => {
                 papInfo: paymentConfig.papInfo,
                 oprKey: paymentConfig.oprKey,
                 insKey: paymentConfig.insKey,
+                // REQUIRED: baseUrl from backend to use production API
+                baseUrl: getPayOptionsFromConfig.baseUrl,
                 // REQUIRED: websiteDomain at top level for SDK validation
                 websiteDomain: window.location.origin,
                 // CALLBACKS AT TOP LEVEL (SDK expects them here)
