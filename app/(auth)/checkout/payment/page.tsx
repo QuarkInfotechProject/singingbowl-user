@@ -40,23 +40,6 @@ const PaymentPage = () => {
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const [sessionExpired, setSessionExpired] = useState(false);
 
-    // Payment Result Modal State
-    const styles = `   
-        @media (min-width: 1000px) {
-            .parent-div.svelte-1i24pqq {
-                padding: 2rem 4rem;
-                display: grid;
-                grid-template-columns: 350px 1fr; /* Order Summary | Payment Form */
-                grid-column-gap: 40px;
-                grid-row-gap: 0px;
-                grid-template-areas:
-                    "order payment"
-                    "summary payment"
-                    "information payment";
-                align-items: start;
-            }
-        }
-`;
     const [resultModal, setResultModal] = useState<{
         isOpen: boolean;
         type: 'success' | 'error';
@@ -164,7 +147,8 @@ const PaymentPage = () => {
                 // FORCE the SDK to stay on page by pointing URLs to dummy hashes
                 successUrl: dummySuccessUrl,
                 failUrl: dummyFailUrl,
-                callbackUrl: getPayOptionsFromConfig.callbackUrl || dummySuccessUrl,
+                // CRITICAL: Force callbackUrl to dummy also, to prevent SDK from pinging backend without auth
+                callbackUrl: dummySuccessUrl,
                 isRedirect: false
             };
 

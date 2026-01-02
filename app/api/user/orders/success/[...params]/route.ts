@@ -53,9 +53,15 @@ export async function GET(
             }
         }
 
-        // Get auth token from cookies
+        // Get auth token from cookies OR query params (for server-to-server or cross-site calls)
         const cookieStore = await cookies();
-        const authToken = cookieStore.get("token")?.value;
+        let authToken = cookieStore.get("token")?.value;
+
+        // Fallback: Check query params for 'auth_token'
+        if (!authToken) {
+            authToken = request.nextUrl.searchParams.get("auth_token") || undefined;
+            if (authToken) console.log("Auth token found in query params.");
+        }
 
         const allCookies = cookieStore.getAll();
 
