@@ -1,7 +1,6 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { CreditCard, Loader2, AlertCircle, ArrowLeft } from "lucide-react";
-import Script from "next/script";
 import {
     Dialog,
     DialogContent,
@@ -37,20 +36,19 @@ interface PaymentConfig {
 const PaymentPage = () => {
     const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
     const [sdkLoading, setSdkLoading] = useState(true);
-    const [sdkLoaded, setSdkLoaded] = useState(false);
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [sessionExpired, setSessionExpired] = useState(false);
 
-    const initAttemptRef = useRef(0);
-    const getpayInstanceRef = useRef<any>(null);
+    const scriptLoadedRef = useRef(false);
+    const getpayInitializedRef = useRef(false);
 
     const { clearCart } = useCart();
     const { isLoggedIn, isLoading: authLoading } = useAuth();
     const router = useRouter();
 
     // GetPay SDK URL
-    const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL || "";
+    const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL;f
 
     // Load payment config from sessionStorage on mount
     useEffect(() => {
@@ -64,84 +62,120 @@ const PaymentPage = () => {
 
         try {
             const config = JSON.parse(storedConfig) as PaymentConfig;
+            console.log("Payment config loaded:", config);
             setPaymentConfig(config);
         } catch (error) {
+            console.error("Error parsing payment config:", error);
             setSessionExpired(true);
             setSdkLoading(false);
         }
     }, []);
 
-    // Initialize GetPay SDK when both config and SDK are ready
+    // Load SDK script and initialize GetPay
     useEffect(() => {
-        if (!paymentConfig || !sdkLoaded) return;
+        if (!paymentConfig) return;
+        if (scriptLoadedRef.current) return;
+        if (!GETPAY_SDK_URL) {
+            setPaymentError("Payment SDK URL is not configured. Please contact support.");
+            setSdkLoading(false);
+            return;
+        }
 
-        initAttemptRef.current += 1;
-        const currentAttempt = initAttemptRef.current;
+        const script = document.createElement('script');
+        script.src = GETPAY_SDK_URL;
+        script.async = true;
 
-        const initPayment = () => {
-            if (currentAttempt !== initAttemptRef.current) return;
+        script.onload = () => {
+            console.log("GetPay SDK script loaded");
+            scriptLoadedRef.current = true;
 
-            const container = document.getElementById("checkout");
-            if (!container) {
-                setTimeout(initPayment, 100);
-                return;
-            }
-
-            // Wait for GetPay to be available
-            if (typeof window.GetPay === 'undefined') {
-                setTimeout(initPayment, 100);
-                return;
-            }
-
-            try {
-                container.innerHTML = "";
-
-                // Build the options for GetPay
-                const backendCallbackUrl = paymentConfig.getPayOptions.callbackUrl;
-
-                const getPayOptions = {
-                    ...paymentConfig.getPayOptions,
-                    containerId: "#checkout",
-                    // Keep the original websiteDomain from backend (it should match production domain)
-                    successUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.successUrl : backendCallbackUrl,
-                    failUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.failUrl : undefined,
-                    callbackUrl: backendCallbackUrl,
-                    onSuccess: (data: any) => {
-                        if (data && data.transactionId) {
-                            // Clear the session storage
-                            sessionStorage.removeItem('paymentConfig');
-                            // Clear cart and show success
-                            clearCart();
-                            setShowSuccessDialog(true);
-                        }
-                    },
-                    onError: (err: any) => {
-                        if (err && (err.code || err.message)) {
-                            setPaymentError(`Payment failed: ${err.message || 'Unknown error'}`);
-                        }
-                        setSdkLoading(false);
-                    }
-                };
-
-                // Initialize GetPay
-                const getpay = new window.GetPay(getPayOptions, paymentConfig.getPayOptions.baseUrl);
-                getpayInstanceRef.current = getpay;
-                getpay.initialize();
-                setSdkLoading(false);
-
-            } catch (e: any) {
-                setPaymentError(`Failed to initialize payment: ${e.message}`);
-                setSdkLoading(false);
-            }
+            // Wait a bit for SDK to initialize its global object
+            setTimeout(() => {
+                initializeGetPay();
+            }, 300);
         };
 
-        // Start initialization with small delay
-        const timeoutId = setTimeout(initPayment, 300);
+        script.onerror = () => {
+            console.error('Failed to load GetPay script');
+            setPaymentError("Failed to load payment SDK. Please refresh the page.");
+            setSdkLoading(false);
+        };
+
+        document.body.appendChild(script);
 
         return () => {
-            clearTimeout(timeoutId);
+            // Clean up script on component unmount
+            if (document.body.contains(script)) {
+                document.body.removeChild(script);
+            }
+            scriptLoadedRef.current = false;
+            getpayInitializedRef.current = false;
         };
-    }, [paymentConfig, sdkLoaded, clearCart]);
+    }, [paymentConfig, GETPAY_SDK_URL]);
+
+    // Initialize GetPay checkout
+    const initializeGetPay = () => {
+        if (getpayInitializedRef.current) return;
+        if (!paymentConfig) return;
+
+        // Check if GetPay is available
+        if (typeof window.GetPay === 'undefined') {
+            console.log("GetPay not available yet, retrying...");
+            setTimeout(initializeGetPay, 200);
+            return;
+        }
+
+        const container = document.getElementById("checkout");
+        if (!container) {
+            console.log("Container not found, retrying...");
+            setTimeout(initializeGetPay, 200);
+            return;
+        }
+
+        console.log("Initializing GetPay...");
+        getpayInitializedRef.current = true;
+
+        try {
+            // Build the options for GetPay
+            const backendCallbackUrl = paymentConfig.getPayOptions.callbackUrl;
+
+            const getPayOptions = {
+                ...paymentConfig.getPayOptions,
+                containerId: "#checkout",
+                successUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.successUrl : backendCallbackUrl,
+                failUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.failUrl : undefined,
+                callbackUrl: backendCallbackUrl,
+                onSuccess: (data: any) => {
+                    console.log("Payment success:", data);
+                    // Clear the session storage
+                    sessionStorage.removeItem('paymentConfig');
+                    // Clear cart and show success
+                    clearCart();
+                    setShowSuccessDialog(true);
+                },
+                onError: (err: any) => {
+                    console.error("Payment error:", err);
+                    setPaymentError(`Payment failed: ${err?.message || 'Unknown error'}`);
+                    setSdkLoading(false);
+                }
+            };
+
+            console.log("GetPay options:", getPayOptions);
+
+            // Initialize GetPay - matching the pattern from the working project
+            const getpay = new window.GetPay(getPayOptions, paymentConfig.getPayOptions.baseUrl);
+            getpay.initialize();
+
+            console.log("GetPay initialized successfully");
+            setSdkLoading(false);
+
+        } catch (e: any) {
+            console.error("GetPay initialization error:", e);
+            setPaymentError(`Failed to initialize payment: ${e.message}`);
+            setSdkLoading(false);
+            getpayInitializedRef.current = false;
+        }
+    };
 
     // Redirect if not logged in
     useEffect(() => {
@@ -149,16 +183,6 @@ const PaymentPage = () => {
             router.push("/login?redirect=/checkout");
         }
     }, [isLoggedIn, authLoading, router]);
-
-    // Handle SDK load
-    const handleSdkLoad = () => {
-        setSdkLoaded(true);
-    };
-
-    const handleSdkError = () => {
-        setPaymentError("Failed to load payment SDK. Please refresh the page.");
-        setSdkLoading(false);
-    };
 
     // Handle back to checkout
     const handleBackToCheckout = () => {
@@ -203,16 +227,6 @@ const PaymentPage = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50">
-            {/* Load GetPay SDK directly on the page (no iframe) */}
-            {GETPAY_SDK_URL && (
-                <Script
-                    src={GETPAY_SDK_URL}
-                    onLoad={handleSdkLoad}
-                    onError={handleSdkError}
-                    strategy="afterInteractive"
-                />
-            )}
-
             <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12">
                 {/* Header */}
                 <div className="mb-8">
@@ -238,7 +252,7 @@ const PaymentPage = () => {
                     </div>
 
                     {/* GetPay Payment Container */}
-                    <div className="relative">
+                    <div className="relative" style={{ minHeight: '500px' }}>
                         {sdkLoading && (
                             <div className="absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-10 rounded-xl">
                                 <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
@@ -247,16 +261,13 @@ const PaymentPage = () => {
                             </div>
                         )}
                         {/* This is where GetPay SDK will render the payment form */}
-                        <div
-                            id="checkout"
-                            className="w-full min-h-[500px] border border-slate-200 rounded-xl p-4"
-                        />
+                        <div id="checkout" style={{ width: '100%', minHeight: '500px' }}></div>
                     </div>
 
                     {/* Error Display */}
                     {paymentError && (
                         <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 flex items-center gap-2">
-                            <AlertCircle className="w-5 h-5" />
+                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
                             <span>{paymentError}</span>
                         </div>
                     )}
