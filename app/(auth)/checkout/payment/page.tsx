@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { CreditCard, Loader2, AlertCircle, ArrowLeft } from "lucide-react";
+import Script from "next/script";
 import {
     Dialog,
     DialogContent,
@@ -14,11 +15,19 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
+// Declare GetPay as global
+declare global {
+    interface Window {
+        GetPay: any;
+    }
+}
+
 interface PaymentConfig {
     getPayOptions: {
         baseUrl: string;
         containerId: string;
         callbackUrl: string | { successUrl: string; failUrl: string };
+        websiteDomain?: string;
         [key: string]: any;
     };
     addressUuid?: string;
@@ -28,19 +37,20 @@ interface PaymentConfig {
 const PaymentPage = () => {
     const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
     const [sdkLoading, setSdkLoading] = useState(true);
+    const [sdkLoaded, setSdkLoaded] = useState(false);
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [sessionExpired, setSessionExpired] = useState(false);
 
-    const iframeRef = useRef<HTMLIFrameElement | null>(null);
     const initAttemptRef = useRef(0);
+    const getpayInstanceRef = useRef<any>(null);
 
     const { clearCart } = useCart();
     const { isLoggedIn, isLoading: authLoading } = useAuth();
     const router = useRouter();
 
     // GetPay SDK URL
-    const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL;
+    const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL || "";
 
     // Load payment config from sessionStorage on mount
     useEffect(() => {
@@ -61,27 +71,10 @@ const PaymentPage = () => {
         }
     }, []);
 
-    // Memoized message handler for iframe communication
-    const handleMessage = useCallback((event: MessageEvent) => {
-        if (event.data?.type === 'GETPAY_READY') {
-            setSdkLoading(false);
-        } else if (event.data?.type === 'GETPAY_SUCCESS') {
-            // Clear the session storage
-            sessionStorage.removeItem('paymentConfig');
-            // Clear cart and show success
-            clearCart();
-            setShowSuccessDialog(true);
-        } else if (event.data?.type === 'GETPAY_ERROR') {
-            setPaymentError(`Payment failed: ${event.data.error?.message || 'Unknown error'}`);
-            setSdkLoading(false);
-        }
-    }, [clearCart]);
-
-    // Initialize GetPay SDK when config is available
+    // Initialize GetPay SDK when both config and SDK are ready
     useEffect(() => {
-        if (!paymentConfig) return;
+        if (!paymentConfig || !sdkLoaded) return;
 
-        setSdkLoading(true);
         initAttemptRef.current += 1;
         const currentAttempt = initAttemptRef.current;
 
@@ -94,127 +87,61 @@ const PaymentPage = () => {
                 return;
             }
 
-            container.innerHTML = "";
+            // Wait for GetPay to be available
+            if (typeof window.GetPay === 'undefined') {
+                setTimeout(initPayment, 100);
+                return;
+            }
 
-            // Build the options for GetPay
-            const backendCallbackUrl = paymentConfig.getPayOptions.callbackUrl;
-            const getPayOptions = {
-                ...paymentConfig.getPayOptions,
-                containerId: "#checkout",
-                successUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.successUrl : backendCallbackUrl,
-                failUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.failUrl : undefined,
-                callbackUrl: backendCallbackUrl
-            };
+            try {
+                container.innerHTML = "";
 
-            // Create iframe
-            const iframe = document.createElement('iframe');
-            iframe.style.width = '100%';
-            iframe.style.minHeight = '500px';
-            iframe.style.border = 'none';
-            iframe.style.borderRadius = '12px';
-            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
-            iframeRef.current = iframe;
+                // Build the options for GetPay
+                const backendCallbackUrl = paymentConfig.getPayOptions.callbackUrl;
 
-            // Generate HTML content
-            const iframeHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            html, body { height: 100%; width: 100%; }
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
-            #checkout { width: 100%; min-height: 600px; padding: 16px; }
-          </style>
-        </head>
-        <body>
-          <div id="checkout"></div>
-          <script>
-            (function() {
-              var script = document.createElement('script');
-              script.src = '${GETPAY_SDK_URL}';
-              script.onload = function() {
-                initGetPay();
-              };
-              script.onerror = function() {
-                window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'Failed to load payment SDK' } }, '*');
-              };
-              document.head.appendChild(script);
-              
-              function initGetPay() {
-                var retryCount = 0;
-                var maxRetries = 50;
-                
-                function tryInit() {
-                  retryCount++;
-                  if (typeof GetPay === 'undefined') {
-                    if (retryCount < maxRetries) {
-                      setTimeout(tryInit, 100);
-                    } else {
-                      window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: 'SDK initialization timeout' } }, '*');
+                const getPayOptions = {
+                    ...paymentConfig.getPayOptions,
+                    containerId: "#checkout",
+                    // Keep the original websiteDomain from backend (it should match production domain)
+                    successUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.successUrl : backendCallbackUrl,
+                    failUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.failUrl : undefined,
+                    callbackUrl: backendCallbackUrl,
+                    onSuccess: (data: any) => {
+                        if (data && data.transactionId) {
+                            // Clear the session storage
+                            sessionStorage.removeItem('paymentConfig');
+                            // Clear cart and show success
+                            clearCart();
+                            setShowSuccessDialog(true);
+                        }
+                    },
+                    onError: (err: any) => {
+                        if (err && (err.code || err.message)) {
+                            setPaymentError(`Payment failed: ${err.message || 'Unknown error'}`);
+                        }
+                        setSdkLoading(false);
                     }
-                    return;
-                  }
-                  
-                  try {
-                    var options = ${JSON.stringify(getPayOptions)};
-                    options.baseUrl = '${paymentConfig.getPayOptions.baseUrl}';
-                    options.onSuccess = function(data) {
-                      if (data && data.transactionId) {
-                        window.parent.postMessage({ type: 'GETPAY_SUCCESS', data: data }, '*');
-                      }
-                    };
-                    options.onError = function(err) {
-                      if (err && (err.code || err.message)) {
-                        window.parent.postMessage({ type: 'GETPAY_ERROR', error: err }, '*');
-                      }
-                    };
-                    
-                    var getpay = new GetPay(options, '${paymentConfig.getPayOptions.baseUrl}');
-                    getpay.initialize();
-                    window.parent.postMessage({ type: 'GETPAY_READY' }, '*');
-                  } catch (e) {
-                    window.parent.postMessage({ type: 'GETPAY_ERROR', error: { message: e.message } }, '*');
-                  }
-                }
-                
-                tryInit();
-              }
-            })();
-          <\/script>
-        </body>
-        </html>
-      `;
+                };
 
-            iframe.srcdoc = iframeHtml;
+                // Initialize GetPay
+                const getpay = new window.GetPay(getPayOptions, paymentConfig.getPayOptions.baseUrl);
+                getpayInstanceRef.current = getpay;
+                getpay.initialize();
+                setSdkLoading(false);
 
-            iframe.onload = () => {
-                if (!iframe.srcdoc) {
-                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-                    if (iframeDoc) {
-                        iframeDoc.open();
-                        iframeDoc.write(iframeHtml);
-                        iframeDoc.close();
-                    }
-                }
-            };
-
-            container.appendChild(iframe);
+            } catch (e: any) {
+                setPaymentError(`Failed to initialize payment: ${e.message}`);
+                setSdkLoading(false);
+            }
         };
 
+        // Start initialization with small delay
         const timeoutId = setTimeout(initPayment, 300);
-        window.addEventListener('message', handleMessage);
 
         return () => {
             clearTimeout(timeoutId);
-            window.removeEventListener('message', handleMessage);
-            if (iframeRef.current) {
-                iframeRef.current = null;
-            }
         };
-    }, [paymentConfig, handleMessage, GETPAY_SDK_URL]);
+    }, [paymentConfig, sdkLoaded, clearCart]);
 
     // Redirect if not logged in
     useEffect(() => {
@@ -222,6 +149,16 @@ const PaymentPage = () => {
             router.push("/login?redirect=/checkout");
         }
     }, [isLoggedIn, authLoading, router]);
+
+    // Handle SDK load
+    const handleSdkLoad = () => {
+        setSdkLoaded(true);
+    };
+
+    const handleSdkError = () => {
+        setPaymentError("Failed to load payment SDK. Please refresh the page.");
+        setSdkLoading(false);
+    };
 
     // Handle back to checkout
     const handleBackToCheckout = () => {
@@ -266,6 +203,16 @@ const PaymentPage = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50">
+            {/* Load GetPay SDK directly on the page (no iframe) */}
+            {GETPAY_SDK_URL && (
+                <Script
+                    src={GETPAY_SDK_URL}
+                    onLoad={handleSdkLoad}
+                    onError={handleSdkError}
+                    strategy="afterInteractive"
+                />
+            )}
+
             <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12">
                 {/* Header */}
                 <div className="mb-8">
