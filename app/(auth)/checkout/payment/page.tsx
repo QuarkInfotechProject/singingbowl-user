@@ -179,6 +179,68 @@ const PaymentPage = () => {
         router.push('/checkout');
     };
 
+    // Inline styles for GetPay SDK container
+    const styles = {
+        // Main container wrapper
+        paymentWrapper: {
+            width: '100%',
+            maxWidth: '100%',
+            margin: '0 auto',
+            padding: '24px',
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            minHeight: '450px',
+        } as React.CSSProperties,
+
+        // SDK container styles - these will be applied to #checkout div
+        sdkContainer: {
+            width: '100%',
+            margin: '0 auto',
+            padding: '0',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+            fontSize: '16px',
+            lineHeight: '1.6',
+            color: '#1e293b',
+        } as React.CSSProperties,
+
+        // Loading overlay styles
+        loadingOverlay: {
+            position: 'absolute' as const,
+            inset: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+            display: 'flex',
+            flexDirection: 'column' as const,
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 20,
+            borderRadius: '16px',
+            backdropFilter: 'blur(4px)',
+        } as React.CSSProperties,
+
+        // Spinner styles
+        spinner: {
+            width: '56px',
+            height: '56px',
+            border: '4px solid #e2e8f0',
+            borderTopColor: '#3b82f6',
+            borderRadius: '50%',
+            marginBottom: '20px',
+        } as React.CSSProperties,
+
+        // Loading text styles
+        loadingTitle: {
+            fontSize: '18px',
+            fontWeight: 600,
+            color: '#1e293b',
+            marginBottom: '8px',
+        } as React.CSSProperties,
+
+        loadingSubtext: {
+            fontSize: '14px',
+            color: '#94a3b8',
+        } as React.CSSProperties,
+    };
+
 
 
     // Loading state
@@ -256,52 +318,148 @@ const PaymentPage = () => {
                     </div>
 
                     {/* Payment Form Area */}
-                    <div className="p-6 md:p-8">
+                    <div style={{ padding: '24px 32px' }}>
+                        {/* Inject CSS for GetPay SDK internal elements */}
+                        <style>{`
+                            #checkout {
+                                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                            }
+                            #checkout iframe {
+                                width: 100% !important;
+                                min-height: 400px !important;
+                                border: none !important;
+                                border-radius: 12px !important;
+                            }
+                            #checkout input,
+                            #checkout select {
+                                width: 100% !important;
+                                padding: 14px 16px !important;
+                                border: 2px solid #e2e8f0 !important;
+                                border-radius: 10px !important;
+                                font-size: 16px !important;
+                                background-color: #f8fafc !important;
+                                transition: all 0.2s ease !important;
+                                outline: none !important;
+                            }
+                            #checkout input:focus,
+                            #checkout select:focus {
+                                border-color: #3b82f6 !important;
+                                background-color: #ffffff !important;
+                                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+                            }
+                            #checkout input::placeholder {
+                                color: #94a3b8 !important;
+                            }
+                            #checkout label {
+                                display: block !important;
+                                font-size: 14px !important;
+                                font-weight: 600 !important;
+                                color: #334155 !important;
+                                margin-bottom: 8px !important;
+                            }
+                            #checkout button[type="submit"],
+                            #checkout .pay-button,
+                            #checkout .submit-btn {
+                                width: 100% !important;
+                                padding: 16px 24px !important;
+                                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+                                color: white !important;
+                                font-size: 16px !important;
+                                font-weight: 700 !important;
+                                border: none !important;
+                                border-radius: 12px !important;
+                                cursor: pointer !important;
+                                transition: all 0.3s ease !important;
+                                text-transform: uppercase !important;
+                                letter-spacing: 0.5px !important;
+                                box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4) !important;
+                            }
+                            #checkout button[type="submit"]:hover,
+                            #checkout .pay-button:hover,
+                            #checkout .submit-btn:hover {
+                                background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
+                                transform: translateY(-2px) !important;
+                                box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5) !important;
+                            }
+                            #checkout .error,
+                            #checkout .error-message {
+                                color: #dc2626 !important;
+                                font-size: 13px !important;
+                                margin-top: 6px !important;
+                            }
+                            #checkout .form-group,
+                            #checkout .field-wrapper {
+                                margin-bottom: 20px !important;
+                            }
+                        `}</style>
+
                         {/* GetPay Payment Container */}
-                        <div className="relative" style={{ minHeight: '480px' }}>
+                        <div style={{ position: 'relative', minHeight: '480px' }}>
                             {sdkLoading && (
-                                <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 rounded-xl">
-                                    <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-                                    <p className="text-slate-700 font-medium text-lg">Loading payment form...</p>
-                                    <p className="text-slate-400 text-sm mt-2">Connecting to secure payment gateway</p>
+                                <div style={styles.loadingOverlay}>
+                                    <div
+                                        style={styles.spinner}
+                                        className="animate-spin"
+                                    />
+                                    <p style={styles.loadingTitle}>Loading payment form...</p>
+                                    <p style={styles.loadingSubtext}>Connecting to secure payment gateway</p>
                                 </div>
                             )}
                             {/* This is where GetPay SDK will render the payment form */}
                             <div
                                 id="checkout"
-                                className="w-full transition-opacity duration-300"
                                 style={{
+                                    ...styles.sdkContainer,
                                     minHeight: '450px',
-                                    opacity: sdkLoading ? 0 : 1
+                                    opacity: sdkLoading ? 0 : 1,
+                                    transition: 'opacity 0.3s ease',
                                 }}
                             />
                         </div>
 
                         {/* Error Display */}
                         {paymentError && (
-                            <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-200 flex items-start gap-3">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                            <div style={{
+                                marginTop: '24px',
+                                padding: '16px',
+                                backgroundColor: '#fef2f2',
+                                borderRadius: '12px',
+                                border: '1px solid #fecaca',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '12px',
+                            }}>
+                                <AlertCircle style={{ width: '20px', height: '20px', color: '#dc2626', flexShrink: 0, marginTop: '2px' }} />
                                 <div>
-                                    <p className="font-medium">Payment Error</p>
-                                    <p className="text-sm text-red-600">{paymentError}</p>
+                                    <p style={{ fontWeight: 600, color: '#b91c1c', marginBottom: '4px' }}>Payment Error</p>
+                                    <p style={{ fontSize: '14px', color: '#dc2626' }}>{paymentError}</p>
                                 </div>
                             </div>
                         )}
 
                         {/* Security Features */}
-                        <div className="mt-6 pt-6 border-t border-slate-100">
-                            <div className="grid grid-cols-3 gap-4 text-center">
-                                <div className="flex flex-col items-center">
-                                    <span className="text-2xl mb-1">🔒</span>
-                                    <span className="text-xs text-slate-500">SSL Encrypted</span>
+                        <div style={{
+                            marginTop: '32px',
+                            paddingTop: '24px',
+                            borderTop: '1px solid #e2e8f0',
+                        }}>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(3, 1fr)',
+                                gap: '16px',
+                                textAlign: 'center',
+                            }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '28px', marginBottom: '8px' }}>🔒</span>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>SSL Encrypted</span>
                                 </div>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-2xl mb-1">🛡️</span>
-                                    <span className="text-xs text-slate-500">Fraud Protection</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '28px', marginBottom: '8px' }}>🛡️</span>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>Fraud Protection</span>
                                 </div>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-2xl mb-1">✅</span>
-                                    <span className="text-xs text-slate-500">Verified Secure</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '28px', marginBottom: '8px' }}>✅</span>
+                                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>Verified Secure</span>
                                 </div>
                             </div>
                         </div>
