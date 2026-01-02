@@ -232,52 +232,101 @@ const PaymentPage = () => {
                 <div className="mb-8">
                     <button
                         onClick={handleBackToCheckout}
-                        className="text-slate-500 hover:text-slate-700 text-sm flex items-center gap-2 mb-4"
+                        className="text-slate-500 hover:text-slate-700 text-sm flex items-center gap-2 mb-4 transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         Back to Checkout
                     </button>
                     <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Complete Your Payment</h1>
-                    <p className="text-slate-500 mt-2">Enter your card details below to complete the purchase.</p>
+                    <p className="text-slate-500 mt-2">Enter your card details below to finalize your order.</p>
+                </div>
+
+                {/* Order Status Info Banner */}
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+                    <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">⏳</span>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-amber-800">Payment Pending</h3>
+                        <p className="text-amber-700 text-sm">
+                            Your order is reserved and waiting for payment. Please complete the payment below to confirm your order.
+                        </p>
+                    </div>
                 </div>
 
                 {/* Payment Container */}
-                <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100">
-                    <div className="flex items-center gap-3 mb-6">
-                        <CreditCard className="w-6 h-6 text-blue-600" />
-                        <div>
-                            <h2 className="text-xl font-bold text-slate-900">Secure Payment</h2>
-                            <p className="text-slate-500 text-sm">Do not close this page until payment is complete.</p>
+                <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+                    {/* Payment Header */}
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                                <CreditCard className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold">Secure Card Payment</h2>
+                                <p className="text-blue-100 text-sm">Your payment information is encrypted and secure</p>
+                            </div>
                         </div>
                     </div>
 
-                    {/* GetPay Payment Container */}
-                    <div className="relative" style={{ minHeight: '500px' }}>
-                        {sdkLoading && (
-                            <div className="absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-10 rounded-xl">
-                                <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
-                                <p className="text-slate-600 font-medium">Loading payment form...</p>
-                                <p className="text-slate-400 text-sm mt-2">Please wait while we connect to the payment gateway</p>
+                    {/* Payment Form Area */}
+                    <div className="p-6 md:p-8">
+                        {/* GetPay Payment Container */}
+                        <div className="relative" style={{ minHeight: '480px' }}>
+                            {sdkLoading && (
+                                <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 rounded-xl">
+                                    <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                                    <p className="text-slate-700 font-medium text-lg">Loading payment form...</p>
+                                    <p className="text-slate-400 text-sm mt-2">Connecting to secure payment gateway</p>
+                                </div>
+                            )}
+                            {/* This is where GetPay SDK will render the payment form */}
+                            <div
+                                id="checkout"
+                                className="w-full transition-opacity duration-300"
+                                style={{
+                                    minHeight: '450px',
+                                    opacity: sdkLoading ? 0 : 1
+                                }}
+                            />
+                        </div>
+
+                        {/* Error Display */}
+                        {paymentError && (
+                            <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-200 flex items-start gap-3">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="font-medium">Payment Error</p>
+                                    <p className="text-sm text-red-600">{paymentError}</p>
+                                </div>
                             </div>
                         )}
-                        {/* This is where GetPay SDK will render the payment form */}
-                        <div id="checkout" style={{ width: '100%', minHeight: '500px' }}></div>
-                    </div>
 
-                    {/* Error Display */}
-                    {paymentError && (
-                        <div className="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 flex items-center gap-2">
-                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                            <span>{paymentError}</span>
+                        {/* Security Features */}
+                        <div className="mt-6 pt-6 border-t border-slate-100">
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div className="flex flex-col items-center">
+                                    <span className="text-2xl mb-1">🔒</span>
+                                    <span className="text-xs text-slate-500">SSL Encrypted</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-2xl mb-1">🛡️</span>
+                                    <span className="text-xs text-slate-500">Fraud Protection</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-2xl mb-1">✅</span>
+                                    <span className="text-xs text-slate-500">Verified Secure</span>
+                                </div>
+                            </div>
                         </div>
-                    )}
+                    </div>
                 </div>
 
-                {/* Security Note */}
+                {/* Footer Security Note */}
                 <div className="mt-6 text-center">
-                    <p className="text-xs text-slate-400 flex items-center justify-center gap-1">
-                        <span>🔒</span>
-                        Secured by GetPay • Your payment information is encrypted
+                    <p className="text-xs text-slate-400 flex items-center justify-center gap-2">
+                        <span>�</span>
+                        Secured by GetPay • 256-bit encryption • PCI DSS Compliant
                     </p>
                 </div>
             </div>
