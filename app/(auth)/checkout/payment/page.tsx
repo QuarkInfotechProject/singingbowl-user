@@ -130,39 +130,41 @@ const PaymentPage = () => {
             const backendCallbackUrl = getPayOptionsFromConfig.callbackUrl;
 
             // Safely extract success and fail URLs from the callback config
-            let successUrl: string | undefined;
-            let failUrl: string | undefined;
+            let successUrl = "";
+            let failUrl = "";
 
             if (backendCallbackUrl) {
                 if (typeof backendCallbackUrl === 'object' && backendCallbackUrl !== null) {
-                    successUrl = backendCallbackUrl.successUrl;
-                    failUrl = backendCallbackUrl.failUrl;
+                    successUrl = backendCallbackUrl.successUrl || "";
+                    failUrl = backendCallbackUrl.failUrl || "";
                 } else if (typeof backendCallbackUrl === 'string') {
                     successUrl = backendCallbackUrl;
                 }
             }
 
-            // If no callback URLs are available, log warning but continue
+            // If no callback URLs are available, log warning
             if (!successUrl) {
-                console.warn("No successUrl found in payment config, SDK may handle callbacks internally");
+                console.warn("No successUrl found in payment config. SDK might behave unexpectedly.");
             }
 
             const getPayOptions: Record<string, any> = {
                 ...getPayOptionsFromConfig,
                 containerId: "#checkout",
+                // Provide strict string URLs
+                successUrl: successUrl,
+                failUrl: failUrl,
+                // Provide dummy callbacks to prevent "not a function" errors
+                onSuccess: (data: any) => {
+                    console.log("GetPay Success Callback:", data);
+                    if (successUrl) window.location.href = successUrl;
+                },
+                onError: (error: any) => {
+                    console.error("GetPay Error Callback:", error);
+                    // Do not redirect on error automatically, let user retry
+                }
             };
 
-            // Only add URLs if they exist
-            if (successUrl) {
-                getPayOptions.successUrl = successUrl;
-            }
-            if (failUrl) {
-                getPayOptions.failUrl = failUrl;
-            }
-
-            // Remove any existing callbacks that might have been spread from paymentConfig
-            delete getPayOptions.onSuccess;
-            delete getPayOptions.onError;
+            // Remove callbackUrl as it's not a standard GetPay option (it's our internal config)
             delete getPayOptions.callbackUrl;
 
             console.log("GetPay options:", getPayOptions);
@@ -228,7 +230,7 @@ const PaymentPage = () => {
 
     return (
         <div className="min-h-screen bg-slate-50">
-            <div className="max-w-2xl mx-auto px-4 py-8">
+            <div className="w-full px-4 py-8">
                 {/* Header */}
                 <div className="mb-6">
                     <button
@@ -270,73 +272,9 @@ const PaymentPage = () => {
 
                     {/* Payment Form Area */}
                     <div className="p-6">
-                        {/* Clean CSS for GetPay SDK */}
-                        <style>{`
-                            #checkout {
-                                font-family: system-ui, -apple-system, sans-serif;
-                                width: 100%;
-                            }
-                            #checkout iframe {
-                                width: 100% !important;
-                                min-height: 400px;
-                                border: none;
-                            }
-                            #checkout input,
-                            #checkout select {
-                                width: 100%;
-                                padding: 12px 14px;
-                                border: 1px solid #e2e8f0;
-                                border-radius: 8px;
-                                font-size: 16px;
-                                background: #fff;
-                                margin-bottom: 4px;
-                            }
-                            #checkout input:focus,
-                            #checkout select:focus {
-                                outline: none;
-                                border-color: #3b82f6;
-                                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-                            }
-                            #checkout label {
-                                display: block;
-                                font-size: 14px;
-                                font-weight: 500;
-                                color: #374151;
-                                margin-bottom: 6px;
-                            }
-                            #checkout button[type="submit"],
-                            #checkout .pay-button,
-                            #checkout .submit-btn {
-                                width: 100%;
-                                padding: 14px 20px;
-                                background: #3b82f6;
-                                color: white;
-                                font-size: 16px;
-                                font-weight: 600;
-                                border: none;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                margin-top: 16px;
-                            }
-                            #checkout button[type="submit"]:hover,
-                            #checkout .pay-button:hover,
-                            #checkout .submit-btn:hover {
-                                background: #2563eb;
-                            }
-                            #checkout .error,
-                            #checkout .error-message {
-                                color: #dc2626;
-                                font-size: 13px;
-                                margin-top: 4px;
-                            }
-                            #checkout .form-group,
-                            #checkout .field-wrapper {
-                                margin-bottom: 16px;
-                            }
-                        `}</style>
 
                         {/* GetPay Container */}
-                        <div className="relative min-h-[400px]">
+                        <div className="relative min-h-[500px]">
                             {sdkLoading && (
                                 <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10">
                                     <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-4" />
@@ -346,7 +284,7 @@ const PaymentPage = () => {
                             )}
                             <div
                                 id="checkout"
-                                className={`min-h-[400px] transition-opacity duration-300 ${sdkLoading ? 'opacity-0' : 'opacity-100'}`}
+                                className={`min-h-[500px] transition-opacity duration-300 ${sdkLoading ? 'opacity-0' : 'opacity-100'}`}
                             />
                         </div>
 
