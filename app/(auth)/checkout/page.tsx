@@ -22,11 +22,22 @@ import AddressList from "@/components/Address/AddressList";
 import { Address } from "@/types/address.types";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { createOrder } from "@/lib/apiItems";
+import { createOrder, fetchCoupons } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 type PaymentMethod = "cod" | "getPay";
+
+interface AvailableCoupon {
+  name: string;
+  code: string;
+  value: string;
+  type: string;
+  minQuantity: number;
+  applyAutomatically: boolean;
+  expiryDate: string;
+  paymentMethods: string[] | string;
+}
 
 const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
@@ -38,6 +49,8 @@ const Checkout = () => {
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+  const [availableCoupons, setAvailableCoupons] = useState<AvailableCoupon[]>([]);
+  const [loadingCoupons, setLoadingCoupons] = useState(false);
 
   const {
     cartItems,
@@ -60,6 +73,24 @@ const Checkout = () => {
   const handleAddressSelect = (address: Address | null) => {
     setSelectedAddress(address);
   };
+
+  // Fetch available coupons on mount
+  useEffect(() => {
+    const loadCoupons = async () => {
+      try {
+        setLoadingCoupons(true);
+        const response = await fetchCoupons();
+        if (response?.data) {
+          setAvailableCoupons(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch coupons:", error);
+      } finally {
+        setLoadingCoupons(false);
+      }
+    };
+    loadCoupons();
+  }, []);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -87,6 +118,35 @@ const Checkout = () => {
     } else {
       setCouponError(result.message);
     }
+  };
+
+  const handleSelectCoupon = (code: string) => {
+    setCouponCode(code);
+    setCouponError(null);
+  };
+
+  // Filter coupons based on selected payment method
+  const getFilteredCoupons = () => {
+    return availableCoupons.filter(coupon => {
+      // Parse paymentMethods if it's a string (JSON)
+      let methods: string[] = [];
+      if (typeof coupon.paymentMethods === 'string') {
+        try {
+          methods = JSON.parse(coupon.paymentMethods);
+        } catch {
+          methods = [];
+        }
+      } else if (Array.isArray(coupon.paymentMethods)) {
+        methods = coupon.paymentMethods;
+      }
+
+      // If no payment methods specified, coupon applies to all
+      if (methods.length === 0) return true;
+
+      // Map payment method "cod" -> "cod", "getPay" -> "card"
+      const currentMethod = selectedPaymentMethod === 'getPay' ? 'card' : 'cod';
+      return methods.includes(currentMethod);
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,7 +204,7 @@ const Checkout = () => {
       }
 
     } catch (error: any) {
-      setOrderError(error.response?.data?.message || "Failed to place order. Please try again.");
+      setOrderError(error.response?.data?.error || error.response?.data?.message || "Failed to place order. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -374,7 +434,7 @@ const Checkout = () => {
                   <span className="text-slate-600">Subtotal</span>
                   <span className="font-medium text-slate-900">${cartTotal.toFixed(2)}</span>
                 </div>
-                {totalDiscount > 0 && (
+                {totalDiscount > 0 && !appliedCoupon && (
                   <div className="flex justify-between text-sm">
                     <span className="text-green-600">Discount</span>
                     <span className="font-medium text-green-600">-${totalDiscount.toFixed(2)}</span>
@@ -388,8 +448,8 @@ const Checkout = () => {
                 </div>
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-purple-600">Coupon Discount</span>
-                    <span className="font-medium text-purple-600">-${couponDiscount.toFixed(2)}</span>
+                    <span className="text-green-600">Coupon Discount</span>
+                    <span className="font-medium text-green-600">-${couponDiscount.toFixed(2)}</span>
                   </div>
                 )}
               </div>
@@ -402,13 +462,13 @@ const Checkout = () => {
                 </h4>
 
                 {appliedCoupon ? (
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Tag className="w-4 h-4 text-purple-600" />
+                        <Tag className="w-4 h-4 text-green-600" />
                         <div>
-                          <span className="font-semibold text-purple-700">{appliedCoupon.code}</span>
-                          <p className="text-xs text-purple-600">
+                          <span className="font-semibold text-green-700">{appliedCoupon.code}</span>
+                          <p className="text-xs text-green-600">
                             {appliedCoupon.type === 'free_shipping' ? 'Free Shipping' : `$${appliedCoupon.discount.toFixed(2)} off`}
                           </p>
                         </div>
@@ -416,13 +476,13 @@ const Checkout = () => {
                       <button
                         onClick={handleRemoveCoupon}
                         disabled={isApplyingCoupon}
-                        className="p-1 hover:bg-purple-100 rounded-full transition-colors"
+                        className="p-1 hover:bg-green-100 rounded-full transition-colors"
                         title="Remove coupon"
                       >
                         {isApplyingCoupon ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+                          <Loader2 className="w-4 h-4 animate-spin text-green-600" />
                         ) : (
-                          <X className="w-4 h-4 text-purple-600" />
+                          <X className="w-4 h-4 text-green-600" />
                         )}
                       </button>
                     </div>
@@ -464,6 +524,42 @@ const Checkout = () => {
                   <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
                     <span>✅</span> {couponSuccess}
                   </p>
+                )}
+
+                {/* Available Coupons List */}
+                {!appliedCoupon && getFilteredCoupons().length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs text-slate-500 mb-2">Available coupons (click to apply):</p>
+                    <div className="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar">
+                      {getFilteredCoupons().map((coupon) => (
+                        <button
+                          key={coupon.code}
+                          onClick={() => handleSelectCoupon(coupon.code)}
+                          disabled={isApplyingCoupon}
+                          className="w-full text-left p-2 rounded-lg border border-slate-200 hover:border-green-300 hover:bg-green-50/50 transition-all group"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-xs font-mono font-semibold text-green-700 group-hover:text-green-800">
+                                {coupon.code}
+                              </span>
+                              <p className="text-[10px] text-slate-500">
+                                {coupon.name} • {coupon.type === 'free_shipping' ? 'Free Shipping' : `$${parseFloat(coupon.value).toFixed(2)} off`}
+                              </p>
+                            </div>
+                            <Tag className="w-3 h-3 text-slate-400 group-hover:text-green-600" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {loadingCoupons && (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Loading available coupons...
+                  </div>
                 )}
               </div>
 

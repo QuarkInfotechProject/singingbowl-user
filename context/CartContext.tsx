@@ -3,12 +3,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthContext";
-import { addToCart as apiAddToCart, fetchCart as apiFetchCart, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart, fetchGuestToken, applyCoupon as apiApplyCoupon, removeCoupon as apiRemoveCoupon } from "@/lib/apiItems";
+import { addToCart as apiAddToCart, fetchCart as apiFetchCart, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart, fetchGuestToken, applyCoupon as apiApplyCoupon, removeCoupon as apiRemoveCoupon, updateCartQuantity as apiUpdateQuantity } from "@/lib/apiItems";
 import Cookies from "js-cookie";
 // import { toast } from "sonner"; // Removed as not installed
 
 export interface CartItem {
-    id: string; // Product ID
+    id: string; // Numeric Product ID
+    productUuid?: string; // Product UUID for API calls
     cartItemId?: string;
     name: string;
     price: number; // unitPrice from API
@@ -35,12 +36,14 @@ interface CartContextType {
     cartItems: CartItem[];
     addToCart: (product: CartItem, openCart?: boolean) => Promise<void>;
     removeFromCart: (cartId: string, id: string) => Promise<void>;
+    updateQuantity: (cartItemId: string, id: string, newQuantity: number) => Promise<void>;
     clearCart: () => Promise<void>;
     isOpen: boolean;
     toggleCart: () => void;
     isLoading: boolean;
     refreshCart: () => Promise<void>;
     removingItemIds: string[];
+    updatingItemIds: string[];
     shippingCharge: number;
     shippingType: string;
     cartTotal: number;
@@ -62,6 +65,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [removingItemIds, setRemovingItemIds] = useState<string[]>([]);
+    const [updatingItemIds, setUpdatingItemIds] = useState<string[]>([]);
     const [shippingCharge, setShippingCharge] = useState<number>(0);
     const [shippingType, setShippingType] = useState<string>("");
     const [cartTotal, setCartTotal] = useState<number>(0);
@@ -118,6 +122,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                 // Map items with new API structure
                 const mappedItems = cartData.items.map((item: any) => ({
                     id: item.id?.toString(),
+                    productUuid: item.productId || item.productUuid || item.uuid, // Product UUID for API calls
                     name: item.productName,
                     price: parseFloat(item.unitPrice || "0"),
                     originalPrice: parseFloat(item.originalPrice || item.unitPrice || "0"),
@@ -141,15 +146,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                 setTotalWeight(cartData.total_weight || 0);
                 setCartUuid(cartData.cart_id || "");
 
-                // Set coupon-related data if present
-                if (cartData.applied_coupon) {
+                // Set coupon-related data if present (API returns 'coupons' array)
+                if (cartData.coupons && Array.isArray(cartData.coupons) && cartData.coupons.length > 0) {
+                    const coupon = cartData.coupons[0]; // Get the first applied coupon
                     setAppliedCoupon({
-                        code: cartData.applied_coupon.code || '',
-                        discount: cartData.applied_coupon.discount || 0,
-                        type: cartData.applied_coupon.type || '',
-                        name: cartData.applied_coupon.name || ''
+                        code: coupon.code || '',
+                        discount: coupon.discountAmount || 0,
+                        type: coupon.type || 'free_shipping', // Default to free_shipping if not provided
+                        name: coupon.name || ''
                     });
-                    setCouponDiscount(cartData.applied_coupon.discount || 0);
+                    setCouponDiscount(coupon.discountAmount || 0);
                 } else {
                     setAppliedCoupon(null);
                     setCouponDiscount(0);
@@ -237,6 +243,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const updateQuantity = async (cartItemId: string, id: string, newQuantity: number) => {
+        if (newQuantity < 1) return; // Don't allow quantity less than 1
+        try {
+            setUpdatingItemIds((prev) => [...prev, id]);
+            await apiUpdateQuantity(cartItemId, id, newQuantity);
+            await fetchCartItems(false);
+        } catch (error) {
+            console.error("Error updating quantity:", error);
+        } finally {
+            setUpdatingItemIds((prev) => prev.filter((itemId) => itemId !== id));
+        }
+    };
+
     const toggleCart = () => setIsOpen((prev) => !prev);
 
     const refreshCart = fetchCartItems;
@@ -283,12 +302,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             cartItems,
             addToCart,
             removeFromCart,
+            updateQuantity,
             clearCart,
             isOpen,
             toggleCart,
             isLoading,
             refreshCart,
             removingItemIds,
+            updatingItemIds,
             shippingCharge,
             shippingType,
             cartTotal,

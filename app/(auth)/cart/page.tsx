@@ -9,6 +9,8 @@ import {
   ArrowRight,
   Loader2,
   AlertTriangle,
+  Plus,
+  Minus,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,7 +21,9 @@ const Cart = () => {
     cartItems,
     isLoading,
     removeFromCart,
+    updateQuantity,
     removingItemIds,
+    updatingItemIds,
     cartTotal,
     grandTotal,
     shippingCharge,
@@ -49,6 +53,7 @@ const Cart = () => {
   // Cart Item Component for reuse
   const CartItemCard = ({ item, isOutOfStock = false }: { item: typeof cartItems[0], isOutOfStock?: boolean }) => {
     const isRemoving = removingItemIds.includes(item.id);
+    const isUpdating = updatingItemIds.includes(item.id);
 
     return (
       <div
@@ -56,7 +61,7 @@ const Cart = () => {
         className={`bg-white rounded-lg border p-4 transition-all relative ${isOutOfStock
           ? 'border-red-200 bg-red-50/50 opacity-75'
           : 'border-slate-200 hover:shadow-lg'
-          } ${isRemoving ? 'opacity-50 pointer-events-none' : ''}`}
+          } ${isRemoving || isUpdating ? 'opacity-50 pointer-events-none' : ''}`}
       >
         {isRemoving && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-lg z-10">
@@ -138,14 +143,44 @@ const Cart = () => {
                     </span>
                   )}
                 </div>
-                <p className={`text-sm mt-1 ${isOutOfStock ? 'text-slate-400' : 'text-gray-500'}`}>
-                  Qty: {item.quantity}
-                  {item.weight && (
-                    <span className="ml-2 text-slate-500">
-                      • Weight: {item.weight}kg
+                {/* Quantity Controls */}
+                {!isOutOfStock && item.cartItemId && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      onClick={() => updateQuantity(item.cartItemId!, item.id, item.quantity - 1)}
+                      disabled={item.quantity <= 1 || isUpdating}
+                      className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Decrease quantity"
+                    >
+                      <Minus className="w-4 h-4 text-slate-600" />
+                    </button>
+                    <span className="w-8 text-center font-medium text-slate-900">
+                      {isUpdating ? (
+                        <Loader2 className="w-4 h-4 animate-spin mx-auto text-[#A12717]" />
+                      ) : (
+                        item.quantity
+                      )}
                     </span>
-                  )}
-                </p>
+                    <button
+                      onClick={() => updateQuantity(item.cartItemId!, item.id, item.quantity + 1)}
+                      disabled={isUpdating || (item.stock !== undefined && item.quantity >= item.stock)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-300 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title="Increase quantity"
+                    >
+                      <Plus className="w-4 h-4 text-slate-600" />
+                    </button>
+                  </div>
+                )}
+                {isOutOfStock && (
+                  <p className="text-sm mt-1 text-slate-400">
+                    Qty: {item.quantity}
+                    {item.weight && (
+                      <span className="ml-2 text-slate-500">
+                        • Weight: {item.weight}kg
+                      </span>
+                    )}
+                  </p>
+                )}
                 {!isOutOfStock && (
                   <p className="text-sm font-medium text-slate-700 mt-1">
                     Line Total: ${item.lineTotal.toFixed(2)}

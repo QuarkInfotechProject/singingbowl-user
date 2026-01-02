@@ -198,6 +198,21 @@ export const clearCart = async () => {
     }
 };
 
+// Update Cart Item Quantity
+export const updateCartQuantity = async (cartId: string, id: string, quantity: number) => {
+    try {
+        const response = await api.post("/user/cart/update/cart-quantity", {
+            cartId,
+            id,
+            quantity: quantity.toString()
+        });
+        return response.data;
+    } catch (error) {
+        console.error("updateCartQuantity error:", error);
+        throw error;
+    }
+};
+
 // Add to Wishlist
 export const addToWishlist = async (productId: string) => {
     try {
