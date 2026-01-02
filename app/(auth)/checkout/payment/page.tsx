@@ -391,6 +391,19 @@ const PaymentPage = () => {
                             #checkout .field-wrapper {
                                 margin-bottom: 20px !important;
                             }
+
+                            @media (min-width: 1500px) {
+                                .parent-div.svelte-1i24pqq {
+                                    padding: 2rem 4rem;
+                                    display: grid;
+                                    grid-template-columns: 1fr;
+                                    grid-column-gap: 0px;
+                                    grid-row-gap: 0px;
+                                    grid-template-areas:
+                                    "order summary"
+                                    "information payment";
+                                }
+                            }
                         `}</style>
 
                         {/* GetPay Payment Container */}
