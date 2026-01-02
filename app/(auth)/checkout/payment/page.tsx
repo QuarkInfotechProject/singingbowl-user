@@ -72,8 +72,23 @@ const PaymentPage = () => {
     // GetPay SDK URL
     const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL;
 
-    // Load payment config from sessionStorage on mount
+    // Load payment config and check for preserved logs
     useEffect(() => {
+        // preserve logs check
+        const lastEvent = sessionStorage.getItem('lastGetPayEvent');
+        if (lastEvent) {
+            try {
+                const parsed = JSON.parse(lastEvent);
+                console.group("👉 PRESERVED GETPAY LOGS 👈");
+                console.log(`Type: ${parsed.type}`);
+                console.log("Data:", parsed.data);
+                console.groupEnd();
+                // sessionStorage.removeItem('lastGetPayEvent'); // Optional: Keep it until success?
+            } catch (e) {
+                console.error("Error parsing preserved logs", e);
+            }
+        }
+
         const storedConfig = sessionStorage.getItem('paymentConfig');
 
         if (!storedConfig) {
@@ -218,18 +233,22 @@ const PaymentPage = () => {
                 failUrl: failUrl,
                 onSuccess: (data: any) => {
                     console.log("GetPay Success Callback:", data);
-                    // Robust check for success status
-                    const isRealSuccess = data && (
-                        data.transactionId ||
-                        data.transaction_id ||
-                        data.status === 'SUCCESS' ||
-                        data.responseCode === '0' ||
-                        data.response_code === '0'
-                    );
 
-                    if (isRealSuccess) {
-                        console.log("Valid payment success. Showing popup...", successUrl);
-                        // Trigger Success Popup
+                    // Persist log for debugging
+                    sessionStorage.setItem('lastGetPayEvent', JSON.stringify({
+                        type: 'SUCCESS',
+                        timestamp: new Date().toISOString(),
+                        data: data
+                    }));
+
+                    // Improved Success Check:
+                    // The "config echo" usually contains 'containerId' or 'businessName'.
+                    // Real success payload should NOT have these, or should have transaction details.
+                    // We simply check if it's NOT just the config.
+                    const isConfigEcho = data && (data.containerId || (data.getPayOptions && data.getPayOptions.containerId));
+
+                    if (!isConfigEcho || (data.transactionId || data.status === 'SUCCESS')) {
+                        console.log("Valid payment success detected. Showing popup...", successUrl);
                         setResultModal({
                             isOpen: true,
                             type: 'success',
@@ -237,17 +256,30 @@ const PaymentPage = () => {
                             message: "Your payment has been successfully processed."
                         });
                     } else {
-                        console.warn("Premature/Invalid success callback. Data:", data);
+                        console.warn("Premature/Invalid success callback (Config Echo). Ignoring.", data);
                     }
                 },
                 onError: (error: any) => {
                     console.error("GetPay Error Callback:", error);
+
+                    // Persist log for debugging
+                    sessionStorage.setItem('lastGetPayEvent', JSON.stringify({
+                        type: 'ERROR',
+                        timestamp: new Date().toISOString(),
+                        error: error
+                    }));
+
+                    let retMsg = "There was an issue processing your payment.";
+                    if (typeof error === 'string') retMsg = error;
+                    else if (error?.message) retMsg = error.message;
+                    else if (error?.data?.message) retMsg = error.data.message;
+
                     // Trigger Failure Popup
                     setResultModal({
                         isOpen: true,
                         type: 'error',
                         url: failUrl,
-                        message: "There was an issue processing your payment. Please try again."
+                        message: `${retMsg} (If amount was deducted, please contact support)`
                     });
                 },
                 // Pass structured callbackUrl for SDK compatibility
@@ -299,8 +331,8 @@ const PaymentPage = () => {
                 window.location.href = resultModal.url;
             } else {
                 setResultModal(prev => ({ ...prev, isOpen: false }));
-                // Consider reloading page to reset SDK?
-                window.location.reload();
+                // REMOVED window.location.reload() to preserve console logs for debugging
+                console.log("Modal closed. Page not reloaded to preserve logs.");
             }
         }
     };
@@ -365,7 +397,7 @@ const PaymentPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex max-w-5xl items-start justify-between">
+                        <div className="flex max-w-7xl items-start justify-between">
 
                             {/* RIGHT COLUMN: Order Summary */}
                             <div className="lg:col-span-1">
@@ -533,12 +565,12 @@ const PaymentPage = () => {
                     <DialogFooter className="sm:justify-center w-full">
                         <Button
                             className={`w-full max-w-[200px] ${resultModal.type === 'success'
-                                    ? 'bg-green-600 hover:bg-green-700'
-                                    : 'bg-red-600 hover:bg-red-700'
+                                ? 'bg-green-600 hover:bg-green-700'
+                                : 'bg-red-600 hover:bg-red-700'
                                 }`}
                             onClick={handleModalConfirm}
                         >
-                            {resultModal.type === 'success' ? 'Continue' : 'Try Again'}
+                            {resultModal.type === 'success' ? 'Continue' : 'Close'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
