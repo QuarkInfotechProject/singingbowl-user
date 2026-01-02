@@ -42,25 +42,27 @@ const PaymentPage = () => {
 
     // Payment Result Modal State
     const styles = `   
-    
-    @media (min-width: 1000px) {
-        .parent-div.svelte-1i24pqq {
-            padding: 2rem 4rem;
-            display: grid;
-            grid-template-columns: 1fr !important;
-            grid-column-gap: 0px;
-            grid-row-gap: 0px;
-            grid-template-areas:
-            "order summary"
-            "information payment";
+        @media (min-width: 1000px) {
+            .parent-div.svelte-1i24pqq {
+                padding: 2rem 4rem;
+                display: grid;
+                grid-template-columns: 350px 1fr; /* Order Summary | Payment Form */
+                grid-column-gap: 40px;
+                grid-row-gap: 0px;
+                grid-template-areas:
+                    "order payment"
+                    "summary payment"
+                    "information payment";
+                align-items: start;
+            }
         }
-    }
 `;
     const [resultModal, setResultModal] = useState<{
         isOpen: boolean;
         type: 'success' | 'error';
         url: string;
         message?: string;
+        data?: any; // Added for debugging info
     }>({
         isOpen: false,
         type: 'success',
@@ -123,7 +125,116 @@ const PaymentPage = () => {
         }
     }, []);
 
-    // Load SDK script and initialize GetPay
+    // Initialize GetPay Logic
+    const initGetPayOps = () => {
+        if (getpayInitializedRef.current) return;
+        if (!paymentConfig) return; // Guard against null config
+
+        // Check availability
+        if (typeof (window as any).GetPay === 'undefined') {
+            console.log("GetPay global not found even after load waiting.");
+            return;
+        }
+
+        const container = document.getElementById("checkout");
+        if (!container) {
+            console.error("Checkout container #checkout not found in DOM.");
+            setPaymentError("Payment form container missing.");
+            setSdkLoading(false);
+            return;
+        }
+
+        if (container.hasChildNodes()) {
+            console.log("Container already populated, assuming init done.");
+        }
+
+        console.log("Initializing GetPay...");
+        getpayInitializedRef.current = true;
+
+        try {
+            const getPayOptionsFromConfig = paymentConfig?.getPayOptions || {};
+
+            // SDK Redirect Prevention: Point to current page anchors so the SDK doesn't navigate away
+            const dummySuccessUrl = window.location.href.split('#')[0] + "#success_callback";
+            const dummyFailUrl = window.location.href.split('#')[0] + "#fail_callback";
+
+            const options = {
+                ...getPayOptionsFromConfig,
+                containerId: "checkout",
+                // FORCE the SDK to stay on page by pointing URLs to dummy hashes
+                successUrl: dummySuccessUrl,
+                failUrl: dummyFailUrl,
+                callbackUrl: getPayOptionsFromConfig.callbackUrl || dummySuccessUrl,
+                isRedirect: false
+            };
+
+            console.log("Initializing GetPay with FORCE STAY options:", options);
+
+            const getPay = new (window as any).GetPay({
+                paymentMethod: paymentConfig.paymentMethod,
+                orderId: paymentConfig.orderId,
+                getPayOptions: options,
+                userInfo: paymentConfig.userInfo,
+                clientRequestId: String(paymentConfig.orderId),
+                papInfo: paymentConfig.papInfo,
+                oprKey: paymentConfig.oprKey,
+                insKey: paymentConfig.insKey
+            });
+
+            getPay.onSuccess = (data: any) => {
+                console.log("GetPay Success Callback:", data);
+
+                // ROBUST CHECK: Ignore initialization echoes
+                // If it looks like a config echo (missing token/id/status), ignore it
+                if (!data.token && !data.id && !data.transactionId && !data.status && data.clientRequestId === String(paymentConfig.orderId)) {
+                    console.warn("Ignoring invalid/echo success callback:", data);
+                    return;
+                }
+
+                // Persist event
+                try {
+                    sessionStorage.setItem('lastGetPayEvent', JSON.stringify({ type: 'SUCCESS', data, timestamp: Date.now() }));
+                } catch (e) { console.error("Log persist failed", e); }
+
+                setResultModal({
+                    isOpen: true,
+                    type: 'success',
+                    data: data,
+                    url: `${window.location.origin}/checkout`,
+                    message: "Payment verified successfully!"
+                });
+            };
+
+            getPay.onError = (error: any) => {
+                console.error("GetPay Error Callback:", error);
+
+                try {
+                    sessionStorage.setItem('lastGetPayEvent', JSON.stringify({ type: 'ERROR', data: error, timestamp: Date.now() }));
+                } catch (e) { }
+
+                setResultModal({
+                    isOpen: true,
+                    type: 'error',
+                    data: error,
+                    url: `${window.location.origin}/checkout`,
+                    message: typeof error === 'string' ? error : (error.message || "Payment processing failed.")
+                });
+            };
+
+            getPay.initialize();
+
+            console.log("GetPay initialized call done.");
+            setSdkLoading(false);
+
+        } catch (e: any) {
+            console.error("GetPay initialization threw error:", e);
+            setPaymentError(`Payment system error: ${e.message}`);
+            setSdkLoading(false);
+            getpayInitializedRef.current = false; // Allow retry if it crashed
+        }
+    };
+
+    // Load SDK script and then initialize
     useEffect(() => {
         if (!paymentConfig) return;
         if (!GETPAY_SDK_URL) {
@@ -160,7 +271,7 @@ const PaymentPage = () => {
                 scriptLoadedRef.current = true;
             }
 
-            // Small delay to ensure global object is ready and DOM is stable
+            // Small delay to ensure global object is ready
             await new Promise(r => setTimeout(r, 500));
 
             if (!isMounted) return;
@@ -179,147 +290,8 @@ const PaymentPage = () => {
         // Cleanup function
         return () => {
             isMounted = false;
-            // NOTE: We do NOT reset getpayInitializedRef.current here because 
-            // verifying unmount/remount in strict mode causes unwanted re-init.
         };
     }, [paymentConfig, GETPAY_SDK_URL]);
-
-    // Separated initialization logic
-    const initGetPayOps = () => {
-        if (getpayInitializedRef.current) return;
-
-        // Check availability
-        if (typeof window.GetPay === 'undefined') {
-            console.log("GetPay global not found even after load waiting.");
-            return;
-        }
-
-        const container = document.getElementById("checkout");
-        if (!container) {
-            console.error("Checkout container #checkout not found in DOM.");
-            setPaymentError("Payment form container missing.");
-            setSdkLoading(false);
-            return;
-        }
-
-        // --- Prevent Double/Dirty Init ---
-        // If the container already has content (iframe), clear it or skip
-        if (container.hasChildNodes()) {
-            console.log("Container already populated, assuming init done.");
-            // Optional: container.innerHTML = ''; // If we wanted to force re-render
-            // For now, we assume it's fine.
-        }
-
-        console.log("Initializing GetPay...");
-        getpayInitializedRef.current = true;
-
-        try {
-            const getPayOptionsFromConfig = paymentConfig?.getPayOptions || {};
-            const backendCallbackUrl = getPayOptionsFromConfig.callbackUrl;
-
-            // Safe URL extraction - Check root properties first
-            let successUrl = getPayOptionsFromConfig.successUrl;
-            let failUrl = getPayOptionsFromConfig.failUrl;
-
-            // Check callbackUrl structure if root properties are missing
-            if (backendCallbackUrl) {
-                if (typeof backendCallbackUrl === 'object' && backendCallbackUrl !== null) {
-                    successUrl = successUrl || backendCallbackUrl.successUrl;
-                    failUrl = failUrl || backendCallbackUrl.failUrl;
-                } else if (typeof backendCallbackUrl === 'string') {
-                    // IF callbackUrl is a string, it is typically the success URL
-                    successUrl = successUrl || backendCallbackUrl;
-                }
-            }
-
-            // Default fallbacks only if absolutely nothing was found
-            if (!successUrl) {
-                console.warn("No successUrl found in config. Using fallback.");
-                successUrl = "https://www.singingbowlvillagenepal.com/checkout";
-            }
-            if (!failUrl) {
-                failUrl = "https://www.singingbowlvillagenepal.com/checkout?error=failed";
-            }
-
-            const getPayOptions: Record<string, any> = {
-                ...getPayOptionsFromConfig,
-                containerId: "#checkout",
-                successUrl: successUrl,
-                failUrl: failUrl,
-                onSuccess: (data: any) => {
-                    console.log("GetPay Success Callback:", data);
-
-                    // Persist log for debugging
-                    sessionStorage.setItem('lastGetPayEvent', JSON.stringify({
-                        type: 'SUCCESS',
-                        timestamp: new Date().toISOString(),
-                        data: data
-                    }));
-
-                    // Improved Success Check:
-                    // The "config echo" usually contains 'containerId' or 'businessName'.
-                    // Real success payload should NOT have these, or should have transaction details.
-                    // We simply check if it's NOT just the config.
-                    const isConfigEcho = data && (data.containerId || (data.getPayOptions && data.getPayOptions.containerId));
-
-                    if (!isConfigEcho || (data.transactionId || data.status === 'SUCCESS')) {
-                        console.log("Valid payment success detected. Showing popup...", successUrl);
-                        setResultModal({
-                            isOpen: true,
-                            type: 'success',
-                            url: successUrl,
-                            message: "Your payment has been successfully processed."
-                        });
-                    } else {
-                        console.warn("Premature/Invalid success callback (Config Echo). Ignoring.", data);
-                    }
-                },
-                onError: (error: any) => {
-                    console.error("GetPay Error Callback:", error);
-
-                    // Persist log for debugging
-                    sessionStorage.setItem('lastGetPayEvent', JSON.stringify({
-                        type: 'ERROR',
-                        timestamp: new Date().toISOString(),
-                        error: error
-                    }));
-
-                    let retMsg = "There was an issue processing your payment.";
-                    if (typeof error === 'string') retMsg = error;
-                    else if (error?.message) retMsg = error.message;
-                    else if (error?.data?.message) retMsg = error.data.message;
-
-                    // Trigger Failure Popup
-                    setResultModal({
-                        isOpen: true,
-                        type: 'error',
-                        url: failUrl,
-                        message: `${retMsg} (If amount was deducted, please contact support)`
-                    });
-                },
-                // Pass structured callbackUrl for SDK compatibility
-                callbackUrl: {
-                    successUrl: successUrl,
-                    failUrl: failUrl
-                }
-            };
-
-            console.log("GetPay Final Options:", getPayOptions);
-
-            const baseUrl = getPayOptionsFromConfig.baseUrl;
-            const getpay = new window.GetPay(getPayOptions, baseUrl);
-            getpay.initialize();
-
-            console.log("GetPay initialized call done.");
-            setSdkLoading(false);
-
-        } catch (e: any) {
-            console.error("GetPay initialization threw error:", e);
-            setPaymentError(`Payment system error: ${e.message}`);
-            setSdkLoading(false);
-            getpayInitializedRef.current = false; // Allow retry if it crashed
-        }
-    };
 
     // Redirect if not logged in
     useEffect(() => {
