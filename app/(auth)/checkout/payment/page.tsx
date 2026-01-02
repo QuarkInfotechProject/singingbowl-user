@@ -48,7 +48,7 @@ const PaymentPage = () => {
     const router = useRouter();
 
     // GetPay SDK URL
-    const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL;f
+    const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL;
 
     // Load payment config from sessionStorage on mount
     useEffect(() => {
