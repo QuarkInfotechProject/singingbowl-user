@@ -141,31 +141,8 @@ const PaymentPage = () => {
             const dummySuccessUrl = window.location.href.split('#')[0] + "#success_callback";
             const dummyFailUrl = window.location.href.split('#')[0] + "#fail_callback";
 
-            const options = {
-                ...getPayOptionsFromConfig,
-                containerId: "checkout",
-                // FORCE the SDK to stay on page by pointing URLs to dummy hashes
-                successUrl: dummySuccessUrl,
-                failUrl: dummyFailUrl,
-                // CRITICAL: Force callbackUrl to dummy also, to prevent SDK from pinging backend without auth
-                callbackUrl: dummySuccessUrl,
-                isRedirect: false
-            };
-
-            console.log("Initializing GetPay with FORCE STAY options:", options);
-
-            const getPay = new (window as any).GetPay({
-                paymentMethod: paymentConfig.paymentMethod,
-                orderId: paymentConfig.orderId,
-                getPayOptions: options,
-                userInfo: paymentConfig.userInfo,
-                clientRequestId: String(paymentConfig.orderId),
-                papInfo: paymentConfig.papInfo,
-                oprKey: paymentConfig.oprKey,
-                insKey: paymentConfig.insKey
-            });
-
-            getPay.onSuccess = (data: any) => {
+            // Define callbacks BEFORE options (SDK expects them in the options object)
+            const handleSuccess = (data: any) => {
                 console.log("GetPay Success Callback:", data);
 
                 // ROBUST CHECK: Ignore initialization echoes
@@ -184,12 +161,12 @@ const PaymentPage = () => {
                     isOpen: true,
                     type: 'success',
                     data: data,
-                    url: `${window.location.origin}/checkout`,
+                    url: `${window.location.origin}/profile?tab=orders&payment=success`,
                     message: "Payment verified successfully!"
                 });
             };
 
-            getPay.onError = (error: any) => {
+            const handleError = (error: any) => {
                 console.error("GetPay Error Callback:", error);
 
                 try {
@@ -204,6 +181,36 @@ const PaymentPage = () => {
                     message: typeof error === 'string' ? error : (error.message || "Payment processing failed.")
                 });
             };
+
+            // Build options - EXPLICITLY remove original URLs and set dummy ones
+            // Destructure to remove original URL fields, then add our overrides
+            const { successUrl: _, failUrl: __, callbackUrl: ___, ...cleanedOptions } = getPayOptionsFromConfig;
+
+            const options = {
+                ...cleanedOptions,
+                containerId: "checkout",
+                // FORCE the SDK to stay on page
+                successUrl: dummySuccessUrl,
+                failUrl: dummyFailUrl,
+                callbackUrl: dummySuccessUrl,
+                isRedirect: false,
+                // CRITICAL: SDK expects callbacks IN the options object
+                onSuccess: handleSuccess,
+                onError: handleError
+            };
+
+            console.log("Initializing GetPay with FORCE STAY options:", options);
+
+            const getPay = new (window as any).GetPay({
+                paymentMethod: paymentConfig.paymentMethod,
+                orderId: paymentConfig.orderId,
+                getPayOptions: options,
+                userInfo: paymentConfig.userInfo,
+                clientRequestId: String(paymentConfig.orderId),
+                papInfo: paymentConfig.papInfo,
+                oprKey: paymentConfig.oprKey,
+                insKey: paymentConfig.insKey
+            });
 
             getPay.initialize();
 
@@ -412,12 +419,12 @@ const PaymentPage = () => {
                                             <span className="text-slate-600">Subtotal</span>
                                             <span className="font-medium text-slate-900">${cartTotal.toFixed(2)}</span>
                                         </div>
-                                        {totalDiscount > 0 && (
+                                        {/* {totalDiscount > 0 && (
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-green-600">Discount</span>
                                                 <span className="font-medium text-green-600">-${totalDiscount.toFixed(2)}</span>
                                             </div>
-                                        )}
+                                        )} */}
                                         <div className="flex justify-between text-sm">
                                             <span className="text-slate-600">Shipping</span>
                                             <span className="font-medium text-slate-900">{shippingCharge === 0 ? "Free" : `$${shippingCharge.toFixed(2)}`}</span>
