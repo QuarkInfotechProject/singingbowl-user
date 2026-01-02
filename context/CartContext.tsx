@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthContext";
-import { addToCart as apiAddToCart, fetchCart as apiFetchCart, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart, fetchGuestToken } from "@/lib/apiItems";
+import { addToCart as apiAddToCart, fetchCart as apiFetchCart, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart, fetchGuestToken, applyCoupon as apiApplyCoupon, removeCoupon as apiRemoveCoupon } from "@/lib/apiItems";
 import Cookies from "js-cookie";
 // import { toast } from "sonner"; // Removed as not installed
 
@@ -24,6 +24,13 @@ export interface CartItem {
     category?: string;
 }
 
+interface AppliedCoupon {
+    code: string;
+    discount: number;
+    type: string;
+    name: string;
+}
+
 interface CartContextType {
     cartItems: CartItem[];
     addToCart: (product: CartItem, openCart?: boolean) => Promise<void>;
@@ -41,6 +48,11 @@ interface CartContextType {
     totalDiscount: number;
     totalWeight: number;
     cartUuid: string;
+    appliedCoupon: AppliedCoupon | null;
+    couponDiscount: number;
+    applyCoupon: (couponCode: string) => Promise<{ success: boolean; message: string }>;
+    removeCoupon: () => Promise<{ success: boolean; message: string }>;
+    isApplyingCoupon: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -57,6 +69,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const [totalDiscount, setTotalDiscount] = useState<number>(0);
     const [totalWeight, setTotalWeight] = useState<number>(0);
     const [cartUuid, setCartUuid] = useState<string>("");
+    const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+    const [couponDiscount, setCouponDiscount] = useState<number>(0);
+    const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
     const { isLoggedIn } = useAuth();
     const router = useRouter();
@@ -125,6 +140,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                 setTotalDiscount(cartData.total_discount || 0);
                 setTotalWeight(cartData.total_weight || 0);
                 setCartUuid(cartData.cart_id || "");
+
+                // Set coupon-related data if present
+                if (cartData.applied_coupon) {
+                    setAppliedCoupon({
+                        code: cartData.applied_coupon.code || '',
+                        discount: cartData.applied_coupon.discount || 0,
+                        type: cartData.applied_coupon.type || '',
+                        name: cartData.applied_coupon.name || ''
+                    });
+                    setCouponDiscount(cartData.applied_coupon.discount || 0);
+                } else {
+                    setAppliedCoupon(null);
+                    setCouponDiscount(0);
+                }
             } else if (Array.isArray(cartData)) {
                 // Fallback
                 setCartItems(cartData);
@@ -212,6 +241,43 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     const refreshCart = fetchCartItems;
 
+    const applyCoupon = async (couponCode: string): Promise<{ success: boolean; message: string }> => {
+        try {
+            setIsApplyingCoupon(true);
+            await apiApplyCoupon(couponCode);
+            await fetchCartItems(false);
+            return { success: true, message: "Coupon applied successfully!" };
+        } catch (error: any) {
+            console.error("Error applying coupon:", error);
+            return {
+                success: false,
+                message: error.response?.data?.message || "Failed to apply coupon"
+            };
+        } finally {
+            setIsApplyingCoupon(false);
+        }
+    };
+
+    const removeCoupon = async (): Promise<{ success: boolean; message: string }> => {
+        if (!appliedCoupon || !cartUuid) {
+            return { success: false, message: "No coupon to remove" };
+        }
+        try {
+            setIsApplyingCoupon(true);
+            await apiRemoveCoupon(cartUuid, appliedCoupon.code);
+            await fetchCartItems(false);
+            return { success: true, message: "Coupon removed successfully!" };
+        } catch (error: any) {
+            console.error("Error removing coupon:", error);
+            return {
+                success: false,
+                message: error.response?.data?.message || "Failed to remove coupon"
+            };
+        } finally {
+            setIsApplyingCoupon(false);
+        }
+    };
+
     return (
         <CartContext.Provider value={{
             cartItems,
@@ -229,7 +295,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             grandTotal,
             totalDiscount,
             totalWeight,
-            cartUuid
+            cartUuid,
+            appliedCoupon,
+            couponDiscount,
+            applyCoupon,
+            removeCoupon,
+            isApplyingCoupon
         }}>
             {children}
         </CartContext.Provider>

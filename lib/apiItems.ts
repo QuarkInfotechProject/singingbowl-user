@@ -122,7 +122,7 @@ export const updateUserProfile = async (data: any) => {
         const response = await api.post("/user/profile/update", data, {
             headers: {
                 "Content-Type": undefined,
-            } as any, 
+            } as any,
         });
         return response.data;
     } catch (error) {
@@ -385,6 +385,39 @@ export const searchProducts = async (query: string) => {
         return response.data;
     } catch (error) {
         console.error("searchProducts error:", error);
+        throw error;
+    }
+};
+
+// Fetch available coupons
+export const fetchCoupons = async () => {
+    try {
+        const response = await api.get("/user/coupons");
+        return response.data;
+    } catch (error) {
+        console.error("fetchCoupons error:", error);
+        throw error;
+    }
+};
+
+// Apply coupon to cart
+export const applyCoupon = async (couponCode: string) => {
+    try {
+        const response = await api.post("/user/coupons/apply", { couponCode });
+        return response.data;
+    } catch (error) {
+        console.error("applyCoupon error:", error);
+        throw error;
+    }
+};
+
+// Remove coupon from cart
+export const removeCoupon = async (cartId: string, couponCode: string) => {
+    try {
+        const response = await api.post("/user/coupons/remove", { cartId, couponCode });
+        return response.data;
+    } catch (error) {
+        console.error("removeCoupon error:", error);
         throw error;
     }
 };

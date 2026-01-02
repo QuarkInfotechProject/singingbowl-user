@@ -6,6 +6,8 @@ import {
   Truck,
   Loader2,
   Banknote,
+  Tag,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -33,6 +35,9 @@ const Checkout = () => {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("cod");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
 
   const {
     cartItems,
@@ -42,13 +47,46 @@ const Checkout = () => {
     shippingType,
     cartTotal,
     grandTotal,
-    totalDiscount
+    totalDiscount,
+    appliedCoupon,
+    couponDiscount,
+    applyCoupon,
+    removeCoupon,
+    isApplyingCoupon
   } = useCart();
   const { isLoggedIn, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   const handleAddressSelect = (address: Address | null) => {
     setSelectedAddress(address);
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+    setCouponError(null);
+    setCouponSuccess(null);
+
+    const result = await applyCoupon(couponCode.trim());
+    if (result.success) {
+      setCouponSuccess(result.message);
+      setCouponCode(""); // Clear input on success
+    } else {
+      setCouponError(result.message);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    setCouponError(null);
+    setCouponSuccess(null);
+    const result = await removeCoupon();
+    if (result.success) {
+      setCouponSuccess(result.message);
+    } else {
+      setCouponError(result.message);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,7 +108,7 @@ const Checkout = () => {
 
       const orderData = {
         addressId: selectedAddress.uuid,
-        couponCodes: [] as string[],
+        couponCodes: appliedCoupon ? [appliedCoupon.code] : [],
         note: "",
         paymentMethod: selectedPaymentMethod,
         termsAndConditions: "true"
@@ -348,6 +386,85 @@ const Checkout = () => {
                   <span className="font-medium"></span>
                   <span className="font-medium text-slate-900">{shippingCharge === 0 ? "Free" : `$${shippingCharge.toFixed(2)}`}</span>
                 </div>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-purple-600">Coupon Discount</span>
+                    <span className="font-medium text-purple-600">-${couponDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Coupon Section */}
+              <div className="pt-4 border-t border-slate-100">
+                <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                  <Tag className="w-4 h-4" />
+                  Apply Coupon
+                </h4>
+
+                {appliedCoupon ? (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-purple-600" />
+                        <div>
+                          <span className="font-semibold text-purple-700">{appliedCoupon.code}</span>
+                          <p className="text-xs text-purple-600">
+                            {appliedCoupon.type === 'free_shipping' ? 'Free Shipping' : `$${appliedCoupon.discount.toFixed(2)} off`}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleRemoveCoupon}
+                        disabled={isApplyingCoupon}
+                        className="p-1 hover:bg-purple-100 rounded-full transition-colors"
+                        title="Remove coupon"
+                      >
+                        {isApplyingCoupon ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+                        ) : (
+                          <X className="w-4 h-4 text-purple-600" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value.toUpperCase());
+                          setCouponError(null);
+                        }}
+                        placeholder="Enter coupon code"
+                        className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A12717]/20 focus:border-[#A12717] placeholder:text-slate-400"
+                      />
+                      <button
+                        onClick={handleApplyCoupon}
+                        disabled={isApplyingCoupon || !couponCode.trim()}
+                        className="px-4 py-2 bg-[#A12717] text-white text-sm font-medium rounded-lg hover:bg-[#8a2113] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                      >
+                        {isApplyingCoupon ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          "Apply"
+                        )}
+                      </button>
+                    </div>
+                    {couponError && (
+                      <p className="text-xs text-red-600 flex items-center gap-1">
+                        <span>⚠️</span> {couponError}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {couponSuccess && (
+                  <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                    <span>✅</span> {couponSuccess}
+                  </p>
+                )}
               </div>
 
               {/* Grand Total */}
