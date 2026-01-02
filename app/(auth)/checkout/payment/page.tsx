@@ -191,6 +191,9 @@ const PaymentPage = () => {
             const options = {
                 ...cleanedOptions,
                 containerId: "checkout",
+                // EXPLICITLY ensure required fields are present (SDK requires websiteDomain)
+                websiteDomain: getPayOptionsFromConfig.websiteDomain || window.location.origin,
+                baseUrl: getPayOptionsFromConfig.baseUrl,
                 // FORCE the SDK to stay on page
                 successUrl: dummySuccessUrl,
                 failUrl: dummyFailUrl,
