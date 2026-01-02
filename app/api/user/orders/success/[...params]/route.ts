@@ -89,18 +89,43 @@ export async function GET(
         console.log("Constructed Backend URL:", backendUrl);
 
         try {
-            const response = await apiClient.post(backendUrl, requestBody, { headers });
-            console.log("Backend Response Status:", response.status);
-            // ... success handling
-        } catch (apiError: any) {
-            console.error("!!! Backend API Failed !!!");
-            if (apiError.response) {
-                console.error("Backend Status:", apiError.response.status);
-                console.error("Backend Data:", JSON.stringify(apiError.response.data));
-            } else {
-                console.error("API Error Message:", apiError.message);
+            // Attempt 1: Standard URL
+            await apiClient.post(backendUrl, requestBody, { headers });
+        } catch (apiError1: any) {
+            console.warn("Attempt 1 failed. Retrying with trailing slash...");
+
+            try {
+                // Attempt 2: Trailing slash
+                await apiClient.post(`${backendUrl}/`, requestBody, { headers });
+            } catch (apiError2: any) {
+                console.error("!!! Backend API Failed (Both Attempts) !!!");
+
+                // Use the error from the first attempt for main display, but log both
+                const finalError = apiError1;
+
+                let debugInfo = `Environment BASE_URL: ${process.env.BASE_URL}\n`;
+                debugInfo += `Error: ${finalError.message}\n`;
+
+                if (finalError.response) {
+                    console.error("Backend Status:", finalError.response.status);
+                    debugInfo += `Status: ${finalError.response.status}\n`;
+                    debugInfo += `Data: ${JSON.stringify(finalError.response.data, null, 2)}\n`;
+                }
+
+                if (finalError.config) {
+                    const fullUrl = (finalError.config.baseURL || '') + (finalError.config.url || '');
+                    debugInfo += `Attempted URL: ${fullUrl}\n`;
+                    debugInfo += `Method: ${finalError.config.method?.toUpperCase()}\n`;
+                    debugInfo += `Request Data: ${JSON.stringify(finalError.config.data)}\n`;
+                }
+
+                // Throw to render error page (preserving the debug info construction logic below)
+                // We'll reconstruct the debugInfo in the catch block below by re-throwing a custom object or modifying logic?
+                // Actually, let's just render the error page directly here or pass the info down.
+                // To keep it simple with existing structure, I'll attach the debugInfo string to the error object.
+                finalError.customDebugInfo = debugInfo;
+                throw finalError;
             }
-            throw apiError; // Re-throw to hit the outer catch block
         }
 
         // Return HTML that redirects the TOP window (breaks out of iframe)
@@ -158,16 +183,23 @@ export async function GET(
         console.error("=== Payment Success Callback ERROR ===");
         console.error("Error message:", error.message);
 
-        let debugInfo = `Error: ${error.message}\n`;
+        let debugInfo = "";
 
-        if (error.response) {
-            console.error("Response status:", error.response.status);
-            console.error("Response data:", JSON.stringify(error.response.data));
-            debugInfo += `Status: ${error.response.status}\n`;
-            debugInfo += `Data: ${JSON.stringify(error.response.data, null, 2)}\n`;
-        }
-        if (error.config) {
-            debugInfo += `URL: ${error.config.url}\n`;
+        if (error.customDebugInfo) {
+            // Use the enhanced debug info from the inner try/catch
+            debugInfo = error.customDebugInfo;
+        } else {
+            // Fallback for unexpected errors
+            debugInfo = `Error: ${error.message}\n`;
+            if (error.response) {
+                console.error("Response status:", error.response.status);
+                debugInfo += `Status: ${error.response.status}\n`;
+                debugInfo += `Data: ${JSON.stringify(error.response.data, null, 2)}\n`;
+            }
+            if (error.config) {
+                const fullUrl = (error.config.baseURL || '') + (error.config.url || '');
+                debugInfo += `URL: ${fullUrl}\n`;
+            }
         }
 
         // Return HTML that redirects the TOP window with error (breaks out of iframe)
