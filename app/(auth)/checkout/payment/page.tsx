@@ -1,16 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { CreditCard, Loader2, AlertCircle, ArrowLeft } from "lucide-react";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from "@/components/ui/dialog";
+import { CreditCard, AlertCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -37,13 +28,11 @@ const PaymentPage = () => {
     const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
     const [sdkLoading, setSdkLoading] = useState(true);
     const [paymentError, setPaymentError] = useState<string | null>(null);
-    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [sessionExpired, setSessionExpired] = useState(false);
 
     const scriptLoadedRef = useRef(false);
     const getpayInitializedRef = useRef(false);
 
-    const { clearCart } = useCart();
     const { isLoggedIn, isLoading: authLoading } = useAuth();
     const router = useRouter();
 
@@ -136,33 +125,33 @@ const PaymentPage = () => {
         getpayInitializedRef.current = true;
 
         try {
-            // Build the options for GetPay
             const backendCallbackUrl = paymentConfig.getPayOptions.callbackUrl;
+
+            // Extract success and fail URLs from the callback config
+            const successUrl = typeof backendCallbackUrl === 'object'
+                ? backendCallbackUrl.successUrl
+                : backendCallbackUrl;
+            const failUrl = typeof backendCallbackUrl === 'object'
+                ? backendCallbackUrl.failUrl
+                : undefined;
 
             const getPayOptions = {
                 ...paymentConfig.getPayOptions,
                 containerId: "#checkout",
-                successUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.successUrl : backendCallbackUrl,
-                failUrl: typeof backendCallbackUrl === 'object' ? backendCallbackUrl.failUrl : undefined,
-                callbackUrl: backendCallbackUrl,
-                onSuccess: (data: any) => {
-                    console.log("Payment success:", data);
-                    // Clear the session storage
-                    sessionStorage.removeItem('paymentConfig');
-                    // Clear cart and show success
-                    clearCart();
-                    setShowSuccessDialog(true);
-                },
-                onError: (err: any) => {
-                    console.error("Payment error:", err);
-                    setPaymentError(`Payment failed: ${err?.message || 'Unknown error'}`);
-                    setSdkLoading(false);
-                }
+                successUrl: successUrl,
+                failUrl: failUrl,
+                // Remove onSuccess/onError callbacks - they cause immediate triggering
+                // The backend handles success/fail via URL redirects
             };
+
+            // Remove any existing callbacks that might have been spread from paymentConfig
+            delete (getPayOptions as any).onSuccess;
+            delete (getPayOptions as any).onError;
+            delete (getPayOptions as any).callbackUrl; // Use successUrl/failUrl instead
 
             console.log("GetPay options:", getPayOptions);
 
-            // Initialize GetPay - matching the pattern from the working project
+            // Initialize GetPay
             const getpay = new window.GetPay(getPayOptions, paymentConfig.getPayOptions.baseUrl);
             getpay.initialize();
 
@@ -190,16 +179,13 @@ const PaymentPage = () => {
         router.push('/checkout');
     };
 
-    // Handle success dialog close
-    const handleSuccessClose = () => {
-        router.push("/profile?tab=orders");
-    };
+
 
     // Loading state
     if (authLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-[#A12717]" />
+                <div className="w-8 h-8 border-4 border-slate-200 border-t-[#A12717] rounded-full animate-spin" />
             </div>
         );
     }
@@ -331,28 +317,7 @@ const PaymentPage = () => {
                 </div>
             </div>
 
-            {/* Success Dialog */}
-            <Dialog open={showSuccessDialog} onOpenChange={() => { }}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-green-600">
-                            <span className="text-2xl">🎉</span> Payment Successful!
-                        </DialogTitle>
-                        <DialogDescription>
-                            Your payment has been processed successfully. Your order is now being prepared for shipment.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="sm:justify-center">
-                        <Button
-                            type="button"
-                            className="bg-[#A12717] hover:bg-[#8a2113] text-white w-full sm:w-auto px-8"
-                            onClick={handleSuccessClose}
-                        >
-                            View My Orders
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+
         </div>
     );
 };
