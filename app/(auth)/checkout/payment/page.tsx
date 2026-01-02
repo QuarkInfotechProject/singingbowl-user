@@ -5,6 +5,15 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 // Declare GetPay as global
 declare global {
@@ -30,6 +39,19 @@ const PaymentPage = () => {
     const [sdkLoading, setSdkLoading] = useState(true);
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const [sessionExpired, setSessionExpired] = useState(false);
+
+    // Payment Result Modal State
+    const [resultModal, setResultModal] = useState<{
+        isOpen: boolean;
+        type: 'success' | 'error';
+        url: string;
+        message?: string;
+    }>({
+        isOpen: false,
+        type: 'success',
+        url: '',
+        message: ''
+    });
 
     const scriptLoadedRef = useRef(false);
     const getpayInitializedRef = useRef(false);
@@ -165,17 +187,28 @@ const PaymentPage = () => {
             const getPayOptionsFromConfig = paymentConfig?.getPayOptions || {};
             const backendCallbackUrl = getPayOptionsFromConfig.callbackUrl;
 
-            // Safe URL extraction
-            let successUrl = "https://www.singingbowlvillagenepal.com/checkout"; // Default fallback
-            let failUrl = "https://www.singingbowlvillagenepal.com/checkout?error=failed";
+            // Safe URL extraction - Check root properties first
+            let successUrl = getPayOptionsFromConfig.successUrl;
+            let failUrl = getPayOptionsFromConfig.failUrl;
 
+            // Check callbackUrl structure if root properties are missing
             if (backendCallbackUrl) {
                 if (typeof backendCallbackUrl === 'object' && backendCallbackUrl !== null) {
-                    successUrl = backendCallbackUrl.successUrl || successUrl;
-                    failUrl = backendCallbackUrl.failUrl || failUrl;
+                    successUrl = successUrl || backendCallbackUrl.successUrl;
+                    failUrl = failUrl || backendCallbackUrl.failUrl;
                 } else if (typeof backendCallbackUrl === 'string') {
-                    successUrl = backendCallbackUrl;
+                    // IF callbackUrl is a string, it is typically the success URL
+                    successUrl = successUrl || backendCallbackUrl;
                 }
+            }
+
+            // Default fallbacks only if absolutely nothing was found
+            if (!successUrl) {
+                console.warn("No successUrl found in config. Using fallback.");
+                successUrl = "https://www.singingbowlvillagenepal.com/checkout";
+            }
+            if (!failUrl) {
+                failUrl = "https://www.singingbowlvillagenepal.com/checkout?error=failed";
             }
 
             const getPayOptions: Record<string, any> = {
@@ -195,14 +228,27 @@ const PaymentPage = () => {
                     );
 
                     if (isRealSuccess) {
-                        console.log("Valid payment success. Redirecting to:", successUrl);
-                        window.location.href = successUrl;
+                        console.log("Valid payment success. Showing popup...", successUrl);
+                        // Trigger Success Popup
+                        setResultModal({
+                            isOpen: true,
+                            type: 'success',
+                            url: successUrl,
+                            message: "Your payment has been successfully processed."
+                        });
                     } else {
                         console.warn("Premature/Invalid success callback. Data:", data);
                     }
                 },
                 onError: (error: any) => {
                     console.error("GetPay Error Callback:", error);
+                    // Trigger Failure Popup
+                    setResultModal({
+                        isOpen: true,
+                        type: 'error',
+                        url: failUrl,
+                        message: "There was an issue processing your payment. Please try again."
+                    });
                 },
                 // Pass structured callbackUrl for SDK compatibility
                 callbackUrl: {
@@ -241,6 +287,24 @@ const PaymentPage = () => {
         router.push('/checkout');
     };
 
+    // Handle Modal Confirmation
+    const handleModalConfirm = () => {
+        if (resultModal.type === 'success') {
+            window.location.href = resultModal.url;
+        } else {
+            // For error, maybe just close modal to let them retry, or redirect to fail URL?
+            // Usually simpler to just close and let them retry the form if possible,
+            // but GetPay iframe might need reload. Let's redirect to failUrl if provided, else close.
+            if (resultModal.url && resultModal.url !== "undefined") {
+                window.location.href = resultModal.url;
+            } else {
+                setResultModal(prev => ({ ...prev, isOpen: false }));
+                // Consider reloading page to reset SDK?
+                window.location.reload();
+            }
+        }
+    };
+
     // Loading state
     if (authLoading) {
         return (
@@ -272,7 +336,7 @@ const PaymentPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50 relative">
             <div className=" mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="mb-6">
@@ -301,7 +365,7 @@ const PaymentPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex  items-start justify-between">
+                        <div className="flex max-w-5xl items-start justify-between">
 
                             {/* RIGHT COLUMN: Order Summary */}
                             <div className="lg:col-span-1">
@@ -370,7 +434,7 @@ const PaymentPage = () => {
                             </div>
 
                             {/* Payment Container */}
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ml-8 flex-1">
                                 {/* Payment Header */}
                                 <div className="bg-blue-600 p-5 text-white">
                                     <div className="flex items-center gap-3">
@@ -440,6 +504,45 @@ const PaymentPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Success/Failure Modal */}
+            <Dialog open={resultModal.isOpen} onOpenChange={(open) => {
+                if (!open && resultModal.type === 'error') {
+                    // Allow closing only on error
+                    setResultModal(prev => ({ ...prev, isOpen: false }));
+                }
+            }}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader className="flex flex-col items-center text-center">
+                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${resultModal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                            }`}>
+                            {resultModal.type === 'success' ? (
+                                <CheckCircle2 className="w-8 h-8" />
+                            ) : (
+                                <XCircle className="w-8 h-8" />
+                            )}
+                        </div>
+                        <DialogTitle className={`text-xl ${resultModal.type === 'success' ? 'text-green-700' : 'text-red-700'
+                            }`}>
+                            {resultModal.type === 'success' ? 'Payment Successful!' : 'Payment Failed'}
+                        </DialogTitle>
+                        <DialogDescription className="text-center pt-2">
+                            {resultModal.message}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-center w-full">
+                        <Button
+                            className={`w-full max-w-[200px] ${resultModal.type === 'success'
+                                    ? 'bg-green-600 hover:bg-green-700'
+                                    : 'bg-red-600 hover:bg-red-700'
+                                }`}
+                            onClick={handleModalConfirm}
+                        >
+                            {resultModal.type === 'success' ? 'Continue' : 'Try Again'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };
