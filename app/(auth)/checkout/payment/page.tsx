@@ -143,7 +143,8 @@ const PaymentPage = () => {
 
             // Define callbacks BEFORE options (SDK expects them in the options object)
             const handleSuccess = (data: any) => {
-                console.log("GetPay Success Callback:", data);
+                console.log("🟢🟢🟢 GetPay Success Callback FIRED:", data);
+                alert("SUCCESS CALLBACK FIRED! Check console.");
 
                 // ROBUST CHECK: Ignore initialization echoes
                 // If it looks like a config echo (missing token/id/status), ignore it
@@ -167,7 +168,8 @@ const PaymentPage = () => {
             };
 
             const handleError = (error: any) => {
-                console.error("GetPay Error Callback:", error);
+                console.error("🔴🔴🔴 GetPay Error Callback FIRED:", error);
+                alert("ERROR CALLBACK FIRED! Check console.");
 
                 try {
                     sessionStorage.setItem('lastGetPayEvent', JSON.stringify({ type: 'ERROR', data: error, timestamp: Date.now() }));
@@ -192,15 +194,17 @@ const PaymentPage = () => {
                 // FORCE the SDK to stay on page
                 successUrl: dummySuccessUrl,
                 failUrl: dummyFailUrl,
-                callbackUrl: dummySuccessUrl,
-                isRedirect: false,
-                // CRITICAL: SDK expects callbacks IN the options object
-                onSuccess: handleSuccess,
-                onError: handleError
+                // callbackUrl must be an OBJECT with nested successUrl/failUrl
+                callbackUrl: {
+                    successUrl: dummySuccessUrl,
+                    failUrl: dummyFailUrl
+                },
+                isRedirect: false
             };
 
             console.log("Initializing GetPay with FORCE STAY options:", options);
 
+            // CRITICAL: onSuccess and onError at TOP LEVEL of constructor
             const getPay = new (window as any).GetPay({
                 paymentMethod: paymentConfig.paymentMethod,
                 orderId: paymentConfig.orderId,
@@ -209,16 +213,24 @@ const PaymentPage = () => {
                 clientRequestId: String(paymentConfig.orderId),
                 papInfo: paymentConfig.papInfo,
                 oprKey: paymentConfig.oprKey,
-                insKey: paymentConfig.insKey
+                insKey: paymentConfig.insKey,
+                // CALLBACKS AT TOP LEVEL (SDK expects them here)
+                onSuccess: handleSuccess,
+                onError: handleError
             });
 
             getPay.initialize();
+            console.log("✅ getPay.initialize() completed without throwing");
+            console.log("   getPay object:", getPay);
+            console.log("   typeof getPay.onSuccess:", typeof getPay.onSuccess);
+            console.log("   typeof getPay.onError:", typeof getPay.onError);
 
             console.log("GetPay initialized call done.");
             setSdkLoading(false);
 
         } catch (e: any) {
-            console.error("GetPay initialization threw error:", e);
+            console.error("💥💥💥 GetPay initialization CRASHED:", e);
+            console.error("Stack trace:", e.stack);
             setPaymentError(`Payment system error: ${e.message}`);
             setSdkLoading(false);
             getpayInitializedRef.current = false; // Allow retry if it crashed
