@@ -44,7 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 // Always fetch fresh profile data to ensure syncing (especially after Google Login redirect)
                 try {
                     const { fetchUserProfile } = await import("@/lib/apiItems");
-                    const res = await fetchUserProfile();
+                    // @ts-ignore
+                    const res = await fetchUserProfile({ skipAuthRedirect: true });
                     if (res?.data) {
                         const userData: User = {
                             name: res.data.fullName,

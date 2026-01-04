@@ -86,10 +86,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         let token = Cookies.get("guest_token");
         if (!token) {
             try {
-                const response = await fetchGuestToken();
+                // @ts-ignore
+                const response = await fetchGuestToken({ skipAuthRedirect: true });
                 if (response?.data?.guest_token) {
                     token = response.data.guest_token;
-                    Cookies.set("guest_token", token as string, { expires: 7 }); // Expires in 7 days
+                    Cookies.set("guest_token", token as string, { expires: 7 });
                 }
             } catch (error) {
                 console.error("Failed to fetch guest token", error);
@@ -113,7 +114,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             if (showLoading) {
                 setIsLoading(true);
             }
-            const data = await apiFetchCart();
+            // @ts-ignore
+            const data = await apiFetchCart({ skipAuthRedirect: true });
 
             // Check if data has 'data' property (if apiFetchCart returns full axios response) or if it IS the data object
             const cartData = data.data || data;
@@ -182,13 +184,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     const addToCart = async (product: CartItem, openCart: boolean = true) => {
         if (!isLoggedIn) {
-            const hasGuestToken = await ensureGuestToken();
-            if (!hasGuestToken) {
-                // Could not get guest token, maybe redirect to login or show error
-                // For now, let's try to proceed, likely will fail at API or be handled there
-                console.error("Could not establish guest session");
-                return;
-            }
+            const currentPath = window.location.pathname;
+            router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+            return;
         }
 
         try {

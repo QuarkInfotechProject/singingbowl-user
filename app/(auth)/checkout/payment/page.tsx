@@ -153,10 +153,14 @@ const PaymentPage = () => {
         };
 
         const loadScript = () => {
-            if (window.GetPay || document.querySelector(`script[src="${GETPAY_SDK_URL}"]`)) {
-                // Script already there, wait a tick and init
-                setTimeout(initSDK, 100);
-                return;
+            // FORCE CLEANUP: Remove any existing scripts to prevent stale state
+            const existingScripts = document.querySelectorAll(`script[src="${GETPAY_SDK_URL}"]`);
+            existingScripts.forEach(s => s.remove());
+
+            // Delete existing global instance
+            if ((window as any).GetPay) {
+                // @ts-ignore
+                delete (window as any).GetPay;
             }
 
             script = document.createElement("script");
@@ -178,6 +182,13 @@ const PaymentPage = () => {
 
         return () => {
             isMounted = false;
+            // Cleanup script on unmount
+            const existingScripts = document.querySelectorAll(`script[src="${GETPAY_SDK_URL}"]`);
+            existingScripts.forEach(s => s.remove());
+            if ((window as any).GetPay) {
+                // @ts-ignore
+                delete (window as any).GetPay;
+            }
         };
     }, [paymentConfig, GETPAY_SDK_URL]);
 

@@ -27,6 +27,12 @@ api.interceptors.response.use(
     (error) => {
         // Handle 401 Unauthenticated - token is invalid/expired
         if (error.response?.status === 401) {
+            // Check if request asked to skip redirect
+            // @ts-ignore
+            if (error.config?.skipAuthRedirect) {
+                return Promise.reject(error);
+            }
+
             // Only handle if we're in the browser
             if (typeof window !== 'undefined') {
                 // Clear all auth state
@@ -122,9 +128,9 @@ export const fetchPostBySlug = async (slug: string) => {
 };
 
 // Fetch user profile
-export const fetchUserProfile = async () => {
+export const fetchUserProfile = async (config?: any) => {
     try {
-        const response = await api.get("/user/profile");
+        const response = await api.get("/user/profile", config);
         return response.data;
     } catch (error) {
         console.error("fetchUserProfile error:", error);
@@ -183,9 +189,9 @@ export const addToCart = async (products: { productId: string; quantity: string 
 };
 
 // Fetch Cart
-export const fetchCart = async () => {
+export const fetchCart = async (config?: any) => {
     try {
-        const response = await api.get("/cart");
+        const response = await api.get("/cart", config);
         return response.data;
     } catch (error) {
         throw error;
@@ -322,9 +328,9 @@ export const createOrder = async (data: {
 };
 
 // Fetch Guest Token
-export const fetchGuestToken = async () => {
+export const fetchGuestToken = async (config?: any) => {
     try {
-        const response = await api.get("/token");
+        const response = await api.get("/token", config);
         return response.data;
     } catch (error) {
         console.error("fetchGuestToken error:", error);
