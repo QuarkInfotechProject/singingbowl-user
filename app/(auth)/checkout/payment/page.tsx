@@ -65,6 +65,38 @@ const PaymentPageContent = () => {
 
     const searchParams = useSearchParams();
     const orderIdParam = searchParams.get('orderId');
+    const [orderProbeStatus, setOrderProbeStatus] = useState<string>('checking');
+
+    // DEBUG: Probe if order actually exists in DB
+    useEffect(() => {
+        if (!orderIdParam) return;
+
+        const checkOrder = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                console.log("Probing Order existence for ID:", orderIdParam);
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/orders/show/${orderIdParam}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    console.log("✅ Order Probe SUCCESS. Order found:", data);
+                    setOrderProbeStatus('found');
+                } else {
+                    console.error("❌ Order Probe FAILED. Status:", res.status);
+                    setOrderProbeStatus('not_found');
+                }
+            } catch (e) {
+                console.error("❌ Order Probe ERROR:", e);
+                setOrderProbeStatus('error');
+            }
+        };
+
+        checkOrder();
+    }, [orderIdParam]);
 
     // DEBUG: Log everything on mount to trace the state
     useEffect(() => {
