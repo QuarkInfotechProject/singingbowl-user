@@ -215,8 +215,8 @@ const Checkout = () => {
         // Store orderId separately as a backup validation source
         sessionStorage.setItem('currentOrderId', String(orderResponse.orderId));
 
-        // Redirect to payment page (Force reload to clear SDK state)
-        window.location.href = '/checkout/payment';
+        // Redirect to payment page
+        router.push('/checkout/payment');
       } else {
         throw new Error("Invalid payment configuration from server - Missing GetPay options");
       }
