@@ -66,6 +66,21 @@ const PaymentPageContent = () => {
     const searchParams = useSearchParams();
     const orderIdParam = searchParams.get('orderId');
 
+    // DEBUG: Log everything on mount to trace the state
+    useEffect(() => {
+        const stored = sessionStorage.getItem('paymentConfig');
+        console.log("=== PAYMENT PAGE MOUNTED ===");
+        console.log("URL Order ID:", orderIdParam);
+        console.log("Session Config Raw:", stored);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            console.log("Session Order ID:", parsed.orderId);
+            console.log("Session Timestamp:", parsed._timestamp);
+        } else {
+            console.error("NO SESSION CONFIG FOUND");
+        }
+    }, [orderIdParam]);
+
     // 1. Load Config on Mount & Validate against URL
     useEffect(() => {
         try {
