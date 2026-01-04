@@ -108,10 +108,6 @@ const Checkout = () => {
       };
 
       document.body.appendChild(script);
-
-      // We technically shouldn't remove the script on cleanup to avoid 
-      // 'window.GetPay is not a constructor' if the component re-renders quickly.
-      // Keeping it in the DOM is safer for the single-page app session.
     }
   }, [cartItems, BUNDLE_URL]);
 
@@ -195,9 +191,9 @@ const Checkout = () => {
       <h3>Order Information</h3>
       <div class="item" style="margin-bottom: 20px;">`;
     cartItems.forEach((cartItem) => {
-      const productName = cartItem?.name;
-      const productPrice = cartItem?.price;
-      const productImageUrl = cartItem?.image;
+      const productName = cartItem?.name || "Product";
+      const productPrice = cartItem?.price || 0;
+      const productImageUrl = cartItem?.image || "";
 
       html += `<div class="item" style="margin-bottom: 20px; display: flex; align-items: center;">
           <img style="max-width: 50px; margin-right: 10px;" src=${productImageUrl} alt="${productName}">
@@ -217,6 +213,9 @@ const Checkout = () => {
   const initializeGetPay = (getPayDatas: any) => {
     const orderInformationHtml = getOrderInformationHtml();
 
+    console.log("GetPay Init Data:", getPayDatas);
+    console.log("Current Origin:", window.location.origin);
+
     const options = {
       userInfo: {
         name: getPayDatas.getPayOptions.userInfo.name,
@@ -231,7 +230,7 @@ const Checkout = () => {
       papInfo: getPayDatas.getPayOptions.papInfo,
       oprKey: getPayDatas.getPayOptions.oprKey,
       insKey: getPayDatas.getPayOptions.insKey,
-      websiteDomain: getPayDatas.getPayOptions.websiteDomain,
+      websiteDomain: window.location.origin, // Force current origin
       price: grandTotal,
       businessName: getPayDatas.getPayOptions.businessName,
       baseUrl: getPayDatas.getPayOptions.base_url,
@@ -256,10 +255,9 @@ const Checkout = () => {
       },
       themeColor: '#5662FF',
       orderInformationUI: `${orderInformationHtml}`,
-      containerId: 'checkout', // Crucial: Needs a container to render into
+      containerId: 'checkout',
 
       onSuccess: (options: any) => {
-        // Redirect to order success page after successful payment
         clearCart();
         router.push(`/checkout/order-success?orderId=${getPayDatas.orderId}`);
       },
@@ -270,7 +268,7 @@ const Checkout = () => {
     };
 
     if (window.GetPay) {
-      console.log("Initializing GetPay SDK...");
+      console.log("Initializing GetPay SDK with options:", options);
       const getPay = new window.GetPay(options);
       getPay.initialize();
     } else {
@@ -296,7 +294,7 @@ const Checkout = () => {
 
     try {
       setIsSubmitting(true);
-      // setOrderCreated(true); // Don't block resubmission completely in case GetPay fails/closes
+      // setOrderCreated(true); 
 
       const orderData = {
         addressId: selectedAddress.uuid,
@@ -306,13 +304,9 @@ const Checkout = () => {
         termsAndConditions: "true"
       };
 
-      // Create Order on Backend
       const response = await createOrder(orderData);
-
-      // Handle response wrapping
       const orderResponse = response.data || response;
 
-      // COD FLOW: Show success directly
       if (selectedPaymentMethod === "cod") {
         clearCart();
         setShowSuccessDialog(true);
@@ -320,10 +314,8 @@ const Checkout = () => {
         return;
       }
 
-      // GetPay FLOW: Initialize directly
       if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
 
-        // Retry logic for script loading
         let retries = 0;
         const waitForScript = async () => {
           while (!window.GetPay && retries < 10) {
@@ -338,8 +330,6 @@ const Checkout = () => {
 
         try {
           initializeGetPay(orderResponse);
-          // NOTE: We do NOT set isSubmitting to false here, 
-          // because the user is now interacting with the GetPay overlay.
         } catch (err: any) {
           console.error("GetPay Init Error:", err);
           setOrderError("Failed to launch payment window: " + (err.message || "Unknown error"));
@@ -355,7 +345,7 @@ const Checkout = () => {
       console.error("Order Creation Error", error);
       setOrderError(error.response?.data?.error || error.response?.data?.message || "Failed to place order. Please try again.");
       setIsSubmitting(false);
-      setOrderCreated(false); // Allow retry on error
+      setOrderCreated(false);
     }
   };
 
@@ -375,22 +365,16 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50">
-      {/* Main Content */}
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-8 md:py-12">
 
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Checkout</h1>
           <p className="text-slate-500 mt-2">Complete your order by providing delivery and payment details.</p>
         </div>
 
-        {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-
-          {/* LEFT COLUMN: Checkout Form */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* Shipping Information */}
             <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100">
               <div className="flex items-center gap-2 mb-6">
                 <Truck className="w-5 h-5 md:w-6 md:h-6 text-slate-700" />
@@ -408,7 +392,6 @@ const Checkout = () => {
               />
             </div>
 
-            {/* Payment Method Selection */}
             {selectedAddress && (
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100">
                 <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
@@ -417,7 +400,6 @@ const Checkout = () => {
                 </h2>
 
                 <div className="space-y-3">
-                  {/* COD Payment Option */}
                   <button
                     type="button"
                     onClick={() => setSelectedPaymentMethod("cod")}
@@ -445,7 +427,6 @@ const Checkout = () => {
                     </div>
                   </button>
 
-                  {/* GetPay Payment Option */}
                   <button
                     type="button"
                     onClick={() => setSelectedPaymentMethod("getPay")}
@@ -473,14 +454,12 @@ const Checkout = () => {
                       </div>
                     </div>
 
-                    {/* Card images */}
                     <div className="flex gap-3 items-center">
                       <Image src="/assets/images/logo/ime.jpeg" alt="Mastercard" width={130} height={50} />
                     </div>
                   </button>
                 </div>
 
-                {/* Payment Info Box */}
                 <div className="mt-4 bg-slate-50 rounded-lg p-4 border border-slate-200 text-sm text-slate-600">
                   {selectedPaymentMethod === "cod" ? (
                     <p className="flex items-center gap-2">
@@ -497,13 +476,10 @@ const Checkout = () => {
               </div>
             )}
 
-            {/* GetPay Widget Container - Explicit container for the SDK */}
             <div id="checkout" className="w-full"></div>
 
-            {/* Terms & Submit */}
             {selectedAddress && (
               <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100">
-                {/* Terms Checkbox */}
                 <label className="flex items-start gap-3 cursor-pointer mb-6 group">
                   <div className="relative flex items-center">
                     <input
@@ -524,7 +500,6 @@ const Checkout = () => {
                   </span>
                 </label>
 
-                {/* Submit Button */}
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting || (cartItems.length === 0)}
@@ -553,7 +528,6 @@ const Checkout = () => {
             )}
           </div>
 
-          {/* RIGHT COLUMN: Order Summary (Sticky) */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100 sticky top-24">
               <h3 className="text-xl font-bold text-slate-900 mb-6 border-b border-slate-100 pb-4">
@@ -581,7 +555,6 @@ const Checkout = () => {
                 )}
               </div>
 
-              {/* Calculations */}
               <div className="space-y-3 pt-4 border-t border-slate-100">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Subtotal</span>
@@ -607,7 +580,6 @@ const Checkout = () => {
                 )}
               </div>
 
-              {/* Coupon Section */}
               <div className="pt-4 border-t border-slate-100">
                 <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                   <Tag className="w-4 h-4" />
@@ -679,7 +651,6 @@ const Checkout = () => {
                   </p>
                 )}
 
-                {/* Available Coupons List */}
                 {!appliedCoupon && getFilteredCoupons().length > 0 && (
                   <div className="mt-4">
                     <p className="text-xs text-slate-500 mb-2">Available coupons (click to apply):</p>
@@ -716,7 +687,6 @@ const Checkout = () => {
                 )}
               </div>
 
-              {/* Grand Total */}
               <div className="mt-6 pt-6 border-t border-slate-100">
                 <div className="flex justify-between items-end">
                   <span className="text-slate-600 font-medium">Grand Total</span>
@@ -729,7 +699,6 @@ const Checkout = () => {
         </div>
       </div>
 
-      {/* Success Dialog (COD only) */}
       <Dialog open={showSuccessDialog} onOpenChange={() => { }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
