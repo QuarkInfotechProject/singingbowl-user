@@ -129,7 +129,7 @@ const PaymentPage = () => {
                     isOpen: true,
                     type: 'success',
                     data: data,
-                    url: `${window.location.origin}/checkout/order-success`,
+                    url: `${window.location.origin}/checkout/order-success?orderId=${paymentConfig.orderId}`,
                     message: "Payment verified successfully!"
                 });
             };
@@ -143,7 +143,7 @@ const PaymentPage = () => {
                     isOpen: true,
                     type: 'error',
                     data: error,
-                    url: `${window.location.origin}/checkout/payment-failed`,
+                    url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
                     message: typeof error === 'string' ? error : (error.message || "Payment processing failed.")
                 });
             };
