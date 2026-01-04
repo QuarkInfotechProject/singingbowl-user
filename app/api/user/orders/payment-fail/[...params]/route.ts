@@ -56,7 +56,6 @@ export async function GET(
         try {
             await apiClient.post(backendUrl, requestBody, { headers });
         } catch (err: any) {
-            console.error("Backend payment-fail call error:", err.message);
             // Backend might not have a fail endpoint or it failed, that's ok, we still show error page
         }
 
@@ -113,7 +112,6 @@ export async function GET(
             headers: { "Content-Type": "text/html" },
         });
     } catch (error: any) {
-        console.error("Payment fail callback error:", error.message);
 
         // Return HTML that redirects the TOP window (breaks out of iframe)
         const prodOrigin = process.env.SITE_ORIGIN;

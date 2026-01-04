@@ -60,29 +60,12 @@ export async function GET(
         // Fallback: Check query params for 'auth_token'
         if (!authToken) {
             authToken = request.nextUrl.searchParams.get("auth_token") || undefined;
-            if (authToken) console.log("Auth token found in query params.");
         }
-
-        const allCookies = cookieStore.getAll();
 
         const headers: Record<string, string> = {};
         if (authToken) {
             headers["Authorization"] = `Bearer ${authToken}`;
         }
-        else {
-            console.error("WARNING: No auth token found in cookies!");
-        }
-
-        // Backend expects path parameters: /user/orders/success/{paymentMethod}/{orderId}
-        // And the RAW GetPay token (base64 string) in the request body
-        // The backend will decode and verify this token itself
-        console.log("=== Payment Success Callback Debug ===");
-        console.log("Params:", JSON.stringify(paramsArray));
-        console.log("Extracted orderId:", orderId, "PaymentMethod:", paymentMethod);
-        console.log("Raw Token from SearchParams:", getPayToken);
-        console.log("Decoded TransactionId:", transactionId);
-        console.log("Cookies present:", allCookies.map(c => c.name).join(', '));
-        console.log("Auth Token Found:", !!authToken);
 
         const requestBody = {
             orderId: orderId,
@@ -92,29 +75,22 @@ export async function GET(
 
         // Backend expects path parameters: /user/orders/success/{paymentMethod}/{orderId}
         const backendUrl = `/user/orders/success/${paymentMethod}/${orderId}`;
-        console.log("Constructed Backend URL:", backendUrl);
 
         try {
             // Attempt 1: Standard URL
             await apiClient.post(backendUrl, requestBody, { headers });
         } catch (apiError1: any) {
-            // ... keep retry logic or simplfy ...
-            // Since we know the route structure now, retry is less critical but good for trailing slash safety
-            console.warn("Attempt 1 failed. Retrying with trailing slash...");
-
+            // Retry with trailing slash for compatibility
             try {
                 // Attempt 2: Trailing slash
                 await apiClient.post(`${backendUrl}/`, requestBody, { headers });
             } catch (apiError2: any) {
-                console.error("!!! Backend API Failed (Both Attempts) !!!");
-
                 const finalError = apiError1;
 
                 let debugInfo = `Environment BASE_URL: ${process.env.BASE_URL}\n`;
                 debugInfo += `Error: ${finalError.message}\n`;
 
                 if (finalError.response) {
-                    console.error("Backend Status:", finalError.response.status);
                     debugInfo += `Status: ${finalError.response.status}\n`;
                     debugInfo += `Data: ${JSON.stringify(finalError.response.data, null, 2)}\n`;
                 }
@@ -183,9 +159,6 @@ export async function GET(
             headers: { "Content-Type": "text/html" },
         });
     } catch (error: any) {
-        console.error("=== Payment Success Callback ERROR ===");
-        console.error("Error message:", error.message);
-
         let debugInfo = "";
 
         if (error.customDebugInfo) {
@@ -195,7 +168,6 @@ export async function GET(
             // Fallback for unexpected errors
             debugInfo = `Error: ${error.message}\n`;
             if (error.response) {
-                console.error("Response status:", error.response.status);
                 debugInfo += `Status: ${error.response.status}\n`;
                 debugInfo += `Data: ${JSON.stringify(error.response.data, null, 2)}\n`;
             }

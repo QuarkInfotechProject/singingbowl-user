@@ -72,23 +72,8 @@ const PaymentPage = () => {
     // GetPay SDK URL
     const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL;
 
-    // Load payment config and check for preserved logs
+    // Load payment config
     useEffect(() => {
-        // preserve logs check
-        const lastEvent = sessionStorage.getItem('lastGetPayEvent');
-        if (lastEvent) {
-            try {
-                const parsed = JSON.parse(lastEvent);
-                console.group("👉 PRESERVED GETPAY LOGS 👈");
-                console.log(`Type: ${parsed.type}`);
-                console.log("Data:", parsed.data);
-                console.groupEnd();
-                // sessionStorage.removeItem('lastGetPayEvent'); // Optional: Keep it until success?
-            } catch (e) {
-                console.error("Error parsing preserved logs", e);
-            }
-        }
-
         const storedConfig = sessionStorage.getItem('paymentConfig');
 
         if (!storedConfig) {
@@ -99,10 +84,8 @@ const PaymentPage = () => {
 
         try {
             const config = JSON.parse(storedConfig) as PaymentConfig;
-            console.log("Payment config loaded:", config);
             setPaymentConfig(config);
         } catch (error) {
-            console.error("Error parsing payment config:", error);
             setSessionExpired(true);
             setSdkLoading(false);
         }
@@ -115,23 +98,15 @@ const PaymentPage = () => {
 
         // Check availability
         if (typeof (window as any).GetPay === 'undefined') {
-            console.log("GetPay global not found even after load waiting.");
             return;
         }
 
         const container = document.getElementById("checkout");
         if (!container) {
-            console.error("Checkout container #checkout not found in DOM.");
             setPaymentError("Payment form container missing.");
             setSdkLoading(false);
             return;
         }
-
-        if (container.hasChildNodes()) {
-            console.log("Container already populated, assuming init done.");
-        }
-
-        console.log("Initializing GetPay...");
         getpayInitializedRef.current = true;
 
         try {
@@ -139,20 +114,16 @@ const PaymentPage = () => {
 
             // Define callbacks BEFORE options (SDK expects them in the options object)
             const handleSuccess = (data: any) => {
-                console.log("🟢🟢🟢 GetPay Success Callback FIRED:", data);
-                alert("SUCCESS CALLBACK FIRED! Check console.");
-
                 // ROBUST CHECK: Ignore initialization echoes
                 // If it looks like a config echo (missing token/id/status), ignore it
                 if (!data.token && !data.id && !data.transactionId && !data.status && data.clientRequestId === String(paymentConfig.orderId)) {
-                    console.warn("Ignoring invalid/echo success callback:", data);
                     return;
                 }
 
                 // Persist event
                 try {
                     sessionStorage.setItem('lastGetPayEvent', JSON.stringify({ type: 'SUCCESS', data, timestamp: Date.now() }));
-                } catch (e) { console.error("Log persist failed", e); }
+                } catch (e) { /* ignore */ }
 
                 setResultModal({
                     isOpen: true,
@@ -164,12 +135,9 @@ const PaymentPage = () => {
             };
 
             const handleError = (error: any) => {
-                console.error("🔴🔴🔴 GetPay Error Callback FIRED:", error);
-                alert("ERROR CALLBACK FIRED! Check console.");
-
                 try {
                     sessionStorage.setItem('lastGetPayEvent', JSON.stringify({ type: 'ERROR', data: error, timestamp: Date.now() }));
-                } catch (e) { }
+                } catch (e) { /* ignore */ }
 
                 setResultModal({
                     isOpen: true,
@@ -192,12 +160,6 @@ const PaymentPage = () => {
                 ...restOptions
             } = getPayOptionsFromConfig;
 
-            console.log("Initializing GetPay with config from getPayOptions:");
-            console.log("  papInfo:", papInfo ? "present" : "missing");
-            console.log("  userInfo:", userInfo);
-            console.log("  oprKey:", oprKey);
-            console.log("  baseUrl:", baseUrl);
-
             // CRITICAL: Spread all getPayOptions and override only what's necessary
             const getPay = new (window as any).GetPay({
                 // Spread all options from getPayOptions
@@ -216,17 +178,9 @@ const PaymentPage = () => {
             });
 
             getPay.initialize();
-            console.log("✅ getPay.initialize() completed without throwing");
-            console.log("   getPay object:", getPay);
-            console.log("   typeof getPay.onSuccess:", typeof getPay.onSuccess);
-            console.log("   typeof getPay.onError:", typeof getPay.onError);
-
-            console.log("GetPay initialized call done.");
             setSdkLoading(false);
 
         } catch (e: any) {
-            console.error("💥💥💥 GetPay initialization CRASHED:", e);
-            console.error("Stack trace:", e.stack);
             setPaymentError(`Payment system error: ${e.message}`);
             setSdkLoading(false);
             getpayInitializedRef.current = false; // Allow retry if it crashed
@@ -244,7 +198,6 @@ const PaymentPage = () => {
 
         // Prevent double-initialization
         if (getpayInitializedRef.current) {
-            console.log("GetPay already initialized, skipping.");
             return;
         }
 
@@ -263,10 +216,8 @@ const PaymentPage = () => {
                     script.onerror = reject;
                     document.body.appendChild(script);
                 });
-                console.log("GetPay SDK script loaded");
                 scriptLoadedRef.current = true;
             } else {
-                console.log("GetPay SDK script already present");
                 scriptLoadedRef.current = true;
             }
 
@@ -279,7 +230,6 @@ const PaymentPage = () => {
         };
 
         loadAndInit().catch(err => {
-            console.error('Failed to load GetPay script:', err);
             if (isMounted) {
                 setPaymentError("Failed to load payment SDK. Please refresh the page.");
                 setSdkLoading(false);
@@ -317,8 +267,6 @@ const PaymentPage = () => {
                 window.location.href = resultModal.url;
             } else {
                 setResultModal(prev => ({ ...prev, isOpen: false }));
-                // REMOVED window.location.reload() to preserve console logs for debugging
-                console.log("Modal closed. Page not reloaded to preserve logs.");
             }
         }
     };
