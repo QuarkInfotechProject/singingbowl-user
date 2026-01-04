@@ -1,12 +1,11 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { CheckCircle2, Package, ArrowRight, Home, ShoppingBag } from "lucide-react";
+import React, { Suspense, useEffect, useState } from "react";
+import { CheckCircle2, Package, ArrowRight, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 
-const OrderSuccessPage = () => {
+const OrderSuccessContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [orderId, setOrderId] = useState<string | null>(null);
@@ -127,6 +126,21 @@ const OrderSuccessPage = () => {
                 </p>
             </div>
         </div>
+    );
+};
+
+// Loading fallback for Suspense
+const LoadingFallback = () => (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-slate-50 to-emerald-50 flex items-center justify-center p-4">
+        <div className="w-10 h-10 border-4 border-green-200 border-t-green-500 rounded-full animate-spin" />
+    </div>
+);
+
+const OrderSuccessPage = () => {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <OrderSuccessContent />
+        </Suspense>
     );
 };
 

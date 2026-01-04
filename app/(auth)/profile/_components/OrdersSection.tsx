@@ -90,7 +90,7 @@ export default function OrdersSection() {
                             </div>
                             <div className="col-span-1 font-medium text-gray-900 flex justify-between md:block">
                                 <span className="md:hidden text-gray-500">Total:</span>
-                                $.{order.total}
+                                $ {order.total}
                             </div>
                             <div className="col-span-1 text-gray-600 text-right flex justify-between md:block">
                                 <span className="md:hidden text-gray-500">Items:</span>

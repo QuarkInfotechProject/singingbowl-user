@@ -1,11 +1,10 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { XCircle, ArrowLeft, RefreshCw, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 
-const PaymentFailedPage = () => {
+const PaymentFailedContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [orderId, setOrderId] = useState<string | null>(null);
@@ -129,6 +128,21 @@ const PaymentFailedPage = () => {
                 </p>
             </div>
         </div>
+    );
+};
+
+// Loading fallback for Suspense
+const LoadingFallback = () => (
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-slate-50 to-red-50 flex items-center justify-center p-4">
+        <div className="w-10 h-10 border-4 border-red-200 border-t-red-500 rounded-full animate-spin" />
+    </div>
+);
+
+const PaymentFailedPage = () => {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <PaymentFailedContent />
+        </Suspense>
     );
 };
 
