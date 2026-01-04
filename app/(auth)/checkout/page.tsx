@@ -26,6 +26,12 @@ import { createOrder, fetchCoupons } from "@/lib/apiItems";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
+declare global {
+  interface Window {
+    GetPay: any;
+  }
+}
+
 type PaymentMethod = "cod" | "getPay";
 
 interface AvailableCoupon {
@@ -52,6 +58,7 @@ const Checkout = () => {
   const [availableCoupons, setAvailableCoupons] = useState<AvailableCoupon[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
   const [orderCreated, setOrderCreated] = useState(false); // Prevent duplicate submissions
+  const [getPayScriptLoaded, setGetPayScriptLoaded] = useState(false);
 
   const {
     cartItems,
@@ -71,9 +78,37 @@ const Checkout = () => {
   const { isLoggedIn, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
+  const BUNDLE_URL = 'https://minio.finpos.global/getpay-cdn/webcheckout/live/v2/bundle.js';
+
   const handleAddressSelect = (address: Address | null) => {
     setSelectedAddress(address);
   };
+
+  // Load GetPay Script
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      const existingScripts = document.querySelectorAll(`script[src="${BUNDLE_URL}"]`);
+      existingScripts.forEach((script) => script.remove());
+
+      setGetPayScriptLoaded(false);
+
+      const script = document.createElement('script');
+      script.src = BUNDLE_URL;
+      script.async = true;
+      script.onload = () => {
+        setGetPayScriptLoaded(true);
+      };
+      script.onerror = () => {
+        setGetPayScriptLoaded(false);
+      };
+
+      document.body.appendChild(script);
+
+      return () => {
+        document.body.removeChild(script);
+      };
+    }
+  }, [cartItems, BUNDLE_URL]);
 
   // Fetch available coupons on mount
   useEffect(() => {
@@ -150,6 +185,87 @@ const Checkout = () => {
     });
   };
 
+  const getOrderInformationHtml = () => {
+    let html = `<div>
+      <h3>Order Information</h3>
+      <div class="item" style="margin-bottom: 20px;">`;
+    cartItems.forEach((cartItem) => {
+      const productName = cartItem?.name;
+      const productPrice = cartItem?.price;
+      const productImageUrl = cartItem?.image;
+
+      html += `<div class="item" style="margin-bottom: 20px; display: flex; align-items: center;">
+          <img style="max-width: 50px; margin-right: 10px;" src=${productImageUrl} alt="${productName}">
+          <p>${productName}&nbsp;</p>
+          <span>Rs ${productPrice}</span>
+        </div>`;
+    });
+    html += `<div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background-color: #ddd; margin-top: 20px; border-radius: 5px;" class="total">
+    <label>Total:</label>
+    <span>Rs ${grandTotal.toFixed(2)}</span>
+  </div>
+</div>`;
+
+    return html;
+  };
+
+  const initializeGetPay = (getPayDatas: any) => {
+    const orderInformationHtml = getOrderInformationHtml();
+
+    const options = {
+      userInfo: {
+        name: getPayDatas.getPayOptions.userInfo.name,
+        email: getPayDatas.getPayOptions.userInfo.email,
+        state: getPayDatas.getPayOptions.userInfo.state,
+        country: getPayDatas.getPayOptions.userInfo.country,
+        zipcode: getPayDatas.getPayOptions.userInfo.zipcode,
+        city: getPayDatas.getPayOptions.userInfo.city,
+        address: getPayDatas.getPayOptions.userInfo.address,
+      },
+      clientRequestId: getPayDatas.getPayOptions.clientRequestId,
+      papInfo: getPayDatas.getPayOptions.papInfo,
+      oprKey: getPayDatas.getPayOptions.oprKey,
+      insKey: getPayDatas.getPayOptions.insKey,
+      websiteDomain: getPayDatas.getPayOptions.websiteDomain,
+      price: grandTotal,
+      businessName: getPayDatas.getPayOptions.businessName,
+      baseUrl: getPayDatas.getPayOptions.base_url,
+      imageUrl: getPayDatas.getPayOptions.imageUrl,
+      currency: getPayDatas.getPayOptions.currency,
+      prefill: {
+        name: false,
+        email: false,
+        state: false,
+        city: false,
+        address: false,
+        zipcode: false,
+        country: false,
+      },
+      disableFields: {
+        address: false,
+        state: false,
+      },
+      callbackUrl: {
+        successUrl: getPayDatas.getPayOptions.callbackUrl.successUrl,
+        failUrl: getPayDatas.getPayOptions.callbackUrl.failUrl,
+      },
+      themeColor: '#5662FF',
+      orderInformationUI: `${orderInformationHtml}`,
+      onSuccess: (options: any) => {
+        // Redirect to order success page after successful payment
+        clearCart();
+        router.push(`/checkout/order-success?orderId=${getPayDatas.orderId}`);
+      },
+      onError: (error: any) => {
+        setIsSubmitting(false);
+        setOrderError(typeof error === 'string' ? error : "Payment failed. Please try again.");
+      },
+    };
+
+    const getPay = new window.GetPay(options);
+    getPay.initialize();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setOrderError(null);
@@ -166,12 +282,7 @@ const Checkout = () => {
 
     try {
       setIsSubmitting(true);
-      setOrderCreated(true);
-
-      // Clear ALL payment-related sessionStorage to prevent stale data
-      sessionStorage.removeItem('paymentConfig');
-      sessionStorage.removeItem('lastGetPayEvent');
-      sessionStorage.removeItem('currentOrderId');
+      // setOrderCreated(true); // Don't block resubmission completely in case GetPay fails/closes
 
       const orderData = {
         addressId: selectedAddress.uuid,
@@ -195,28 +306,27 @@ const Checkout = () => {
         return;
       }
 
-      // GetPay FLOW: Store config and redirect to payment page
+      // GetPay FLOW: Initialize directly
       if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
-        // DEBUG: Log the order response to identify orderId mismatch
-        console.log('=== Order Created Debug ===');
-        console.log('orderResponse.orderId:', orderResponse.orderId);
-        console.log('orderResponse.getPayOptions.callbackUrl:', orderResponse.getPayOptions?.callbackUrl);
-        console.log('orderResponse.getPayOptions.clientRequestId:', orderResponse.getPayOptions?.clientRequestId);
-        console.log('Full orderResponse:', JSON.stringify(orderResponse, null, 2));
 
-        // Store payment config in sessionStorage (survives page navigation)
-        // Include a timestamp and store orderId separately for validation
-        const config = {
-          ...orderResponse,
-          addressUuid: selectedAddress?.uuid,
-          _timestamp: Date.now() // Help detect stale configs
-        };
-        sessionStorage.setItem('paymentConfig', JSON.stringify(config));
-        // Store orderId separately as a backup validation source
-        sessionStorage.setItem('currentOrderId', String(orderResponse.orderId));
+        // Ensure script is loaded
+        if (!getPayScriptLoaded && !window.GetPay) {
+          // Fallback or wait? 
+          // For now assume script loaded as useEffect runs on mount
+          console.warn("GetPay script might not be loaded yet");
+        }
 
-        // Redirect to payment page
-        router.push('/checkout/payment');
+        try {
+          initializeGetPay(orderResponse);
+          // NOTE: We do NOT set isSubmitting to false here, 
+          // because the user is now interacting with the GetPay overlay.
+        } catch (err: any) {
+          console.error("GetPay Init Error:", err);
+          setOrderError("Failed to launch payment window.");
+          setIsSubmitting(false);
+          setOrderCreated(false);
+        }
+
       } else {
         throw new Error("Invalid payment configuration from server - Missing GetPay options");
       }
@@ -393,8 +503,8 @@ const Checkout = () => {
                 {/* Submit Button */}
                 <button
                   onClick={handleSubmit}
-                  disabled={isSubmitting || orderCreated || cartItems.length === 0}
-                  className={`w-full bg-[#A12717] text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-[#8a2113] active:scale-[0.99] flex items-center justify-center gap-2 ${isSubmitting || orderCreated || cartItems.length === 0 ? "opacity-50 cursor-not-allowed transform-none" : ""
+                  disabled={isSubmitting || (cartItems.length === 0)}
+                  className={`w-full bg-[#A12717] text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-[#8a2113] active:scale-[0.99] flex items-center justify-center gap-2 ${isSubmitting || (cartItems.length === 0) ? "opacity-50 cursor-not-allowed transform-none" : ""
                     }`}
                 >
                   {isSubmitting ? (
