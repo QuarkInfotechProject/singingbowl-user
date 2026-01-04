@@ -195,6 +195,13 @@ const Checkout = () => {
 
       // GetPay FLOW: Store config and redirect to payment page
       if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
+        // DEBUG: Log the order response to identify orderId mismatch
+        console.log('=== Order Created Debug ===');
+        console.log('orderResponse.orderId:', orderResponse.orderId);
+        console.log('orderResponse.getPayOptions.callbackUrl:', orderResponse.getPayOptions?.callbackUrl);
+        console.log('orderResponse.getPayOptions.clientRequestId:', orderResponse.getPayOptions?.clientRequestId);
+        console.log('Full orderResponse:', JSON.stringify(orderResponse, null, 2));
+
         // Store payment config in sessionStorage (survives page navigation)
         const config = {
           ...orderResponse,

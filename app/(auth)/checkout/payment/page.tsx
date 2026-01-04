@@ -112,6 +112,13 @@ const PaymentPage = () => {
         try {
             const getPayOptionsFromConfig = paymentConfig?.getPayOptions || {};
 
+            // DEBUG: Log orderId and callbackUrl to identify mismatch
+            console.log('=== GetPay SDK Initialization Debug ===');
+            console.log('paymentConfig.orderId:', paymentConfig.orderId);
+            console.log('getPayOptions.callbackUrl:', getPayOptionsFromConfig.callbackUrl);
+            console.log('getPayOptions.clientRequestId:', getPayOptionsFromConfig.clientRequestId);
+            console.log('Full paymentConfig:', JSON.stringify(paymentConfig, null, 2));
+
             // Define callbacks BEFORE options (SDK expects them in the options object)
             const handleSuccess = (data: any) => {
                 // ROBUST CHECK: Ignore initialization echoes
