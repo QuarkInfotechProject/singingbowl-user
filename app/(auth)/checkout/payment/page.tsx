@@ -133,6 +133,15 @@ const PaymentPageContent = () => {
                     paymentMethod: paymentConfig.paymentMethod,
                     onSuccess: (data: any) => {
                         if (!data.token && !data.id && !data.status) return;
+
+                        // Prevent stale instances from processing events for wrong orders
+                        const currentParams = new URLSearchParams(window.location.search);
+                        const currentOrderId = currentParams.get('orderId');
+                        if (currentOrderId && String(paymentConfig.orderId) !== String(currentOrderId)) {
+                            console.warn("Ignoring stale success callback", { configId: paymentConfig.orderId, urlId: currentOrderId });
+                            return;
+                        }
+
                         console.log("Success Callback:", data);
                         setResultModal({
                             isOpen: true,
@@ -143,6 +152,14 @@ const PaymentPageContent = () => {
                         });
                     },
                     onError: (error: any) => {
+                        // Prevent stale instances from processing events for wrong orders
+                        const currentParams = new URLSearchParams(window.location.search);
+                        const currentOrderId = currentParams.get('orderId');
+                        if (currentOrderId && String(paymentConfig.orderId) !== String(currentOrderId)) {
+                            console.warn("Ignoring stale error callback", { configId: paymentConfig.orderId, urlId: currentOrderId });
+                            return;
+                        }
+
                         console.error("Error Callback:", error);
                         setResultModal({
                             isOpen: true,
