@@ -102,6 +102,16 @@ const PaymentPageContent = () => {
                 return;
             }
 
+            // Check if payment tokens are likely expired (CyberSource JWT expires in ~15 minutes)
+            // We use 14 minutes to give a small buffer
+            const SESSION_MAX_AGE_MS = 14 * 60 * 1000; // 14 minutes
+            if (config._timestamp && (Date.now() - config._timestamp > SESSION_MAX_AGE_MS)) {
+                console.warn("Payment session too old, tokens likely expired. Age:",
+                    Math.round((Date.now() - config._timestamp) / 1000 / 60), "minutes");
+                setSessionExpired(true);
+                return;
+            }
+
             setPaymentConfig(config);
         } catch (e) {
             console.error("Config parse error", e);
@@ -143,6 +153,12 @@ const PaymentPageContent = () => {
                     containerId: "checkout",
                     isRedirect: false,
                     websiteDomain: window.location.origin,
+
+                    // CRITICAL: Explicitly set callback URLs with current order ID to prevent stale redirects
+                    callbackUrl: {
+                        successUrl: `${window.location.origin}/api/user/orders/success/getPay/${paymentConfig.orderId}`,
+                        failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`
+                    },
 
                     // CRITICAL: Add these missing configurations
                     timeout: 180000, // 3 minutes for bank processing
@@ -188,56 +204,25 @@ const PaymentPageContent = () => {
                     },
 
                     onSuccess: (data: any) => {
-                        // Validate response has actual success data
-                        if (!data || (!data.token && !data.id && !data.status)) {
-                            console.warn("Invalid success callback data:", data);
-                            return;
-                        }
+                        // IMPORTANT: According to GetPay documentation, this callback fires when
+                        // SDK INITIALIZATION succeeds, NOT when payment succeeds.
+                        // The actual payment result is delivered via redirect to successUrl/failUrl.
+                        // This callback receives the configuration object back.
+                        console.log("=== GetPay SDK Initialization Success ===");
+                        console.log("SDK initialized successfully. Payment form is ready.");
+                        console.log("Config data received:", data);
 
-                        const currentParams = new URLSearchParams(window.location.search);
-                        const currentOrderId = currentParams.get('orderId');
+                        // The SDK has been initialized successfully.
+                        // The user will now see the payment form.
+                        // After payment completion, GetPay will REDIRECT to:
+                        // - successUrl (for successful payments)
+                        // - failUrl (for failed/cancelled payments)
+                        // We don't need to do anything here except confirm initialization worked.
 
-                        if (currentOrderId && String(paymentConfig.orderId) !== String(currentOrderId)) {
-                            console.warn("Ignoring stale success callback", {
-                                configId: paymentConfig.orderId,
-                                urlId: currentOrderId
-                            });
-                            return;
-                        }
-
-                        console.log("Success Callback:", data);
-
-                        // Verify payment status on backend before showing success
-                        verifyPaymentStatus(paymentConfig.orderId, data)
-                            .then((verified) => {
-                                if (verified) {
-                                    setResultModal({
-                                        isOpen: true,
-                                        type: 'success',
-                                        data: data,
-                                        url: `${window.location.origin}/checkout/order-success?orderId=${paymentConfig.orderId}`,
-                                        message: "Payment verified successfully!"
-                                    });
-                                } else {
-                                    setResultModal({
-                                        isOpen: true,
-                                        type: 'error',
-                                        data: data,
-                                        url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
-                                        message: "Payment verification failed. Please contact support."
-                                    });
-                                }
-                            })
-                            .catch((err) => {
-                                console.error("Payment verification error:", err);
-                                setResultModal({
-                                    isOpen: true,
-                                    type: 'error',
-                                    data: err,
-                                    url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
-                                    message: "Could not verify payment status. Please contact support."
-                                });
-                            });
+                        // Note: The actual payment success is handled by:
+                        // 1. GetPay redirecting to our successUrl (/api/user/orders/success/getPay/{orderId})
+                        // 2. The backend verifying the payment with GetPay
+                        // 3. The backend redirecting to /checkout/order-success
                     },
 
                     onError: (error: any) => {
@@ -307,43 +292,6 @@ const PaymentPageContent = () => {
             }
             return false;
         };
-
-        const verifyPaymentStatus = async (orderId: string | number, paymentData: any): Promise<boolean> => {
-            try {
-                // Call your backend to verify the payment status
-                const response = await fetch(`/api/user/orders/verify-payment/${orderId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(paymentData)
-                });
-
-                const result = await response.json();
-                return result.success === true;
-            } catch (error) {
-                console.error("Payment verification failed:", error);
-                return false;
-            }
-        };
-
-        {
-            paymentError && (
-                <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-20 p-6 text-center">
-                    <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Payment Gateway Error</h3>
-                    <p className="text-slate-600 mb-4">{paymentError}</p>
-                    <div className="flex gap-3">
-                        <Button onClick={handleManualRetry} variant="outline">
-                            Try Again
-                        </Button>
-                        <Button onClick={handleBackToCheckout} className="bg-[#A12717]">
-                            Back to Checkout
-                        </Button>
-                    </div>
-                </div>
-            )
-        }
 
         const loadScript = () => {
             // Check if script is already present
