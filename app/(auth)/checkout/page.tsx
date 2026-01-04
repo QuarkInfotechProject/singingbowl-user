@@ -86,10 +86,19 @@ const Checkout = () => {
 
   // Load GetPay Script - Robust Loading
   useEffect(() => {
-    // Check if script is already present
-    if (document.querySelector(`script[src="${BUNDLE_URL}"]`)) {
-      if (window.GetPay) setGetPayScriptLoaded(true);
+    // Determine if we need to reload
+    // If script tag exists AND object exists, we are good.
+    // If script tag exists but object MISSING, we must reload (it failed or is stuck).
+    const existingScript = document.querySelector(`script[src="${BUNDLE_URL}"]`);
+
+    if (existingScript && typeof window !== 'undefined' && window.GetPay) {
+      setGetPayScriptLoaded(true);
       return;
+    }
+
+    if (existingScript) {
+      // Script exists but GePay is missing. Clean up to force reload.
+      existingScript.remove();
     }
 
     if (cartItems.length > 0) {
@@ -108,6 +117,12 @@ const Checkout = () => {
       };
 
       document.body.appendChild(script);
+
+      // Cleanup on unmount to ensure fresh state on re-navigation
+      return () => {
+        const s = document.querySelector(`script[src="${BUNDLE_URL}"]`);
+        if (s) s.remove();
+      };
     }
   }, [cartItems, BUNDLE_URL]);
 
@@ -269,8 +284,16 @@ const Checkout = () => {
 
     if (window.GetPay) {
       console.log("Initializing GetPay SDK with options:", options);
-      const getPay = new window.GetPay(options);
-      getPay.initialize();
+      // Ensure container is clear/ready?
+      // SDK might generally handle it.
+      try {
+        const getPay = new window.GetPay(options);
+        getPay.initialize();
+      } catch (err: any) {
+        console.error("GetPay Constructor Error:", err);
+        setOrderError("Payment system error: " + (err.message || "Init failed"));
+        setIsSubmitting(false);
+      }
     } else {
       console.error("GetPay Global Object not found!");
       setOrderError("Payment system failed to load. Please refresh.");
@@ -294,7 +317,6 @@ const Checkout = () => {
 
     try {
       setIsSubmitting(true);
-      // setOrderCreated(true); 
 
       const orderData = {
         addressId: selectedAddress.uuid,
@@ -316,16 +338,26 @@ const Checkout = () => {
 
       if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
 
+        // Retry logic for script loading
         let retries = 0;
         const waitForScript = async () => {
-          while (!window.GetPay && retries < 10) {
+          while (!window.GetPay && retries < 20) { // Increased retries
+            if (getPayScriptLoaded && window.GetPay) break;
             await new Promise(r => setTimeout(r, 500));
             retries++;
           }
         };
 
         if (!window.GetPay) {
+          console.log("GetPay not ready, waiting...");
           await waitForScript();
+        }
+
+        if (!window.GetPay) {
+          console.error("GetPay Wait Timeout");
+          setOrderError("Payment system unresponsive. Please refresh.");
+          setIsSubmitting(false);
+          return;
         }
 
         try {
