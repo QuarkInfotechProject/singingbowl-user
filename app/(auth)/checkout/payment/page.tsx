@@ -65,50 +65,9 @@ const PaymentPageContent = () => {
 
     const searchParams = useSearchParams();
     const orderIdParam = searchParams.get('orderId');
-    const [orderProbeStatus, setOrderProbeStatus] = useState<string>('checking');
 
-    // DEBUG: Probe if order actually exists in DB
-    useEffect(() => {
-        if (!orderIdParam) return;
 
-        const checkOrder = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                console.log("Probing Order existence for ID:", orderIdParam);
-                // Dual Probe to diagnose Order Persistence vs Validation Logic
-                const apiUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://api.singingbowlvillagenepal.com/api';
 
-                // 1. Probe Real ID
-                const realRes = await fetch(`${apiUrl}/user/orders/success/getPay/${orderIdParam}`, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-                console.log(`🔎 Probe Real ID (${orderIdParam}): ${realRes.status}`);
-
-                // 2. Probe Fake ID (Control Group)
-                const fakeRes = await fetch(`${apiUrl}/user/orders/success/getPay/000000`, {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-                console.log(`🔎 Probe Fake ID (000000): ${fakeRes.status}`);
-
-                if (realRes.status === 400 && fakeRes.status === 404) {
-                    console.log("✅ CONCLUSION: Order EXISTS! (Backend found it, but complained about missing params)");
-                } else if (realRes.status === 404 && fakeRes.status === 404) {
-                    console.log("❌ CONCLUSION: Order MISSING! (Backend could not find it)");
-                } else if (realRes.status === 400 && fakeRes.status === 400) {
-                    console.log("⚠️ CONCLUSION: Inconclusive (Backend validates params before checking ID)");
-                } else {
-                    console.log("⚠️ CONCLUSION: Unexpected State", realRes.status, fakeRes.status);
-                }
-            } catch (e) {
-                console.error("❌ Order Probe ERROR:", e);
-                setOrderProbeStatus('error');
-            }
-        };
-
-        checkOrder();
-    }, [orderIdParam]);
 
     // DEBUG: Log everything on mount to trace the state
     useEffect(() => {
