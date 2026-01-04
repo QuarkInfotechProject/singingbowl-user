@@ -75,7 +75,9 @@ const PaymentPageContent = () => {
             try {
                 const token = localStorage.getItem('token');
                 console.log("Probing Order existence for ID:", orderIdParam);
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/orders/show/${orderIdParam}`, {
+                // Correct env var from user feedback
+                const apiUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://api.singingbowlvillagenepal.com/api';
+                const res = await fetch(`${apiUrl}/user/orders/show/${orderIdParam}`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
