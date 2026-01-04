@@ -75,22 +75,31 @@ const PaymentPageContent = () => {
             try {
                 const token = localStorage.getItem('token');
                 console.log("Probing Order existence for ID:", orderIdParam);
-                // Probe the Public Success URL to avoid CORS/Auth issues
-                // If this returns 404, it confirms the backend cannot find the order publicly.
+                // Dual Probe to diagnose Order Persistence vs Validation Logic
                 const apiUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://api.singingbowlvillagenepal.com/api';
-                const res = await fetch(`${apiUrl}/user/orders/success/getPay/${orderIdParam}`, {
+
+                // 1. Probe Real ID
+                const realRes = await fetch(`${apiUrl}/user/orders/success/getPay/${orderIdParam}`, {
                     method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                    }
+                    headers: { 'Accept': 'application/json' }
                 });
-                if (res.ok) {
-                    const data = await res.json();
-                    console.log("✅ Order Probe SUCCESS. Order found:", data);
-                    setOrderProbeStatus('found');
+                console.log(`🔎 Probe Real ID (${orderIdParam}): ${realRes.status}`);
+
+                // 2. Probe Fake ID (Control Group)
+                const fakeRes = await fetch(`${apiUrl}/user/orders/success/getPay/000000`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                console.log(`🔎 Probe Fake ID (000000): ${fakeRes.status}`);
+
+                if (realRes.status === 400 && fakeRes.status === 404) {
+                    console.log("✅ CONCLUSION: Order EXISTS! (Backend found it, but complained about missing params)");
+                } else if (realRes.status === 404 && fakeRes.status === 404) {
+                    console.log("❌ CONCLUSION: Order MISSING! (Backend could not find it)");
+                } else if (realRes.status === 400 && fakeRes.status === 400) {
+                    console.log("⚠️ CONCLUSION: Inconclusive (Backend validates params before checking ID)");
                 } else {
-                    console.error("❌ Order Probe FAILED. Status:", res.status);
-                    setOrderProbeStatus('not_found');
+                    console.log("⚠️ CONCLUSION: Unexpected State", realRes.status, fakeRes.status);
                 }
             } catch (e) {
                 console.error("❌ Order Probe ERROR:", e);
