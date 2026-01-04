@@ -166,10 +166,12 @@ const Checkout = () => {
 
     try {
       setIsSubmitting(true);
-      setOrderCreated(true); // Mark as submitted to prevent duplicates
+      setOrderCreated(true); 
 
-      // Clear any existing payment config to prevent stale data
+      // Clear ALL payment-related sessionStorage to prevent stale data
       sessionStorage.removeItem('paymentConfig');
+      sessionStorage.removeItem('lastGetPayEvent');
+      sessionStorage.removeItem('currentOrderId');
 
       const orderData = {
         addressId: selectedAddress.uuid,
@@ -203,11 +205,15 @@ const Checkout = () => {
         console.log('Full orderResponse:', JSON.stringify(orderResponse, null, 2));
 
         // Store payment config in sessionStorage (survives page navigation)
+        // Include a timestamp and store orderId separately for validation
         const config = {
           ...orderResponse,
-          addressUuid: selectedAddress?.uuid
+          addressUuid: selectedAddress?.uuid,
+          _timestamp: Date.now() // Help detect stale configs
         };
         sessionStorage.setItem('paymentConfig', JSON.stringify(config));
+        // Store orderId separately as a backup validation source
+        sessionStorage.setItem('currentOrderId', String(orderResponse.orderId));
 
         // Redirect to payment page
         router.push('/checkout/payment');

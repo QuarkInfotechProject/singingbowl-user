@@ -55,6 +55,8 @@ const PaymentPage = () => {
 
     const scriptLoadedRef = useRef(false);
     const getpayInitializedRef = useRef(false);
+    // Use ref to ensure orderId is always current in callbacks
+    const orderIdRef = useRef<number | string | null>(null);
 
     const { isLoggedIn, isLoading: authLoading } = useAuth();
     const router = useRouter();
@@ -72,9 +74,10 @@ const PaymentPage = () => {
     // GetPay SDK URL
     const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL;
 
-    // Load payment config
+    // Load payment config with validation
     useEffect(() => {
         const storedConfig = sessionStorage.getItem('paymentConfig');
+        const storedOrderId = sessionStorage.getItem('currentOrderId');
 
         if (!storedConfig) {
             setSessionExpired(true);
@@ -84,8 +87,31 @@ const PaymentPage = () => {
 
         try {
             const config = JSON.parse(storedConfig) as PaymentConfig;
+            
+            // Validate config freshness (expire after 15 minutes)
+            const MAX_CONFIG_AGE_MS = 15 * 60 * 1000; // 15 minutes
+            if (config._timestamp && (Date.now() - config._timestamp) > MAX_CONFIG_AGE_MS) {
+                console.warn('Payment config expired, age:', Date.now() - config._timestamp);
+                setSessionExpired(true);
+                setSdkLoading(false);
+                return;
+            }
+            
+            // Cross-validate orderId from separate storage
+            if (storedOrderId && String(config.orderId) !== storedOrderId) {
+                console.error('Order ID mismatch detected!', {
+                    configOrderId: config.orderId,
+                    storedOrderId: storedOrderId
+                });
+                // Use the stored orderId as the source of truth (set most recently)
+                config.orderId = parseInt(storedOrderId, 10);
+            }
+            
+            // Store orderId in ref for stable callback access
+            orderIdRef.current = config.orderId;
             setPaymentConfig(config);
         } catch (error) {
+            console.error('Failed to parse payment config:', error);
             setSessionExpired(true);
             setSdkLoading(false);
         }
@@ -127,6 +153,10 @@ const PaymentPage = () => {
                     return;
                 }
 
+                // Use orderIdRef for consistent orderId (not closure-captured value)
+                const currentOrderId = orderIdRef.current || paymentConfig.orderId;
+                console.log('handleSuccess - Using orderId:', currentOrderId);
+
                 // Persist event
                 try {
                     sessionStorage.setItem('lastGetPayEvent', JSON.stringify({ type: 'SUCCESS', data, timestamp: Date.now() }));
@@ -136,12 +166,16 @@ const PaymentPage = () => {
                     isOpen: true,
                     type: 'success',
                     data: data,
-                    url: `${window.location.origin}/checkout/order-success?orderId=${paymentConfig.orderId}`,
+                    url: `${window.location.origin}/checkout/order-success?orderId=${currentOrderId}`,
                     message: "Payment verified successfully!"
                 });
             };
 
             const handleError = (error: any) => {
+                // Use orderIdRef for consistent orderId
+                const currentOrderId = orderIdRef.current || paymentConfig.orderId;
+                console.log('handleError - Using orderId:', currentOrderId);
+                
                 try {
                     sessionStorage.setItem('lastGetPayEvent', JSON.stringify({ type: 'ERROR', data: error, timestamp: Date.now() }));
                 } catch (e) { /* ignore */ }
@@ -150,7 +184,7 @@ const PaymentPage = () => {
                     isOpen: true,
                     type: 'error',
                     data: error,
-                    url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
+                    url: `${window.location.origin}/checkout/payment-failed?orderId=${currentOrderId}`,
                     message: typeof error === 'string' ? error : (error.message || "Payment processing failed.")
                 });
             };
