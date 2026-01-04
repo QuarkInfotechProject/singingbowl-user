@@ -108,7 +108,7 @@ export async function GET(
         }
 
         // Return HTML that redirects the TOP window (breaks out of iframe)
-        const successUrl = `${prodOrigin}/profile?tab=orders&payment=success`;
+        const successUrl = `${prodOrigin}/checkout/order-success?orderId=${orderId}`;
         const successHtml = `
             <!DOCTYPE html>
             <html>

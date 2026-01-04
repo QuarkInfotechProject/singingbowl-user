@@ -129,7 +129,7 @@ const PaymentPage = () => {
                     isOpen: true,
                     type: 'success',
                     data: data,
-                    url: `${window.location.origin}/profile?tab=orders&payment=success`,
+                    url: `${window.location.origin}/checkout/order-success`,
                     message: "Payment verified successfully!"
                 });
             };
