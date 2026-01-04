@@ -75,11 +75,11 @@ const PaymentPageContent = () => {
             try {
                 const token = localStorage.getItem('token');
                 console.log("Probing Order existence for ID:", orderIdParam);
-                // Correct env var from user feedback
+                // Probe the Public Success URL to avoid CORS/Auth issues
+                // If this returns 404, it confirms the backend cannot find the order publicly.
                 const apiUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://api.singingbowlvillagenepal.com/api';
-                const res = await fetch(`${apiUrl}/user/orders/show/${orderIdParam}`, {
+                const res = await fetch(`${apiUrl}/user/orders/success/getPay/${orderIdParam}`, {
                     method: 'GET',
-                    credentials: 'include',
                     headers: {
                         'Accept': 'application/json',
                     }
