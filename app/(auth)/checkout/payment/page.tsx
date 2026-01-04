@@ -143,7 +143,7 @@ const PaymentPage = () => {
                     isOpen: true,
                     type: 'error',
                     data: error,
-                    url: `${window.location.origin}/checkout`,
+                    url: `${window.location.origin}/checkout/payment-failed`,
                     message: typeof error === 'string' ? error : (error.message || "Payment processing failed.")
                 });
             };

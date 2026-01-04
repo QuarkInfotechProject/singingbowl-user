@@ -61,7 +61,7 @@ export async function GET(
 
         // Return HTML that redirects the TOP window (breaks out of iframe)
         const prodOrigin = process.env.SITE_ORIGIN;
-        const errorUrl = `${prodOrigin}/checkout?error=payment_failed&orderId=${orderId}`;
+        const errorUrl = `${prodOrigin}/checkout/payment-failed?orderId=${orderId}`;
         const errorHtml = `
             <!DOCTYPE html>
             <html>
@@ -115,7 +115,7 @@ export async function GET(
 
         // Return HTML that redirects the TOP window (breaks out of iframe)
         const prodOrigin = process.env.SITE_ORIGIN;
-        const errorUrl = `${prodOrigin}/checkout?error=payment_failed`;
+        const errorUrl = `${prodOrigin}/checkout/payment-failed`;
         const errorHtml = `
             <!DOCTYPE html>
             <html>
