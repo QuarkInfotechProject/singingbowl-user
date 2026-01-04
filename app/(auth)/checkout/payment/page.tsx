@@ -133,63 +133,160 @@ const PaymentPageContent = () => {
             try {
                 if (sdkInitializedRef.current) return;
 
-                // Double check window.GetPay exists
                 if (!(window as any).GetPay) {
                     console.log("window.GetPay not ready yet in initSDK");
                     return;
                 }
 
-                const getPayOptions = paymentConfig.getPayOptions || {};
-                console.log("Initializing GetPay with Order ID:", paymentConfig.orderId);
-
-                const getPay = new (window as any).GetPay({
-                    ...getPayOptions,
+                const getPayOptions = {
+                    ...paymentConfig.getPayOptions,
                     containerId: "checkout",
                     isRedirect: false,
                     websiteDomain: window.location.origin,
-                    orderId: paymentConfig.orderId,
-                    paymentMethod: paymentConfig.paymentMethod,
-                    onSuccess: (data: any) => {
-                        if (!data.token && !data.id && !data.status) return;
 
-                        // Prevent stale instances from processing events for wrong orders
+                    // CRITICAL: Add these missing configurations
+                    timeout: 180000, // 3 minutes for bank processing
+
+                    // Handle timeout scenarios (like bank server not responding)
+                    onTimeout: (data: any) => {
+                        console.error("Payment timeout:", data);
                         const currentParams = new URLSearchParams(window.location.search);
                         const currentOrderId = currentParams.get('orderId');
+
                         if (currentOrderId && String(paymentConfig.orderId) !== String(currentOrderId)) {
-                            console.warn("Ignoring stale success callback", { configId: paymentConfig.orderId, urlId: currentOrderId });
+                            console.warn("Ignoring stale timeout callback");
+                            return;
+                        }
+
+                        setResultModal({
+                            isOpen: true,
+                            type: 'error',
+                            data: data,
+                            url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
+                            message: "Payment timed out. The bank's authentication server didn't respond in time. Please try again."
+                        });
+                    },
+
+                    // Handle user cancellation
+                    onAbort: (data: any) => {
+                        console.log("Payment aborted by user:", data);
+                        const currentParams = new URLSearchParams(window.location.search);
+                        const currentOrderId = currentParams.get('orderId');
+
+                        if (currentOrderId && String(paymentConfig.orderId) !== String(currentOrderId)) {
+                            console.warn("Ignoring stale abort callback");
+                            return;
+                        }
+
+                        setResultModal({
+                            isOpen: true,
+                            type: 'error',
+                            data: data,
+                            url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
+                            message: "Payment was cancelled. You can try again when ready."
+                        });
+                    },
+
+                    onSuccess: (data: any) => {
+                        // Validate response has actual success data
+                        if (!data || (!data.token && !data.id && !data.status)) {
+                            console.warn("Invalid success callback data:", data);
+                            return;
+                        }
+
+                        const currentParams = new URLSearchParams(window.location.search);
+                        const currentOrderId = currentParams.get('orderId');
+
+                        if (currentOrderId && String(paymentConfig.orderId) !== String(currentOrderId)) {
+                            console.warn("Ignoring stale success callback", {
+                                configId: paymentConfig.orderId,
+                                urlId: currentOrderId
+                            });
                             return;
                         }
 
                         console.log("Success Callback:", data);
-                        setResultModal({
-                            isOpen: true,
-                            type: 'success',
-                            data: data,
-                            url: `${window.location.origin}/checkout/order-success?orderId=${paymentConfig.orderId}`,
-                            message: "Payment verified successfully!"
-                        });
+
+                        // Verify payment status on backend before showing success
+                        verifyPaymentStatus(paymentConfig.orderId, data)
+                            .then((verified) => {
+                                if (verified) {
+                                    setResultModal({
+                                        isOpen: true,
+                                        type: 'success',
+                                        data: data,
+                                        url: `${window.location.origin}/checkout/order-success?orderId=${paymentConfig.orderId}`,
+                                        message: "Payment verified successfully!"
+                                    });
+                                } else {
+                                    setResultModal({
+                                        isOpen: true,
+                                        type: 'error',
+                                        data: data,
+                                        url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
+                                        message: "Payment verification failed. Please contact support."
+                                    });
+                                }
+                            })
+                            .catch((err) => {
+                                console.error("Payment verification error:", err);
+                                setResultModal({
+                                    isOpen: true,
+                                    type: 'error',
+                                    data: err,
+                                    url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
+                                    message: "Could not verify payment status. Please contact support."
+                                });
+                            });
                     },
+
                     onError: (error: any) => {
-                        // Prevent stale instances from processing events for wrong orders
                         const currentParams = new URLSearchParams(window.location.search);
                         const currentOrderId = currentParams.get('orderId');
+
                         if (currentOrderId && String(paymentConfig.orderId) !== String(currentOrderId)) {
-                            console.warn("Ignoring stale error callback", { configId: paymentConfig.orderId, urlId: currentOrderId });
+                            console.warn("Ignoring stale error callback", {
+                                configId: paymentConfig.orderId,
+                                urlId: currentOrderId
+                            });
                             return;
                         }
 
                         console.error("Error Callback:", error);
+
+                        // Parse error message for user-friendly display
+                        let errorMessage = "Payment processing failed.";
+                        if (typeof error === 'string') {
+                            errorMessage = error;
+                        } else if (error?.message) {
+                            errorMessage = error.message;
+                        } else if (error?.error) {
+                            errorMessage = error.error;
+                        }
+
+                        // Specific error handling based on error codes
+                        if (error?.code === 'BANK_TIMEOUT' || errorMessage.includes('timeout')) {
+                            errorMessage = "The bank's server didn't respond in time. Please try again.";
+                        } else if (error?.code === 'AUTHENTICATION_FAILED') {
+                            errorMessage = "Card authentication failed. Please verify your card details with your bank.";
+                        } else if (error?.code === 'INSUFFICIENT_FUNDS') {
+                            errorMessage = "Insufficient funds. Please try a different payment method.";
+                        }
+
                         setResultModal({
                             isOpen: true,
                             type: 'error',
                             data: error,
                             url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
-                            message: typeof error === 'string' ? error : (error.message || "Payment processing failed.")
+                            message: errorMessage
                         });
                     }
-                });
+                };
 
+                console.log("Initializing GetPay with Order ID:", paymentConfig.orderId);
+                const getPay = new (window as any).GetPay(getPayOptions);
                 getPay.initialize();
+
                 sdkInitializedRef.current = true;
                 if (isMounted) setSdkLoading(false);
                 if (checkInterval) clearInterval(checkInterval);
@@ -210,6 +307,43 @@ const PaymentPageContent = () => {
             }
             return false;
         };
+
+        const verifyPaymentStatus = async (orderId: string | number, paymentData: any): Promise<boolean> => {
+            try {
+                // Call your backend to verify the payment status
+                const response = await fetch(`/api/user/orders/verify-payment/${orderId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+
+                const result = await response.json();
+                return result.success === true;
+            } catch (error) {
+                console.error("Payment verification failed:", error);
+                return false;
+            }
+        };
+
+        {
+            paymentError && (
+                <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-20 p-6 text-center">
+                    <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Payment Gateway Error</h3>
+                    <p className="text-slate-600 mb-4">{paymentError}</p>
+                    <div className="flex gap-3">
+                        <Button onClick={handleManualRetry} variant="outline">
+                            Try Again
+                        </Button>
+                        <Button onClick={handleBackToCheckout} className="bg-[#A12717]">
+                            Back to Checkout
+                        </Button>
+                    </div>
+                </div>
+            )
+        }
 
         const loadScript = () => {
             // Check if script is already present
@@ -380,20 +514,55 @@ const PaymentPageContent = () => {
             </div>
 
             {/* Result Modal */}
-            <Dialog open={resultModal.isOpen} onOpenChange={(open) => !open && resultModal.type === 'error' && setResultModal(prev => ({ ...prev, isOpen: false }))}>
+            <Dialog open={resultModal.isOpen} onOpenChange={(open) => {
+                if (!open && resultModal.type === 'error') {
+                    setResultModal(prev => ({ ...prev, isOpen: false }));
+                }
+            }}>
                 <DialogContent className="sm:max-w-md text-center">
                     <DialogHeader>
                         <div className="mx-auto mb-4">
-                            {resultModal.type === 'success' ? <CheckCircle2 className="w-12 h-12 text-green-600" /> : <XCircle className="w-12 h-12 text-red-600" />}
+                            {resultModal.type === 'success' ? (
+                                <CheckCircle2 className="w-12 h-12 text-green-600" />
+                            ) : (
+                                <XCircle className="w-12 h-12 text-red-600" />
+                            )}
                         </div>
                         <DialogTitle className={resultModal.type === 'success' ? 'text-green-700' : 'text-red-700'}>
                             {resultModal.type === 'success' ? 'Payment Successful' : 'Payment Failed'}
                         </DialogTitle>
-                        <DialogDescription>{resultModal.message}</DialogDescription>
+                        <DialogDescription className="text-left space-y-2">
+                            <p>{resultModal.message}</p>
+                            {resultModal.type === 'error' && (
+                                <div className="mt-4 p-3 bg-amber-50 rounded-lg text-sm text-amber-800">
+                                    <p className="font-semibold mb-1">What to do:</p>
+                                    <ul className="list-disc list-inside space-y-1 text-xs">
+                                        <li>Check your internet connection</li>
+                                        <li>Verify your card details with your bank</li>
+                                        <li>Try a different payment method</li>
+                                        <li>Contact support if the issue persists</li>
+                                    </ul>
+                                </div>
+                            )}
+                        </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="sm:justify-center">
-                        <Button onClick={handleModalConfirm} className={resultModal.type === 'success' ? 'bg-green-600' : 'bg-red-600'}>
-                            {resultModal.type === 'success' ? 'Continue' : 'Close'}
+                    <DialogFooter className="sm:justify-center flex gap-2">
+                        {resultModal.type === 'error' && (
+                            <Button
+                                onClick={() => {
+                                    setResultModal(prev => ({ ...prev, isOpen: false }));
+                                    handleManualRetry();
+                                }}
+                                variant="outline"
+                            >
+                                Try Again
+                            </Button>
+                        )}
+                        <Button
+                            onClick={handleModalConfirm}
+                            className={resultModal.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+                        >
+                            {resultModal.type === 'success' ? 'View Order' : 'Back to Checkout'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
