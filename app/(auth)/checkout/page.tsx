@@ -84,12 +84,15 @@ const Checkout = () => {
     setSelectedAddress(address);
   };
 
-  // Load GetPay Script
+  // Load GetPay Script - Robust Loading
   useEffect(() => {
-    if (cartItems.length > 0) {
-      const existingScripts = document.querySelectorAll(`script[src="${BUNDLE_URL}"]`);
-      existingScripts.forEach((script) => script.remove());
+    // Check if script is already present
+    if (document.querySelector(`script[src="${BUNDLE_URL}"]`)) {
+      if (window.GetPay) setGetPayScriptLoaded(true);
+      return;
+    }
 
+    if (cartItems.length > 0) {
       setGetPayScriptLoaded(false);
 
       const script = document.createElement('script');
@@ -97,16 +100,18 @@ const Checkout = () => {
       script.async = true;
       script.onload = () => {
         setGetPayScriptLoaded(true);
+        console.log("GetPay script loaded successfully");
       };
       script.onerror = () => {
         setGetPayScriptLoaded(false);
+        console.error("Failed to load GetPay script");
       };
 
       document.body.appendChild(script);
 
-      return () => {
-        document.body.removeChild(script);
-      };
+      // We technically shouldn't remove the script on cleanup to avoid 
+      // 'window.GetPay is not a constructor' if the component re-renders quickly.
+      // Keeping it in the DOM is safer for the single-page app session.
     }
   }, [cartItems, BUNDLE_URL]);
 
@@ -251,6 +256,8 @@ const Checkout = () => {
       },
       themeColor: '#5662FF',
       orderInformationUI: `${orderInformationHtml}`,
+      containerId: 'checkout', // Crucial: Needs a container to render into
+
       onSuccess: (options: any) => {
         // Redirect to order success page after successful payment
         clearCart();
@@ -262,8 +269,15 @@ const Checkout = () => {
       },
     };
 
-    const getPay = new window.GetPay(options);
-    getPay.initialize();
+    if (window.GetPay) {
+      console.log("Initializing GetPay SDK...");
+      const getPay = new window.GetPay(options);
+      getPay.initialize();
+    } else {
+      console.error("GetPay Global Object not found!");
+      setOrderError("Payment system failed to load. Please refresh.");
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -309,11 +323,17 @@ const Checkout = () => {
       // GetPay FLOW: Initialize directly
       if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
 
-        // Ensure script is loaded
-        if (!getPayScriptLoaded && !window.GetPay) {
-          // Fallback or wait? 
-          // For now assume script loaded as useEffect runs on mount
-          console.warn("GetPay script might not be loaded yet");
+        // Retry logic for script loading
+        let retries = 0;
+        const waitForScript = async () => {
+          while (!window.GetPay && retries < 10) {
+            await new Promise(r => setTimeout(r, 500));
+            retries++;
+          }
+        };
+
+        if (!window.GetPay) {
+          await waitForScript();
         }
 
         try {
@@ -322,7 +342,7 @@ const Checkout = () => {
           // because the user is now interacting with the GetPay overlay.
         } catch (err: any) {
           console.error("GetPay Init Error:", err);
-          setOrderError("Failed to launch payment window.");
+          setOrderError("Failed to launch payment window: " + (err.message || "Unknown error"));
           setIsSubmitting(false);
           setOrderCreated(false);
         }
@@ -332,6 +352,7 @@ const Checkout = () => {
       }
 
     } catch (error: any) {
+      console.error("Order Creation Error", error);
       setOrderError(error.response?.data?.error || error.response?.data?.message || "Failed to place order. Please try again.");
       setIsSubmitting(false);
       setOrderCreated(false); // Allow retry on error
@@ -475,6 +496,9 @@ const Checkout = () => {
                 </div>
               </div>
             )}
+
+            {/* GetPay Widget Container - Explicit container for the SDK */}
+            <div id="checkout" className="w-full"></div>
 
             {/* Terms & Submit */}
             {selectedAddress && (
