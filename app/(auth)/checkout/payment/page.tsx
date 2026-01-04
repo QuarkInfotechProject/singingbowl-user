@@ -87,7 +87,7 @@ const PaymentPage = () => {
 
         try {
             const config = JSON.parse(storedConfig) as PaymentConfig;
-            
+
             // Validate config freshness (expire after 15 minutes)
             const MAX_CONFIG_AGE_MS = 15 * 60 * 1000; // 15 minutes
             if (config._timestamp && (Date.now() - config._timestamp) > MAX_CONFIG_AGE_MS) {
@@ -96,7 +96,7 @@ const PaymentPage = () => {
                 setSdkLoading(false);
                 return;
             }
-            
+
             // Cross-validate orderId from separate storage
             if (storedOrderId && String(config.orderId) !== storedOrderId) {
                 console.error('Order ID mismatch detected!', {
@@ -106,7 +106,7 @@ const PaymentPage = () => {
                 // Use the stored orderId as the source of truth (set most recently)
                 config.orderId = parseInt(storedOrderId, 10);
             }
-            
+
             // Store orderId in ref for stable callback access
             orderIdRef.current = config.orderId;
             setPaymentConfig(config);
@@ -175,7 +175,7 @@ const PaymentPage = () => {
                 // Use orderIdRef for consistent orderId
                 const currentOrderId = orderIdRef.current || paymentConfig.orderId;
                 console.log('handleError - Using orderId:', currentOrderId);
-                
+
                 try {
                     sessionStorage.setItem('lastGetPayEvent', JSON.stringify({ type: 'ERROR', data: error, timestamp: Date.now() }));
                 } catch (e) { /* ignore */ }

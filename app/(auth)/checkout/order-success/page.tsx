@@ -102,7 +102,7 @@ const OrderSuccessContent = () => {
                         <div className="space-y-3 pt-2">
                             <Button
                                 onClick={handleViewOrders}
-                                className="w-full bg-[#A12717] hover:bg-[#8a2113] text-white py-6 text-base font-semibold"
+                                className="w-full bg-[#A12717] cursor-pointer hover:bg-[#8a2113] text-white py-6 text-base font-semibold"
                             >
                                 <Package className="w-5 h-5 mr-2" />
                                 View My Orders
@@ -111,7 +111,7 @@ const OrderSuccessContent = () => {
                             <Button
                                 onClick={handleContinueShopping}
                                 variant="outline"
-                                className="w-full py-6 text-base border-slate-300"
+                                className="w-full py-6 text-base cursor-pointer border-slate-300"
                             >
                                 <ShoppingBag className="w-5 h-5 mr-2" />
                                 Continue Shopping
