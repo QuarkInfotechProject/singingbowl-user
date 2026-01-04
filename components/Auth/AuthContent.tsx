@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthForm } from "@/hooks/useAuthForm";
 import { authService } from "@/services/authService";
 import { useAuth } from "@/context/AuthContext";
@@ -20,10 +20,13 @@ interface AuthContentProps {
     isModal?: boolean;
 }
 
-export const AuthContent = ({ initialMode = "login", onClose, isModal = false }: AuthContentProps) => {
+// Inner component that uses useSearchParams (needs Suspense boundary)
+const AuthContentInner = ({ initialMode = "login", onClose, isModal = false }: AuthContentProps) => {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [mode, setMode] = useState<"login" | "signup" | "reset-password">(initialMode);
     const [resetEmail, setResetEmail] = useState("");
+    const [sessionExpiredMsg, setSessionExpiredMsg] = useState<string | null>(null);
 
     const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -42,6 +45,13 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
             setMode(initialMode);
         }
     }, [initialMode]);
+
+    // Check for session expired message from URL
+    useEffect(() => {
+        if (searchParams.get('expired') === 'true') {
+            setSessionExpiredMsg('Your session has expired. Please log in again.');
+        }
+    }, [searchParams]);
 
     const handleModeSwitch = (newMode: "login" | "signup" | "reset-password") => {
         setMode(newMode);
@@ -175,6 +185,11 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
             )}
 
             <div className="relative z-10 space-y-2 px-6 py-4">
+                {sessionExpiredMsg && mode === "login" && (
+                    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm flex items-center gap-2">
+                        <span>⚠️</span> {sessionExpiredMsg}
+                    </div>
+                )}
                 {mode !== "reset-password" && <ErrorAlert message={state.error} />}
 
                 {mode === "login" ? (
@@ -242,5 +257,21 @@ export const AuthContent = ({ initialMode = "login", onClose, isModal = false }:
                 )}
             </div>
         </div>
+    );
+};
+
+// Loading fallback for Suspense
+const AuthContentLoading = () => (
+    <div className="flex items-center justify-center py-12">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-[#A12717] rounded-full animate-spin" />
+    </div>
+);
+
+// Exported wrapper with Suspense boundary
+export const AuthContent = (props: AuthContentProps) => {
+    return (
+        <Suspense fallback={<AuthContentLoading />}>
+            <AuthContentInner {...props} />
+        </Suspense>
     );
 };

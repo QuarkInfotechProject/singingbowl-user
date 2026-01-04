@@ -19,13 +19,29 @@ api.interceptors.request.use(
     }
 );
 
-// Response Interceptor
+// Response Interceptor - handles auth errors globally
 api.interceptors.response.use(
     (response) => {
         return response;
     },
     (error) => {
-        console.error("API Call Failed:", error);
+        // Handle 401 Unauthenticated - token is invalid/expired
+        if (error.response?.status === 401) {
+            // Only handle if we're in the browser
+            if (typeof window !== 'undefined') {
+                // Clear all auth state
+                localStorage.removeItem('user_data');
+
+                // Clear cookies by calling logout endpoint
+                fetch('/api/user/auth/logout', { method: 'POST' }).catch(() => { });
+
+                // Redirect to login with a message
+                const currentPath = window.location.pathname;
+                if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
+                    window.location.href = `/login?expired=true&redirect=${encodeURIComponent(currentPath)}`;
+                }
+            }
+        }
         return Promise.reject(error);
     }
 );
