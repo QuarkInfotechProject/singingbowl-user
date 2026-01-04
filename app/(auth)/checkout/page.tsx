@@ -51,6 +51,7 @@ const Checkout = () => {
   const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
   const [availableCoupons, setAvailableCoupons] = useState<AvailableCoupon[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
+  const [orderCreated, setOrderCreated] = useState(false); // Prevent duplicate submissions
 
   const {
     cartItems,
@@ -84,7 +85,7 @@ const Checkout = () => {
           setAvailableCoupons(response.data);
         }
       } catch (error) {
-        console.error("Failed to fetch coupons:", error);
+        // Silently fail - coupons are optional
       } finally {
         setLoadingCoupons(false);
       }
@@ -165,6 +166,10 @@ const Checkout = () => {
 
     try {
       setIsSubmitting(true);
+      setOrderCreated(true); // Mark as submitted to prevent duplicates
+
+      // Clear any existing payment config to prevent stale data
+      sessionStorage.removeItem('paymentConfig');
 
       const orderData = {
         addressId: selectedAddress.uuid,
@@ -206,6 +211,7 @@ const Checkout = () => {
     } catch (error: any) {
       setOrderError(error.response?.data?.error || error.response?.data?.message || "Failed to place order. Please try again.");
       setIsSubmitting(false);
+      setOrderCreated(false); // Allow retry on error
     }
   };
 
@@ -374,8 +380,8 @@ const Checkout = () => {
                 {/* Submit Button */}
                 <button
                   onClick={handleSubmit}
-                  disabled={isSubmitting || cartItems.length === 0}
-                  className={`w-full bg-[#A12717] text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-[#8a2113] active:scale-[0.99] flex items-center justify-center gap-2 ${isSubmitting || cartItems.length === 0 ? "opacity-50 cursor-not-allowed transform-none" : ""
+                  disabled={isSubmitting || orderCreated || cartItems.length === 0}
+                  className={`w-full bg-[#A12717] text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-[#8a2113] active:scale-[0.99] flex items-center justify-center gap-2 ${isSubmitting || orderCreated || cartItems.length === 0 ? "opacity-50 cursor-not-allowed transform-none" : ""
                     }`}
                 >
                   {isSubmitting ? (
