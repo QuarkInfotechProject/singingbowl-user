@@ -196,9 +196,26 @@ const Checkout = () => {
 
                         const checkoutDiv = document.getElementById('checkout');
                         console.log('checkout innerHTML length in onSuccess:', checkoutDiv?.innerHTML?.length);
-                        console.log('checkout innerHTML preview:', checkoutDiv?.innerHTML?.substring(0, 200));
 
-                        // Modal already shown before init, just stop the loading state
+                        // SDK stores session data during initialize()
+                        // Reload the script to trigger auto-render from cached session
+                        console.log('Reloading SDK script to trigger auto-render...');
+                        const oldScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
+                        if (oldScript) oldScript.remove();
+
+                        const newScript = document.createElement('script');
+                        newScript.src = GETPAY_SDK_URL;
+                        newScript.async = true;
+                        newScript.onload = () => {
+                            console.log('SDK script reloaded, checking for render...');
+                            setTimeout(() => {
+                                const div = document.getElementById('checkout');
+                                console.log('After reload - innerHTML length:', div?.innerHTML?.length);
+                                console.log('After reload - iframes:', document.querySelectorAll('iframe').length);
+                            }, 1000);
+                        };
+                        document.body.appendChild(newScript);
+
                         setIsSubmitting(false);
                     },
                     onError: (error: any) => {
