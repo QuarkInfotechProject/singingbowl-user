@@ -323,10 +323,11 @@ const PaymentPageContent = () => {
                 // Debug: Log checkout div state immediately after SDK init
                 setTimeout(() => {
                     const divAfterInit = document.getElementById("checkout");
-                    console.log("=== 100ms After GetPay.initialize() ===");
+                    console.log("=== 2 SECONDS After GetPay.initialize() ===");
                     console.log("Checkout div innerHTML length:", divAfterInit?.innerHTML?.length);
-                    console.log("Checkout div innerHTML preview:", divAfterInit?.innerHTML?.substring(0, 200));
-                }, 100);
+                    console.log("Checkout div innerHTML preview:", divAfterInit?.innerHTML?.substring(0, 500));
+                    console.log("Checkout div hidden attr:", divAfterInit?.hidden);
+                }, 2000);
 
                 sdkInitializedRef.current = true;
                 // Note: setSdkLoading(false) is now called in onSuccess callback
@@ -481,6 +482,7 @@ const PaymentPageContent = () => {
                                 <div
                                     id="checkout"
                                     className="min-h-[300px]"
+                                    hidden
                                 />
 
                                 {/* Loading overlay - shows on top while SDK loads */}
