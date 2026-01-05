@@ -30,6 +30,7 @@ const Checkout = () => {
     const [orderError, setOrderError] = useState<string | null>(null);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("cod");
+    const [showPaymentInit, setShowPaymentInit] = useState(false);
     const checkoutInProgressRef = useRef(false);
 
     const { cartItems, isLoading, clearCart, appliedCoupon } = useCart();
@@ -74,6 +75,9 @@ const Checkout = () => {
     const initializeGetPay = async (orderResponse: any) => {
         await waitForGetPay();
 
+        setShowPaymentInit(true);
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         const getPayOptions = {
             ...orderResponse.getPayOptions,
             websiteDomain: window.location.origin,
@@ -85,6 +89,7 @@ const Checkout = () => {
                 window.location.href = `/checkout/payment?orderId=${orderResponse.orderId}`;
             },
             onError: (error: any) => {
+                setShowPaymentInit(false);
                 setOrderError('Payment initialization failed: ' + (error?.error || error?.message || 'Unknown error'));
                 setIsSubmitting(false);
                 checkoutInProgressRef.current = false;
@@ -270,7 +275,17 @@ const Checkout = () => {
                 </DialogContent>
             </Dialog>
 
-            <div id="checkout" className="hidden"></div>
+            {showPaymentInit && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="bg-white rounded-2xl w-full max-w-lg p-8 text-center">
+                        <Loader2 className="w-10 h-10 animate-spin text-[#A12717] mx-auto mb-4" />
+                        <p className="text-slate-700 font-medium">Initializing payment...</p>
+                        <p className="text-slate-500 text-sm mt-2">Please wait while we set up your secure payment</p>
+                        <div id="checkout" className="mt-4"></div>
+                    </div>
+                </div>
+            )}
+            {!showPaymentInit && <div id="checkout" className="hidden"></div>}
         </div>
     );
 };
