@@ -261,22 +261,10 @@ const PaymentPageContent = () => {
                     },
 
                     onSuccess: (data: any) => {
-                        // IMPORTANT: According to GetPay documentation, this callback fires when
-                        // SDK INITIALIZATION succeeds, NOT when payment succeeds.
-                        // The actual payment result is delivered via redirect to successUrl/failUrl.
-                        // This callback receives the configuration object back.
                         console.log("=== GetPay SDK Initialization Success ===");
                         console.log("SDK initialized successfully. Payment form is ready.");
                         console.log("Config data received:", data);
-
-                        // Hide loading spinner now that the form is actually ready
                         setSdkLoading(false);
-
-                        // The SDK has been initialized successfully.
-                        // The user will now see the payment form.
-                        // After payment completion, GetPay will REDIRECT to:
-                        // - successUrl (for successful payments)
-                        // - failUrl (for failed/cancelled payments)
                     },
 
                     onError: (error: any) => {
@@ -473,14 +461,20 @@ const PaymentPageContent = () => {
                             </div>
 
                             <div className="p-6 relative min-h-[400px]">
+
+                                {/* GetPay renders its form into this div - MUST always be in DOM */}
+                                <div
+                                    id="checkout"
+                                    className="min-h-[300px]"
+                                />
+
+                                {/* Loading overlay - shows on top while SDK loads */}
                                 {sdkLoading && (
-                                    <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10 transition-opacity duration-300">
+                                    <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10">
                                         <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-4" />
                                         <p className="text-slate-500">Loading secure gateway...</p>
                                     </div>
                                 )}
-
-                                <div id="checkout" className={sdkLoading ? 'opacity-0' : 'opacity-100'} />
 
                                 {paymentError && (
                                     <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-20 p-6 text-center">
