@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     ChevronRight,
     Loader2,
@@ -31,7 +31,9 @@ const Checkout = () => {
     const [orderError, setOrderError] = useState<string | null>(null);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("cod");
-    const [orderCreated, setOrderCreated] = useState(false); // Prevent duplicate submissions
+
+    // Use a ref to track in-flight checkout - survives re-renders and prevents race conditions
+    const checkoutInProgressRef = useRef(false);
 
     const {
         cartItems,
@@ -52,6 +54,8 @@ const Checkout = () => {
         sessionStorage.removeItem('paymentConfig');
         sessionStorage.removeItem('lastGetPayEvent');
         sessionStorage.removeItem('currentOrderId');
+        // Reset checkout guard to allow fresh checkout attempt
+        checkoutInProgressRef.current = false;
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -68,9 +72,15 @@ const Checkout = () => {
             return;
         }
 
+        // CRITICAL: Prevent duplicate submissions using ref (sync check before any async work)
+        if (checkoutInProgressRef.current) {
+            console.warn('Checkout already in progress, ignoring duplicate submission');
+            return;
+        }
+        checkoutInProgressRef.current = true;
+
         try {
             setIsSubmitting(true);
-            setOrderCreated(true);
 
             // Clear ALL payment-related sessionStorage to prevent stale data
             sessionStorage.removeItem('paymentConfig');
@@ -129,7 +139,7 @@ const Checkout = () => {
             console.error("Order creation failed:", error);
             setOrderError(error.response?.data?.error || error.response?.data?.message || "Failed to place order. Please try again.");
             setIsSubmitting(false);
-            setOrderCreated(false); // Allow retry on error
+            checkoutInProgressRef.current = false; // Allow retry on error
         }
     };
 
@@ -205,8 +215,8 @@ const Checkout = () => {
                                 {/* Submit Button */}
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={isSubmitting || orderCreated || cartItems.length === 0}
-                                    className={`w-full bg-[#A12717] text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-[#8a2113] active:scale-[0.99] flex items-center justify-center gap-2 ${isSubmitting || orderCreated || cartItems.length === 0 ? "opacity-50 cursor-not-allowed transform-none" : ""
+                                    disabled={isSubmitting || cartItems.length === 0}
+                                    className={`w-full bg-[#A12717] text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-[#8a2113] active:scale-[0.99] flex items-center justify-center gap-2 ${isSubmitting || cartItems.length === 0 ? "opacity-50 cursor-not-allowed transform-none" : ""
                                         }`}
                                 >
                                     {isSubmitting ? (

@@ -66,8 +66,48 @@ const PaymentPageContent = () => {
     const searchParams = useSearchParams();
     const orderIdParam = searchParams.get('orderId');
 
+    /**
+     * CRITICAL: Completely destroy GetPay SDK state to prevent stale transaction context.
+     * GetPay SDK caches internal state (including callback URLs) from previous transactions.
+     * Without full destruction, a new order may use the previous order's callback URL.
+     */
+    const destroyGetPaySDK = () => {
+        console.log("=== Destroying GetPay SDK State ===");
 
+        // 1. Clear the checkout container
+        const checkoutContainer = document.getElementById("checkout");
+        if (checkoutContainer) {
+            checkoutContainer.innerHTML = "";
+        }
 
+        // 2. Remove any existing GetPay script to force fresh load
+        const existingScripts = document.querySelectorAll(`script[src*="getpay"], script[src*="GetPay"]`);
+        existingScripts.forEach(script => {
+            console.log("Removing GetPay script:", script.getAttribute('src'));
+            script.remove();
+        });
+
+        // 3. Delete the global GetPay object and any related state
+        if ((window as any).GetPay) {
+            delete (window as any).GetPay;
+        }
+
+        // 4. Clear any GetPay-related iframes that might be cached
+        const iframes = document.querySelectorAll('iframe[src*="getpay"], iframe[src*="nchl"], iframe[id*="Cardinal"]');
+        iframes.forEach(iframe => {
+            console.log("Removing GetPay iframe");
+            iframe.remove();
+        });
+
+        // 5. Reset our ref
+        sdkInitializedRef.current = false;
+    };
+
+    // On FIRST mount, completely destroy any existing SDK state
+    useEffect(() => {
+        destroyGetPaySDK();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // DEBUG: Log everything on mount to trace the state
     useEffect(() => {
@@ -294,42 +334,30 @@ const PaymentPageContent = () => {
         };
 
         const loadScript = () => {
-            // Check if script is already present
-            const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
-
-            if (existingScript) {
-                console.log("GetPay script already exists. Waiting for global object...");
-                // Script exists, just wait for window.GetPay
-                if (!checkAndInit()) {
-                    checkInterval = setInterval(() => {
-                        if (checkAndInit()) clearInterval(checkInterval);
-                    }, 500);
-                }
-            } else {
-                console.log("Loading GetPay script...");
-                script = document.createElement("script");
-                script.src = GETPAY_SDK_URL;
-                script.async = true;
-                script.onload = () => {
-                    console.log("GetPay script loaded. Initializing...");
-                    // Small delay to ensure execution
-                    setTimeout(() => {
-                        if (!checkAndInit()) {
-                            // Fallback polling if onload fired but global not ready immediately
-                            checkInterval = setInterval(() => {
-                                if (checkAndInit()) clearInterval(checkInterval);
-                            }, 500);
-                        }
-                    }, 100);
-                };
-                script.onerror = () => {
-                    if (isMounted) {
-                        setPaymentError("Failed to load payment script. Please check your connection.");
-                        setSdkLoading(false);
+            // Always load fresh script since we destroy it on mount
+            console.log("Loading GetPay script fresh...");
+            script = document.createElement("script");
+            script.src = GETPAY_SDK_URL;
+            script.async = true;
+            script.onload = () => {
+                console.log("GetPay script loaded. Initializing...");
+                // Small delay to ensure execution
+                setTimeout(() => {
+                    if (!checkAndInit()) {
+                        // Fallback polling if onload fired but global not ready immediately
+                        checkInterval = setInterval(() => {
+                            if (checkAndInit()) clearInterval(checkInterval);
+                        }, 500);
                     }
-                };
-                document.body.appendChild(script);
-            }
+                }, 100);
+            };
+            script.onerror = () => {
+                if (isMounted) {
+                    setPaymentError("Failed to load payment script. Please check your connection.");
+                    setSdkLoading(false);
+                }
+            };
+            document.body.appendChild(script);
         };
 
         // Start loading
@@ -347,28 +375,22 @@ const PaymentPageContent = () => {
             isMounted = false;
             if (checkInterval) clearInterval(checkInterval);
             clearTimeout(safetyTimeout);
-            // NOTE: We do NOT remove the script tag anymore to avoid race conditions on quick re-navigation
-            // We only clean up the global instance reference if we want to force re-init next time
-            if ((window as any).GetPay) {
-                // Optional: delete (window as any).GetPay; 
-                // Better to leave it and just re-instantiate with 'new'
-            }
+            // CRITICAL: Destroy SDK on unmount to ensure fresh state on next mount
+            destroyGetPaySDK();
         };
     }, [paymentConfig, GETPAY_SDK_URL]);
 
     const handleBackToCheckout = () => {
+        destroyGetPaySDK();
         sessionStorage.removeItem('paymentConfig');
         router.push('/checkout');
     };
 
     const handleManualRetry = () => {
+        destroyGetPaySDK();
         setPaymentError(null);
         setSdkLoading(true);
-        sdkInitializedRef.current = false;
-        // Trigger re-run of effect by toggling a dummy state or just forcing component update?
-        // Actually, since we cleared sdkInitializedRef, if we remount the effect it will run.
-        // Simplest way: reload page or just let the user go back.
-        // But to stay on page:
+        // Force page reload to reinitialize everything fresh
         window.location.reload();
     };
 
