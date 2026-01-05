@@ -166,7 +166,16 @@ const Checkout = () => {
                 await waitForGetPay();
                 console.log('GetPay SDK ready, initializing...');
 
-                // Initialize GetPay SDK (as per docs - this should be called on checkout page)
+                // DEBUG: Check DOM state before init
+                const checkoutBefore = document.getElementById('checkout');
+                console.log('=== BEFORE INIT ===');
+                console.log('checkout div exists:', !!checkoutBefore);
+                console.log('checkout computed style display:', checkoutBefore ? getComputedStyle(checkoutBefore).display : 'N/A');
+                console.log('checkout computed style visibility:', checkoutBefore ? getComputedStyle(checkoutBefore).visibility : 'N/A');
+                console.log('checkout offsetParent (null = hidden):', checkoutBefore?.offsetParent);
+                console.log('checkout innerHTML length:', checkoutBefore?.innerHTML?.length);
+
+                // Initialize GetPay SDK
                 const getPayOptions = {
                     ...orderResponse.getPayOptions,
                     websiteDomain: window.location.origin,
@@ -174,19 +183,21 @@ const Checkout = () => {
                         successUrl: `${window.location.origin}/api/user/orders/success/getPay/${orderResponse.orderId}`,
                         failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${orderResponse.orderId}`
                     },
-                    onSuccess: () => {
-                        console.log('GetPay SDK initialized successfully, showing payment form');
-                        // Show payment form on the same page instead of redirecting
+                    onSuccess: (data: any) => {
+                        console.log('=== onSuccess CALLBACK ===');
+                        console.log('Data received:', data);
+
                         const checkoutDiv = document.getElementById('checkout');
-                        if (checkoutDiv) {
-                            checkoutDiv.removeAttribute('hidden');
-                        }
+                        console.log('checkout innerHTML length in onSuccess:', checkoutDiv?.innerHTML?.length);
+                        console.log('checkout innerHTML preview:', checkoutDiv?.innerHTML?.substring(0, 200));
+
                         setCurrentOrderId(orderResponse.orderId);
                         setShowPaymentForm(true);
                         setIsSubmitting(false);
                     },
                     onError: (error: any) => {
-                        console.error('GetPay initialization error:', error);
+                        console.error('=== onError CALLBACK ===');
+                        console.error('Error:', error);
                         setOrderError('Payment initialization failed: ' + (error?.error || error?.message || 'Unknown error'));
                         setIsSubmitting(false);
                         checkoutInProgressRef.current = false;
@@ -195,7 +206,26 @@ const Checkout = () => {
 
                 console.log('Initializing GetPay with options:', getPayOptions);
                 const getPay = new (window as any).GetPay(getPayOptions);
+                console.log('GetPay instance created:', getPay);
+                console.log('GetPay methods:', Object.keys(getPay));
+
                 getPay.initialize();
+                console.log('initialize() called');
+
+                // Check DOM state after 1s, 3s, 5s
+                [1000, 3000, 5000].forEach(delay => {
+                    setTimeout(() => {
+                        const div = document.getElementById('checkout');
+                        console.log(`=== ${delay / 1000}s AFTER INIT ===`);
+                        console.log('innerHTML length:', div?.innerHTML?.length);
+                        console.log('innerHTML preview:', div?.innerHTML?.substring(0, 300));
+                        console.log('iframes on page:', document.querySelectorAll('iframe').length);
+                        // List all iframes
+                        document.querySelectorAll('iframe').forEach((f, i) => {
+                            console.log(`iframe ${i}:`, f.id, f.src?.substring(0, 80));
+                        });
+                    }, delay);
+                });
 
                 // Don't reset submitting state here - let onSuccess/onError handle it
             } else {
@@ -339,15 +369,15 @@ const Checkout = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* Single GetPay checkout div - SDK renders here */}
-            <div className={showPaymentForm ? "fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" : "hidden"}>
+            {/* GetPay payment modal - uses opacity so SDK can render into #checkout while invisible */}
+            <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity ${showPaymentForm ? "bg-black/50" : "opacity-0 pointer-events-none"}`}>
                 <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto">
                     <div className="bg-blue-600 p-4 text-white rounded-t-2xl flex justify-between items-center">
                         <span className="font-semibold">Complete Payment</span>
                         {currentOrderId && <span className="text-sm opacity-75">Order #{currentOrderId}</span>}
                     </div>
-                    <div className="p-6">
-                        <div id="checkout"></div>
+                    <div className="p-6 min-h-[600px]">
+                        <div id="checkout" className="!flex"></div>
                     </div>
                 </div>
             </div>
