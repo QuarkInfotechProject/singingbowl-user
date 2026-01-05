@@ -173,9 +173,11 @@ const Checkout = () => {
                         failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${orderResponse.orderId}`
                     },
                     onSuccess: () => {
-                        console.log('GetPay SDK initialized successfully, redirecting to payment page');
-                        // Redirect to payment page as per GetPay docs
-                        window.location.href = `/checkout/payment?orderId=${orderResponse.orderId}`;
+                        console.log('GetPay SDK initialized successfully, redirecting to payment page in 500ms...');
+                        // Add small delay to ensure SDK saves its internal state before redirect
+                        setTimeout(() => {
+                            window.location.href = `/checkout/payment?orderId=${orderResponse.orderId}`;
+                        }, 500);
                     },
                     onError: (error: any) => {
                         console.error('GetPay initialization error:', error);
