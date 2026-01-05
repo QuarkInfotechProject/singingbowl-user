@@ -57,12 +57,14 @@ const PaymentPageContent = () => {
         const runInitialization = async () => {
             hasInitializedRef.current = true;
             setSdkStatus('initializing');
+            console.log('PaymentPage: Starting initialization...');
 
             try {
                 // Wait for SDK script to load
                 await new Promise<void>((resolve, reject) => {
                     const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
                     if (existingScript) {
+                        console.log('PaymentPage: Script already exists');
                         resolve();
                         return;
                     }
@@ -70,7 +72,10 @@ const PaymentPageContent = () => {
                     const script = document.createElement('script');
                     script.src = GETPAY_SDK_URL;
                     script.async = true;
-                    script.onload = () => resolve();
+                    script.onload = () => {
+                        console.log('PaymentPage: Script loaded');
+                        resolve();
+                    };
                     script.onerror = () => reject(new Error('Failed to load payment SDK'));
                     document.body.appendChild(script);
                 });
@@ -88,10 +93,12 @@ const PaymentPageContent = () => {
                     };
                     check();
                 });
+                console.log('PaymentPage: GetPay object found');
 
                 // Initialize GetPay
                 const storedConfig = sessionStorage.getItem('paymentConfig');
                 const config = JSON.parse(storedConfig || '{}');
+                console.log('PaymentPage: Config loaded', config);
 
                 const getPayOptions = {
                     ...config.getPayOptions,
@@ -100,18 +107,51 @@ const PaymentPageContent = () => {
                         successUrl: `${window.location.origin}/api/user/orders/success/getPay/${config.orderId}`,
                         failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${config.orderId}`
                     },
-                    onSuccess: () => {
+                    onSuccess: (data: any) => {
+                        console.log('PaymentPage: onSuccess fired', data);
                         setSdkStatus('success');
+
+                        // Check DOM
+                        const div = document.getElementById('checkout');
+                        console.log('PaymentPage: DOM content length:', div?.innerHTML?.length);
                     },
                     onError: (error: any) => {
-                        console.error('GetPay error:', error);
+                        console.error('PaymentPage: onError fired:', error);
                         setErrorMessage(error?.error || error?.message || 'Payment initialization failed');
                         setSdkStatus('error');
                     }
                 };
 
+                console.log('PaymentPage: Calling initialize()');
                 const getPay = new (window as any).GetPay(getPayOptions);
                 getPay.initialize();
+
+                // Poll for changes in the #checkout div for 5 seconds
+                let checks = 0;
+                const interval = setInterval(() => {
+                    checks++;
+                    const div = document.getElementById('checkout');
+                    if (div) {
+                        const style = window.getComputedStyle(div);
+                        const rect = div.getBoundingClientRect();
+                        console.log(`PaymentPage [${checks * 0.5}s]:`, {
+                            innerHTML: div.innerHTML.length,
+                            children: div.children.length,
+                            display: style.display,
+                            visibility: style.visibility,
+                            width: rect.width,
+                            height: rect.height,
+                            iframes: document.querySelectorAll('iframe').length
+                        });
+
+                        // If content appears, stop checking
+                        if (div.children.length > 0 || div.innerHTML.length > 0) {
+                            console.log('PaymentPage: Content generated! Stopping checks.');
+                            clearInterval(interval);
+                        }
+                    }
+                    if (checks >= 10) clearInterval(interval);
+                }, 500);
 
             } catch (error: any) {
                 console.error('Initialization failed:', error);
