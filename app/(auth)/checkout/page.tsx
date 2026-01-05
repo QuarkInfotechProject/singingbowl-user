@@ -24,6 +24,9 @@ import OrderSummary from "./components/OrderSummary";
 
 type PaymentMethod = "cod" | "getPay";
 
+// GetPay SDK URL
+const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL || 'https://minio.finpos.global/getpay-cdn/webcheckout/bundle.js';
+
 const Checkout = () => {
     const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
     const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -57,6 +60,20 @@ const Checkout = () => {
         // Reset checkout guard to allow fresh checkout attempt
         checkoutInProgressRef.current = false;
     }, []);
+
+    // Load GetPay SDK script on mount (required for initialize() call)
+    useEffect(() => {
+        if (selectedPaymentMethod === 'getPay') {
+            const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
+            if (!existingScript) {
+                const script = document.createElement('script');
+                script.src = GETPAY_SDK_URL;
+                script.async = true;
+                script.onload = () => console.log('GetPay script loaded on checkout page');
+                document.body.appendChild(script);
+            }
+        }
+    }, [selectedPaymentMethod]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -112,25 +129,67 @@ const Checkout = () => {
                 return;
             }
 
-            // GetPay FLOW: Store config and redirect to payment page
+            // GetPay FLOW: Initialize SDK and redirect to payment page
             if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
-                // DEBUG: Log the order response to identify orderId mismatch
                 console.log('=== Order Created Debug ===');
                 console.log('Fresh Order ID from Server:', orderResponse.orderId);
 
-                // Store payment config in sessionStorage (survives page navigation)
+                // Store payment config for payment page reference
                 const config = {
                     ...orderResponse,
                     addressUuid: selectedAddress?.uuid,
-                    _timestamp: Date.now() // Help detect stale configs
+                    _timestamp: Date.now()
                 };
                 sessionStorage.setItem('paymentConfig', JSON.stringify(config));
                 sessionStorage.setItem('currentOrderId', String(orderResponse.orderId));
 
-                // Redirect to payment page with Order ID in URL for validation
-                const redirectUrl = `/checkout/payment?orderId=${orderResponse.orderId}`;
-                console.log("Redirecting to:", redirectUrl);
-                router.push(redirectUrl);
+                // Wait for GetPay script to be ready
+                const waitForGetPay = () => {
+                    return new Promise<void>((resolve, reject) => {
+                        let attempts = 0;
+                        const check = () => {
+                            if ((window as any).GetPay) {
+                                resolve();
+                            } else if (attempts > 50) {
+                                reject(new Error('GetPay SDK failed to load'));
+                            } else {
+                                attempts++;
+                                setTimeout(check, 100);
+                            }
+                        };
+                        check();
+                    });
+                };
+
+                await waitForGetPay();
+                console.log('GetPay SDK ready, initializing...');
+
+                // Initialize GetPay SDK (as per docs - this should be called on checkout page)
+                const getPayOptions = {
+                    ...orderResponse.getPayOptions,
+                    websiteDomain: window.location.origin,
+                    callbackUrl: {
+                        successUrl: `${window.location.origin}/api/user/orders/success/getPay/${orderResponse.orderId}`,
+                        failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${orderResponse.orderId}`
+                    },
+                    onSuccess: () => {
+                        console.log('GetPay SDK initialized successfully, redirecting to payment page');
+                        // Redirect to payment page as per GetPay docs
+                        window.location.href = `/checkout/payment?orderId=${orderResponse.orderId}`;
+                    },
+                    onError: (error: any) => {
+                        console.error('GetPay initialization error:', error);
+                        setOrderError('Payment initialization failed: ' + (error?.error || error?.message || 'Unknown error'));
+                        setIsSubmitting(false);
+                        checkoutInProgressRef.current = false;
+                    }
+                };
+
+                console.log('Initializing GetPay with options:', getPayOptions);
+                const getPay = new (window as any).GetPay(getPayOptions);
+                getPay.initialize();
+
+                // Don't reset submitting state here - let onSuccess/onError handle it
             } else {
                 throw new Error("Invalid payment configuration from server - Missing GetPay options");
             }
@@ -271,6 +330,9 @@ const Checkout = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Hidden GetPay checkout container (required for SDK) */}
+            <div id="checkout" hidden></div>
         </div>
     );
 };

@@ -1,461 +1,146 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
-import { CreditCard, AlertCircle, ArrowLeft, CheckCircle2, XCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { CreditCard, ArrowLeft, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from "@/components/ui/dialog";
-
-// Declare GetPay as global
-declare global {
-    interface Window {
-        GetPay: any;
-    }
-}
-
-interface PaymentConfig {
-    getPayOptions?: {
-        baseUrl?: string;
-        containerId?: string;
-        callbackUrl?: string | { successUrl?: string; failUrl?: string };
-        websiteDomain?: string;
-        [key: string]: any;
-    };
-    addressUuid?: string;
-    [key: string]: any;
-}
-
 import { Suspense } from 'react';
 
-const PaymentPageContent = () => {
-    // simple state state
-    const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
-    const [sdkLoading, setSdkLoading] = useState(true);
-    const [paymentError, setPaymentError] = useState<string | null>(null);
-    const [sessionExpired, setSessionExpired] = useState(false);
-    const sdkInitializedRef = useRef(false);
+// GetPay SDK URL - as per docs, just load the script on payment page
+const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL || 'https://minio.finpos.global/getpay-cdn/webcheckout/bundle.js';
 
-    // Modal state
-    const [resultModal, setResultModal] = useState<{
-        isOpen: boolean;
-        type: 'success' | 'error';
-        url: string;
-        message?: string;
-        data?: any;
-    }>({
-        isOpen: false,
-        type: 'success',
-        url: '',
-        message: ''
-    });
+const PaymentPageContent = () => {
+    const [sdkLoaded, setSdkLoaded] = useState(false);
+    const [sessionExpired, setSessionExpired] = useState(false);
 
     const { isLoggedIn, isLoading: authLoading } = useAuth();
     const router = useRouter();
-    const { cartItems, cartTotal, grandTotal, shippingCharge, couponDiscount } = useCart();
-
-    const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL;
+    const { grandTotal } = useCart();
 
     const searchParams = useSearchParams();
     const orderIdParam = searchParams.get('orderId');
 
-    /**
-     * CRITICAL: Completely destroy GetPay SDK state to prevent stale transaction context.
-     * GetPay SDK caches internal state (including callback URLs) from previous transactions.
-     * Without full destruction, a new order may use the previous order's callback URL.
-     */
-    const destroyGetPaySDK = () => {
-        console.log("=== Destroying GetPay SDK State ===");
+    // Get order ID from sessionStorage for display
+    const [displayOrderId, setDisplayOrderId] = useState<string | null>(null);
 
-        // 1. Clear the checkout container
-        const checkoutContainer = document.getElementById("checkout");
-        if (checkoutContainer) {
-            checkoutContainer.innerHTML = "";
-        }
-
-        // 2. Remove any existing GetPay script to force fresh load
-        const existingScripts = document.querySelectorAll(`script[src*="getpay"], script[src*="GetPay"]`);
-        existingScripts.forEach(script => {
-            console.log("Removing GetPay script:", script.getAttribute('src'));
-            script.remove();
-        });
-
-        // 3. Delete the global GetPay object and any related state
-        if ((window as any).GetPay) {
-            delete (window as any).GetPay;
-        }
-
-        // 4. Clear any GetPay-related iframes that might be cached
-        const iframes = document.querySelectorAll('iframe[src*="getpay"], iframe[src*="nchl"], iframe[id*="Cardinal"]');
-        iframes.forEach(iframe => {
-            console.log("Removing GetPay iframe");
-            iframe.remove();
-        });
-
-        // 5. Reset our ref
-        sdkInitializedRef.current = false;
-    };
-
-    // On FIRST mount, completely destroy any existing SDK state
-    useEffect(() => {
-        destroyGetPaySDK();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    // DEBUG: Log everything on mount to trace the state
+    // Check session on mount
     useEffect(() => {
         const stored = sessionStorage.getItem('paymentConfig');
-        console.log("=== PAYMENT PAGE MOUNTED ===");
-        console.log("URL Order ID:", orderIdParam);
-        console.log("Session Config Raw:", stored);
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            console.log("Session Order ID:", parsed.orderId);
-            console.log("Session Timestamp:", parsed._timestamp);
-        } else {
-            console.error("NO SESSION CONFIG FOUND");
+        if (!stored) {
+            console.error("No payment config found in session");
+            setSessionExpired(true);
+            return;
+        }
+
+        try {
+            const config = JSON.parse(stored);
+            setDisplayOrderId(config.orderId || orderIdParam);
+
+            // Validate order ID matches
+            if (orderIdParam && String(config.orderId) !== String(orderIdParam)) {
+                console.error("Order ID mismatch:", config.orderId, "vs", orderIdParam);
+                setSessionExpired(true);
+            }
+        } catch (e) {
+            console.error("Failed to parse payment config:", e);
+            setSessionExpired(true);
         }
     }, [orderIdParam]);
 
-    const [configLoadAttempts, setConfigLoadAttempts] = useState(0);
-    const MAX_CONFIG_LOAD_ATTEMPTS = 3;
-
-    useEffect(() => {
-        const loadConfig = () => {
-            try {
-                const stored = sessionStorage.getItem('paymentConfig');
-
-                if (!stored) {
-                    if (configLoadAttempts < MAX_CONFIG_LOAD_ATTEMPTS) {
-                        console.log(`Config not found, retry attempt ${configLoadAttempts + 1}/${MAX_CONFIG_LOAD_ATTEMPTS}`);
-                        setTimeout(() => {
-                            setConfigLoadAttempts(prev => prev + 1);
-                        }, 200);
-                        return;
-                    }
-                    console.error("Config not found after max retries, session expired");
-                    setSessionExpired(true);
-                    return;
-                }
-
-                const config = JSON.parse(stored);
-
-                // STRICT VALIDATION: URL Order ID must match Session Config Order ID
-                // Using loose comparison for robust handling of string vs number
-                if (orderIdParam && String(config.orderId) !== String(orderIdParam)) {
-                    console.error("Order ID Mismatch: Session has", config.orderId, "but URL requested", orderIdParam);
-                    setSessionExpired(true); // Force expire to prevent paying for wrong order
-                    return;
-                }
-
-                // Check if payment tokens are likely expired (CyberSource JWT expires in ~15 minutes)
-                // We use 14 minutes to give a small buffer
-                const SESSION_MAX_AGE_MS = 14 * 60 * 1000; // 14 minutes
-                if (config._timestamp && (Date.now() - config._timestamp > SESSION_MAX_AGE_MS)) {
-                    console.warn("Payment session too old, tokens likely expired. Age:",
-                        Math.round((Date.now() - config._timestamp) / 1000 / 60), "minutes");
-                    setSessionExpired(true);
-                    return;
-                }
-
-                console.log("Payment config loaded successfully for order:", config.orderId);
-                setPaymentConfig(config);
-            } catch (e) {
-                console.error("Config parse error", e);
-                setSessionExpired(true);
-            }
-        };
-
-        loadConfig();
-    }, [orderIdParam, configLoadAttempts]);
-
-    // 2. Redirect if not logged in
+    // Redirect if not logged in
     useEffect(() => {
         if (!authLoading && !isLoggedIn) {
             router.push("/login?redirect=/checkout");
         }
     }, [isLoggedIn, authLoading, router]);
 
-    // 3. Robust SDK Loading & Initialization
+    // Load GetPay SDK script (as per docs - just load script, SDK auto-renders)
     useEffect(() => {
-        if (!paymentConfig || !GETPAY_SDK_URL || sdkInitializedRef.current) return;
+        if (sessionExpired) return;
 
-        let script: HTMLScriptElement | null = null;
-        let isMounted = true;
-        let checkInterval: NodeJS.Timeout;
+        console.log("Payment page: Loading GetPay SDK script...");
 
-        const initSDK = () => {
-            if (!document.getElementById("checkout")) {
-                console.warn("Checkout container not found, retrying...");
-                return;
-            }
+        // Check if script already exists
+        const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
+        if (existingScript) {
+            console.log("GetPay script already loaded");
+            setSdkLoaded(true);
+            return;
+        }
 
-            try {
-                if (sdkInitializedRef.current) return;
-
-                if (!(window as any).GetPay) {
-                    console.log("window.GetPay not ready yet in initSDK");
-                    return;
-                }
-
-                // Debug: Log checkout div state before SDK init
-                const checkoutDiv = document.getElementById("checkout");
-                console.log("=== Before GetPay.initialize() ===");
-                console.log("Checkout div exists:", !!checkoutDiv);
-                console.log("Checkout div innerHTML length:", checkoutDiv?.innerHTML?.length);
-
-                const getPayOptions = {
-                    ...paymentConfig.getPayOptions,
-                    // NOTE: Do NOT pass containerId - GetPay automatically looks for id="checkout"
-                    isRedirect: false,
-                    websiteDomain: window.location.origin,
-
-                    // CRITICAL: Explicitly set callback URLs with current order ID to prevent stale redirects
-                    callbackUrl: {
-                        successUrl: `${window.location.origin}/api/user/orders/success/getPay/${paymentConfig.orderId}`,
-                        failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`
-                    },
-
-                    // CRITICAL: Add these missing configurations
-                    timeout: 180000, // 3 minutes for bank processing
-
-                    // Handle timeout scenarios (like bank server not responding)
-                    onTimeout: (data: any) => {
-                        console.error("Payment timeout:", data);
-                        const currentParams = new URLSearchParams(window.location.search);
-                        const currentOrderId = currentParams.get('orderId');
-
-                        if (currentOrderId && String(paymentConfig.orderId) !== String(currentOrderId)) {
-                            console.warn("Ignoring stale timeout callback");
-                            return;
-                        }
-
-                        setResultModal({
-                            isOpen: true,
-                            type: 'error',
-                            data: data,
-                            url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
-                            message: "Payment timed out. The bank's authentication server didn't respond in time. Please try again."
-                        });
-                    },
-
-                    // Handle user cancellation
-                    onAbort: (data: any) => {
-                        console.log("Payment aborted by user:", data);
-                        const currentParams = new URLSearchParams(window.location.search);
-                        const currentOrderId = currentParams.get('orderId');
-
-                        if (currentOrderId && String(paymentConfig.orderId) !== String(currentOrderId)) {
-                            console.warn("Ignoring stale abort callback");
-                            return;
-                        }
-
-                        setResultModal({
-                            isOpen: true,
-                            type: 'error',
-                            data: data,
-                            url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
-                            message: "Payment was cancelled. You can try again when ready."
-                        });
-                    },
-
-                    onSuccess: (data: any) => {
-                        console.log("=== GetPay SDK Initialization Success ===");
-                        console.log("SDK initialized successfully. Payment form is ready.");
-                        console.log("Config data received:", data);
-                        setSdkLoading(false);
-                    },
-
-                    onError: (error: any) => {
-                        const currentParams = new URLSearchParams(window.location.search);
-                        const currentOrderId = currentParams.get('orderId');
-
-                        if (currentOrderId && String(paymentConfig.orderId) !== String(currentOrderId)) {
-                            console.warn("Ignoring stale error callback", {
-                                configId: paymentConfig.orderId,
-                                urlId: currentOrderId
-                            });
-                            return;
-                        }
-
-                        console.error("Error Callback:", error);
-
-                        // Parse error message for user-friendly display
-                        let errorMessage = "Payment processing failed.";
-                        if (typeof error === 'string') {
-                            errorMessage = error;
-                        } else if (error?.message) {
-                            errorMessage = error.message;
-                        } else if (error?.error) {
-                            errorMessage = error.error;
-                        }
-
-                        // Specific error handling based on error codes
-                        if (error?.code === 'BANK_TIMEOUT' || errorMessage.includes('timeout')) {
-                            errorMessage = "The bank's server didn't respond in time. Please try again.";
-                        } else if (error?.code === 'AUTHENTICATION_FAILED') {
-                            errorMessage = "Card authentication failed. Please verify your card details with your bank.";
-                        } else if (error?.code === 'INSUFFICIENT_FUNDS') {
-                            errorMessage = "Insufficient funds. Please try a different payment method.";
-                        }
-
-                        setResultModal({
-                            isOpen: true,
-                            type: 'error',
-                            data: error,
-                            url: `${window.location.origin}/checkout/payment-failed?orderId=${paymentConfig.orderId}`,
-                            message: errorMessage
-                        });
-                    }
-                };
-
-                console.log("Initializing GetPay with Order ID:", paymentConfig.orderId);
-                const getPay = new (window as any).GetPay(getPayOptions);
-                getPay.initialize();
-
-                // Debug: Log checkout div state immediately after SDK init
-                setTimeout(() => {
-                    const divAfterInit = document.getElementById("checkout");
-                    console.log("=== 2 SECONDS After GetPay.initialize() ===");
-                    console.log("Checkout div innerHTML length:", divAfterInit?.innerHTML?.length);
-                    console.log("Checkout div hidden attr:", divAfterInit?.hidden);
-
-                    // Check for any iframes created by SDK
-                    const iframes = document.querySelectorAll('iframe');
-                    console.log("Total iframes on page:", iframes.length);
-                    iframes.forEach((iframe, i) => {
-                        console.log(`Iframe ${i}:`, iframe.id, iframe.src?.substring(0, 100), iframe.className);
-                    });
-
-                    // Check for any getpay-related elements
-                    const getpayElements = document.querySelectorAll('[id*="getpay"], [class*="getpay"], [id*="GetPay"], [class*="GetPay"]');
-                    console.log("GetPay-related elements:", getpayElements.length);
-
-                    // Log body's direct children count
-                    console.log("Body direct children:", document.body.children.length);
-
-                    // Check document for any new divs with payment-related IDs
-                    const paymentDivs = document.querySelectorAll('[id*="payment"], [id*="pay"], [id*="nchl"]');
-                    console.log("Payment-related divs:", Array.from(paymentDivs).map(el => el.id));
-                }, 2000);
-
-                sdkInitializedRef.current = true;
-                // Note: setSdkLoading(false) is now called in onSuccess callback
-                // because the form isn't actually ready until that callback fires
-                if (checkInterval) clearInterval(checkInterval);
-
-            } catch (err: any) {
-                console.error("SDK Init Error", err);
-                if (isMounted) {
-                    setPaymentError("Failed to initialize payment system: " + err.message);
-                    setSdkLoading(false);
-                }
-            }
+        const script = document.createElement('script');
+        script.src = GETPAY_SDK_URL;
+        script.async = true;
+        script.onload = () => {
+            console.log('GetPay SDK script loaded on payment page');
+            setSdkLoaded(true);
         };
-
-        const checkAndInit = () => {
-            if ((window as any).GetPay) {
-                initSDK();
-                return true;
-            }
-            return false;
+        script.onerror = () => {
+            console.error('Failed to load GetPay SDK');
         };
-
-        const loadScript = () => {
-            // Always load fresh script since we destroy it on mount
-            console.log("Loading GetPay script fresh...");
-            script = document.createElement("script");
-            script.src = GETPAY_SDK_URL;
-            script.async = true;
-            script.onload = () => {
-                console.log("GetPay script loaded. Initializing...");
-                // Small delay to ensure execution
-                setTimeout(() => {
-                    if (!checkAndInit()) {
-                        // Fallback polling if onload fired but global not ready immediately
-                        checkInterval = setInterval(() => {
-                            if (checkAndInit()) clearInterval(checkInterval);
-                        }, 500);
-                    }
-                }, 100);
-            };
-            script.onerror = () => {
-                if (isMounted) {
-                    setPaymentError("Failed to load payment script. Please check your connection.");
-                    setSdkLoading(false);
-                }
-            };
-            document.body.appendChild(script);
-        };
-
-        // Start loading
-        loadScript();
-
-        // Safety timeout: stop loading if it takes too long
-        const safetyTimeout = setTimeout(() => {
-            if (isMounted && sdkLoading && !sdkInitializedRef.current) {
-                setPaymentError("Payment gateway is taking too long to load.");
-                setSdkLoading(false);
-            }
-        }, 15000); // 15 seconds timeout
+        document.body.appendChild(script);
 
         return () => {
-            isMounted = false;
-            if (checkInterval) clearInterval(checkInterval);
-            clearTimeout(safetyTimeout);
-            // CRITICAL: Destroy SDK on unmount to ensure fresh state on next mount
-            destroyGetPaySDK();
+            // Don't remove script on unmount - SDK needs it
         };
-    }, [paymentConfig, GETPAY_SDK_URL]);
+    }, [sessionExpired]);
+
+    // Debug: Check if SDK renders anything
+    useEffect(() => {
+        if (!sdkLoaded) return;
+
+        const checkForContent = () => {
+            const checkoutDiv = document.getElementById('checkout');
+            console.log("Payment page: Checking checkout div...");
+            console.log("Checkout div exists:", !!checkoutDiv);
+            console.log("Checkout div innerHTML length:", checkoutDiv?.innerHTML?.length || 0);
+
+            // Check for iframes
+            const iframes = document.querySelectorAll('iframe');
+            console.log("Total iframes on page:", iframes.length);
+        };
+
+        // Check immediately and after 2 seconds
+        setTimeout(checkForContent, 500);
+        setTimeout(checkForContent, 2000);
+    }, [sdkLoaded]);
 
     const handleBackToCheckout = () => {
-        destroyGetPaySDK();
+        // Clear session data
         sessionStorage.removeItem('paymentConfig');
+        sessionStorage.removeItem('currentOrderId');
         router.push('/checkout');
     };
 
-    const handleManualRetry = () => {
-        destroyGetPaySDK();
-        setPaymentError(null);
-        setSdkLoading(true);
-        // Force page reload to reinitialize everything fresh
-        window.location.reload();
-    };
-
-    const handleModalConfirm = () => {
-        if (resultModal.url && resultModal.url !== "undefined") {
-            window.location.href = resultModal.url;
-        } else {
-            setResultModal(prev => ({ ...prev, isOpen: false }));
-        }
-    };
-
-    if (authLoading) {
+    // Session Expired State
+    if (sessionExpired) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="w-8 h-8 border-4 border-slate-200 border-t-[#A12717] rounded-full animate-spin" />
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle className="w-8 h-8 text-amber-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-900 mb-2">Payment Session Expired</h2>
+                    <p className="text-slate-600 mb-6">
+                        Your payment session has expired or is invalid. Please start a new checkout.
+                    </p>
+                    <Button
+                        onClick={() => router.push('/checkout')}
+                        className="bg-[#A12717] hover:bg-[#8a2113] text-white px-8"
+                    >
+                        Return to Checkout
+                    </Button>
+                </div>
             </div>
         );
     }
 
-    if (sessionExpired) {
+    // Loading state
+    if (authLoading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-xl p-8 shadow-md border border-slate-200 max-w-md w-full text-center">
-                    <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-                    <h2 className="text-xl font-bold text-slate-900 mb-2">Session Expired</h2>
-                    <p className="text-slate-600 mb-6">Your payment session has expired. Please try checking out again.</p>
-                    <Button onClick={handleBackToCheckout} className="bg-[#A12717] hover:bg-[#8a2113] text-white px-8">
-                        Back to Checkout
-                    </Button>
-                </div>
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
             </div>
         );
     }
@@ -465,24 +150,29 @@ const PaymentPageContent = () => {
             <div className="mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="mb-6">
-                    <button onClick={handleBackToCheckout} className="text-slate-500 hover:text-slate-700 text-sm flex items-center gap-2 mb-4">
-                        <ArrowLeft className="w-4 h-4" />
+                    <button
+                        onClick={handleBackToCheckout}
+                        className="flex items-center text-slate-600 hover:text-slate-900 mb-4"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to Checkout
                     </button>
                     <h1 className="text-2xl font-bold text-slate-900">Complete Your Payment</h1>
                 </div>
 
                 <div className="grid grid-cols-1 gap-8">
-                    {/* Payment Form Area */}
                     <div className="space-y-6">
-
-                        {/* Order Summary (Simplified View) */}
-                        <div className="bg-white rounded-xl p-4 border border-slate-200 mb-4 flex justify-between items-center">
+                        {/* Order Info */}
+                        <div className="bg-white rounded-xl p-4 border border-slate-200 flex justify-between items-center">
                             <div>
-                                <span className="text-slate-500 text-sm">Total Amount</span>
-                                <div className="text-2xl font-bold text-[#A12717]">${grandTotal.toFixed(2)}</div>
+                                <p className="text-sm text-slate-500">Total Amount</p>
+                                <p className="text-2xl font-bold text-[#A12717]">
+                                    ${grandTotal?.toFixed(2) || '0.00'}
+                                </p>
                             </div>
-                            <div className="text-sm text-slate-500">Order ID: #{paymentConfig?.orderId}</div>
+                            {displayOrderId && (
+                                <p className="text-sm text-slate-500">Order ID: #{displayOrderId}</p>
+                            )}
                         </div>
 
                         {/* Payment Container */}
@@ -493,31 +183,15 @@ const PaymentPageContent = () => {
                             </div>
 
                             <div className="p-6 relative min-h-[400px]">
+                                {/* GetPay renders its form into this div automatically */}
+                                {/* As per docs: just have this div, SDK auto-populates it */}
+                                <div id="checkout"></div>
 
-                                {/* GetPay renders its form into this div - MUST always be in DOM */}
-                                {/* Using hidden attribute as per GetPay docs - SDK should remove it */}
-                                <div
-                                    id="checkout"
-                                    className="min-h-[300px]"
-                                    hidden
-                                />
-
-                                {/* Loading overlay - shows on top while SDK loads */}
-                                {sdkLoading && (
+                                {/* Show loading state until SDK renders */}
+                                {!sdkLoaded && (
                                     <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-10">
                                         <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin mb-4" />
-                                        <p className="text-slate-500">Loading secure gateway...</p>
-                                    </div>
-                                )}
-
-                                {paymentError && (
-                                    <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-20 p-6 text-center">
-                                        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-                                        <h3 className="text-lg font-semibold text-slate-900 mb-2">Unavailable</h3>
-                                        <p className="text-slate-600 mb-6">{paymentError}</p>
-                                        <Button onClick={handleManualRetry} variant="outline">
-                                            Retry Connection
-                                        </Button>
+                                        <p className="text-slate-500">Loading payment form...</p>
                                     </div>
                                 )}
                             </div>
@@ -525,70 +199,16 @@ const PaymentPageContent = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Result Modal */}
-            <Dialog open={resultModal.isOpen} onOpenChange={(open) => {
-                if (!open && resultModal.type === 'error') {
-                    setResultModal(prev => ({ ...prev, isOpen: false }));
-                }
-            }}>
-                <DialogContent className="sm:max-w-md text-center">
-                    <DialogHeader>
-                        <div className="mx-auto mb-4">
-                            {resultModal.type === 'success' ? (
-                                <CheckCircle2 className="w-12 h-12 text-green-600" />
-                            ) : (
-                                <XCircle className="w-12 h-12 text-red-600" />
-                            )}
-                        </div>
-                        <DialogTitle className={resultModal.type === 'success' ? 'text-green-700' : 'text-red-700'}>
-                            {resultModal.type === 'success' ? 'Payment Successful' : 'Payment Failed'}
-                        </DialogTitle>
-                        <DialogDescription className="text-left space-y-2">
-                            <p>{resultModal.message}</p>
-                            {resultModal.type === 'error' && (
-                                <div className="mt-4 p-3 bg-amber-50 rounded-lg text-sm text-amber-800">
-                                    <p className="font-semibold mb-1">What to do:</p>
-                                    <ul className="list-disc list-inside space-y-1 text-xs">
-                                        <li>Check your internet connection</li>
-                                        <li>Verify your card details with your bank</li>
-                                        <li>Try a different payment method</li>
-                                        <li>Contact support if the issue persists</li>
-                                    </ul>
-                                </div>
-                            )}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="sm:justify-center flex gap-2">
-                        {resultModal.type === 'error' && (
-                            <Button
-                                onClick={() => {
-                                    setResultModal(prev => ({ ...prev, isOpen: false }));
-                                    handleManualRetry();
-                                }}
-                                variant="outline"
-                            >
-                                Try Again
-                            </Button>
-                        )}
-                        <Button
-                            onClick={handleModalConfirm}
-                            className={resultModal.type === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
-                        >
-                            {resultModal.type === 'success' ? 'View Order' : 'Back to Checkout'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 };
 
+// Wrap in Suspense for useSearchParams
 const PaymentPage = () => {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="w-8 h-8 border-4 border-slate-200 border-t-[#A12717] rounded-full animate-spin" />
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
             </div>
         }>
             <PaymentPageContent />
