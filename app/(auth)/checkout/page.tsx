@@ -339,21 +339,18 @@ const Checkout = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* GetPay checkout container - hidden until SDK initializes */}
-            {showPaymentForm && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto">
-                        <div className="bg-blue-600 p-4 text-white rounded-t-2xl flex justify-between items-center">
-                            <span className="font-semibold">Complete Payment</span>
-                            {currentOrderId && <span className="text-sm opacity-75">Order #{currentOrderId}</span>}
-                        </div>
-                        <div className="p-6">
-                            <div id="checkout"></div>
-                        </div>
+            {/* Single GetPay checkout div - SDK renders here */}
+            <div className={showPaymentForm ? "fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" : "hidden"}>
+                <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto">
+                    <div className="bg-blue-600 p-4 text-white rounded-t-2xl flex justify-between items-center">
+                        <span className="font-semibold">Complete Payment</span>
+                        {currentOrderId && <span className="text-sm opacity-75">Order #{currentOrderId}</span>}
+                    </div>
+                    <div className="p-6">
+                        <div id="checkout"></div>
                     </div>
                 </div>
-            )}
-            {!showPaymentForm && <div id="checkout" hidden></div>}
+            </div>
         </div>
     );
 };
