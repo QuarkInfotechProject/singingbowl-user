@@ -98,35 +98,45 @@ const PaymentPageContent = () => {
                 // Initialize GetPay
                 const storedConfig = sessionStorage.getItem('paymentConfig');
                 const config = JSON.parse(storedConfig || '{}');
-                console.log('PaymentPage: Config loaded', config);
+                const isSdkInitialized = sessionStorage.getItem('sdkInitialized') === 'true';
 
-                const getPayOptions = {
-                    ...config.getPayOptions,
-                    websiteDomain: window.location.origin,
-                    callbackUrl: {
-                        successUrl: `${window.location.origin}/api/user/orders/success/getPay/${config.orderId}`,
-                        failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${config.orderId}`
-                    },
-                    onSuccess: (data: any) => {
-                        console.log('PaymentPage: onSuccess fired', data);
-                        setSdkStatus('success');
+                if (isSdkInitialized) {
+                    // Scenario A: Already Initialized (e.g. after reload)
+                    console.log('PaymentPage: SDK already initialized. Waiting for auto-render...');
+                    setSdkStatus('success');
+                } else {
+                    // Scenario B: First Time Initialization
+                    console.log('PaymentPage: First time init. Config loaded', config);
 
-                        // Check DOM
-                        const div = document.getElementById('checkout');
-                        console.log('PaymentPage: DOM content length:', div?.innerHTML?.length);
-                    },
-                    onError: (error: any) => {
-                        console.error('PaymentPage: onError fired:', error);
-                        setErrorMessage(error?.error || error?.message || 'Payment initialization failed');
-                        setSdkStatus('error');
-                    }
-                };
+                    const getPayOptions = {
+                        ...config.getPayOptions,
+                        websiteDomain: window.location.origin,
+                        callbackUrl: {
+                            successUrl: `${window.location.origin}/api/user/orders/success/getPay/${config.orderId}`,
+                            failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${config.orderId}`
+                        },
+                        onSuccess: (data: any) => {
+                            console.log('PaymentPage: onSuccess fired', data);
+                            // Mark as initialized so next load we skip this and just render
+                            sessionStorage.setItem('sdkInitialized', 'true');
 
-                console.log('PaymentPage: Calling initialize()');
-                const getPay = new (window as any).GetPay(getPayOptions);
-                getPay.initialize();
+                            // Force a reload to trigger the SDK's auto-render on fresh page load
+                            console.log('PaymentPage: Reloading page to force render...');
+                            window.location.reload();
+                        },
+                        onError: (error: any) => {
+                            console.error('PaymentPage: onError fired:', error);
+                            setErrorMessage(error?.error || error?.message || 'Payment initialization failed');
+                            setSdkStatus('error');
+                        }
+                    };
 
-                // Poll for changes in the #checkout div for 5 seconds
+                    console.log('PaymentPage: Calling initialize()');
+                    const getPay = new (window as any).GetPay(getPayOptions);
+                    getPay.initialize();
+                }
+
+                // Poll for changes in the #checkout div for 5 seconds (to verify render)
                 let checks = 0;
                 const interval = setInterval(() => {
                     checks++;
@@ -167,6 +177,7 @@ const PaymentPageContent = () => {
     const handleBackToCheckout = () => {
         sessionStorage.removeItem('paymentConfig');
         sessionStorage.removeItem('currentOrderId');
+        sessionStorage.removeItem('sdkInitialized');
         router.push('/checkout');
     };
 
