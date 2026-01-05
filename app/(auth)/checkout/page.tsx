@@ -166,6 +166,13 @@ const Checkout = () => {
                 await waitForGetPay();
                 console.log('GetPay SDK ready, initializing...');
 
+                // CRITICAL: Show modal BEFORE init - SDK checks visibility
+                setCurrentOrderId(orderResponse.orderId);
+                setShowPaymentForm(true);
+
+                // Small delay to let React render the visible modal
+                await new Promise(resolve => setTimeout(resolve, 100));
+
                 // DEBUG: Check DOM state before init
                 const checkoutBefore = document.getElementById('checkout');
                 console.log('=== BEFORE INIT ===');
@@ -191,8 +198,7 @@ const Checkout = () => {
                         console.log('checkout innerHTML length in onSuccess:', checkoutDiv?.innerHTML?.length);
                         console.log('checkout innerHTML preview:', checkoutDiv?.innerHTML?.substring(0, 200));
 
-                        setCurrentOrderId(orderResponse.orderId);
-                        setShowPaymentForm(true);
+                        // Modal already shown before init, just stop the loading state
                         setIsSubmitting(false);
                     },
                     onError: (error: any) => {
