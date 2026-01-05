@@ -100,61 +100,62 @@ const PaymentPageContent = () => {
                 const config = JSON.parse(storedConfig || '{}');
                 const isSdkInitialized = sessionStorage.getItem('sdkInitialized') === 'true';
 
-                if (isSdkInitialized) {
-                    // Scenario A: Already Initialized (e.g. after reload)
-                    console.log('PaymentPage: SDK already initialized. Waiting for auto-render...');
-                    setSdkStatus('success');
-                } else {
-                    // Scenario B: First Time Initialization
-                    console.log('PaymentPage: First time init. Config loaded', config);
+                console.log(`PaymentPage: Init status [Initialized=${isSdkInitialized}]`);
 
-                    const getPayOptions = {
-                        ...config.getPayOptions,
-                        websiteDomain: window.location.origin,
-                        callbackUrl: {
-                            successUrl: `${window.location.origin}/api/user/orders/success/getPay/${config.orderId}`,
-                            failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${config.orderId}`
-                        },
-                        onSuccess: (data: any) => {
-                            console.log('PaymentPage: onSuccess fired', data);
-                            // Mark as initialized so next load we skip this and just render
-                            sessionStorage.setItem('sdkInitialized', 'true');
+                const getPayOptions = {
+                    ...config.getPayOptions,
+                    websiteDomain: window.location.origin,
+                    callbackUrl: {
+                        successUrl: `${window.location.origin}/api/user/orders/success/getPay/${config.orderId}`,
+                        failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${config.orderId}`
+                    },
+                    onSuccess: (data: any) => {
+                        console.log('PaymentPage: onSuccess fired', data);
+                        setSdkStatus('success');
 
-                            // Force a reload to trigger the SDK's auto-render on fresh page load
-                            console.log('PaymentPage: Reloading page to force render...');
-                            window.location.reload();
-                        },
-                        onError: (error: any) => {
-                            console.error('PaymentPage: onError fired:', error);
-                            setErrorMessage(error?.error || error?.message || 'Payment initialization failed');
-                            setSdkStatus('error');
+                        // Strategy: Reload SDK script to force auto-render
+                        console.log('PaymentPage: Reloading SDK script to trigger auto-render...');
+
+                        const oldScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
+                        if (oldScript) {
+                            oldScript.remove();
+                            console.log('PaymentPage: Old script removed');
                         }
-                    };
 
-                    console.log('PaymentPage: Calling initialize()');
+                        // Re-add script
+                        const script = document.createElement('script');
+                        script.src = GETPAY_SDK_URL;
+                        script.async = true;
+                        script.onload = () => console.log('PaymentPage: SDK script reloaded');
+                        document.body.appendChild(script);
+                    },
+                    onError: (error: any) => {
+                        console.error('PaymentPage: onError fired:', error);
+                        setErrorMessage(error?.error || error?.message || 'Payment initialization failed');
+                        setSdkStatus('error');
+                    }
+                };
+
+                console.log('PaymentPage: Calling initialize()');
+                try {
                     const getPay = new (window as any).GetPay(getPayOptions);
                     getPay.initialize();
+                } catch (e) {
+                    console.error('PaymentPage: CRITICAL - initialize() threw error:', e);
                 }
 
-                // Poll for changes in the #checkout div for 5 seconds (to verify render)
+                // Poll for changes in the #checkout div
                 let checks = 0;
                 const interval = setInterval(() => {
                     checks++;
                     const div = document.getElementById('checkout');
                     if (div) {
-                        const style = window.getComputedStyle(div);
-                        const rect = div.getBoundingClientRect();
                         console.log(`PaymentPage [${checks * 0.5}s]:`, {
                             innerHTML: div.innerHTML.length,
                             children: div.children.length,
-                            display: style.display,
-                            visibility: style.visibility,
-                            width: rect.width,
-                            height: rect.height,
-                            iframes: document.querySelectorAll('iframe').length
+                            display: window.getComputedStyle(div).display
                         });
 
-                        // If content appears, stop checking
                         if (div.children.length > 0 || div.innerHTML.length > 0) {
                             console.log('PaymentPage: Content generated! Stopping checks.');
                             clearInterval(interval);
