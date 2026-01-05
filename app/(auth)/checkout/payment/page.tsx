@@ -205,9 +205,15 @@ const PaymentPageContent = () => {
                     return;
                 }
 
+                // Debug: Log checkout div state before SDK init
+                const checkoutDiv = document.getElementById("checkout");
+                console.log("=== Before GetPay.initialize() ===");
+                console.log("Checkout div exists:", !!checkoutDiv);
+                console.log("Checkout div innerHTML length:", checkoutDiv?.innerHTML?.length);
+
                 const getPayOptions = {
                     ...paymentConfig.getPayOptions,
-                    containerId: "checkout",
+                    // NOTE: Do NOT pass containerId - GetPay automatically looks for id="checkout"
                     isRedirect: false,
                     websiteDomain: window.location.origin,
 
@@ -313,6 +319,14 @@ const PaymentPageContent = () => {
                 console.log("Initializing GetPay with Order ID:", paymentConfig.orderId);
                 const getPay = new (window as any).GetPay(getPayOptions);
                 getPay.initialize();
+
+                // Debug: Log checkout div state immediately after SDK init
+                setTimeout(() => {
+                    const divAfterInit = document.getElementById("checkout");
+                    console.log("=== 100ms After GetPay.initialize() ===");
+                    console.log("Checkout div innerHTML length:", divAfterInit?.innerHTML?.length);
+                    console.log("Checkout div innerHTML preview:", divAfterInit?.innerHTML?.substring(0, 200));
+                }, 100);
 
                 sdkInitializedRef.current = true;
                 // Note: setSdkLoading(false) is now called in onSuccess callback
@@ -463,6 +477,7 @@ const PaymentPageContent = () => {
                             <div className="p-6 relative min-h-[400px]">
 
                                 {/* GetPay renders its form into this div - MUST always be in DOM */}
+                                {/* Using hidden attribute as per GetPay docs - SDK should remove it */}
                                 <div
                                     id="checkout"
                                     className="min-h-[300px]"
