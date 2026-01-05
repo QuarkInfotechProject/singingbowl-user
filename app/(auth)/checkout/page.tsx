@@ -21,8 +21,6 @@ import OrderSummary from "./components/OrderSummary";
 
 type PaymentMethod = "cod" | "getPay";
 
-const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL || 'https://minio.finpos.global/getpay-cdn/webcheckout/bundle.js';
-
 const Checkout = () => {
     const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
     const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -30,7 +28,6 @@ const Checkout = () => {
     const [orderError, setOrderError] = useState<string | null>(null);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("cod");
-    const [showPaymentInit, setShowPaymentInit] = useState(false);
     const checkoutInProgressRef = useRef(false);
 
     const { cartItems, isLoading, clearCart, appliedCoupon } = useCart();
@@ -42,63 +39,6 @@ const Checkout = () => {
         sessionStorage.removeItem('currentOrderId');
         checkoutInProgressRef.current = false;
     }, []);
-
-    useEffect(() => {
-        if (selectedPaymentMethod === 'getPay') {
-            const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
-            if (!existingScript) {
-                const script = document.createElement('script');
-                script.src = GETPAY_SDK_URL;
-                script.async = true;
-                document.body.appendChild(script);
-            }
-        }
-    }, [selectedPaymentMethod]);
-
-    const waitForGetPay = (): Promise<void> => {
-        return new Promise((resolve, reject) => {
-            let attempts = 0;
-            const check = () => {
-                if ((window as any).GetPay) {
-                    resolve();
-                } else if (attempts > 50) {
-                    reject(new Error('GetPay SDK failed to load'));
-                } else {
-                    attempts++;
-                    setTimeout(check, 100);
-                }
-            };
-            check();
-        });
-    };
-
-    const initializeGetPay = async (orderResponse: any) => {
-        await waitForGetPay();
-
-        setShowPaymentInit(true);
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        const getPayOptions = {
-            ...orderResponse.getPayOptions,
-            websiteDomain: window.location.origin,
-            callbackUrl: {
-                successUrl: `${window.location.origin}/api/user/orders/success/getPay/${orderResponse.orderId}`,
-                failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${orderResponse.orderId}`
-            },
-            onSuccess: () => {
-                window.location.href = `/checkout/payment?orderId=${orderResponse.orderId}`;
-            },
-            onError: (error: any) => {
-                setShowPaymentInit(false);
-                setOrderError('Payment initialization failed: ' + (error?.error || error?.message || 'Unknown error'));
-                setIsSubmitting(false);
-                checkoutInProgressRef.current = false;
-            }
-        };
-
-        const getPay = new (window as any).GetPay(getPayOptions);
-        getPay.initialize();
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -142,6 +82,7 @@ const Checkout = () => {
             }
 
             if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
+                // Save complete configuration for payment page to use for initialization
                 const config = {
                     ...orderResponse,
                     addressUuid: selectedAddress?.uuid,
@@ -150,7 +91,8 @@ const Checkout = () => {
                 sessionStorage.setItem('paymentConfig', JSON.stringify(config));
                 sessionStorage.setItem('currentOrderId', String(orderResponse.orderId));
 
-                await initializeGetPay(orderResponse);
+                // Redirect immediately to payment page - initialization will happen there
+                router.push(`/checkout/payment?orderId=${orderResponse.orderId}`);
             } else {
                 throw new Error("Invalid payment configuration from server");
             }
@@ -274,18 +216,6 @@ const Checkout = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            {showPaymentInit && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-8 text-center">
-                        <Loader2 className="w-10 h-10 animate-spin text-[#A12717] mx-auto mb-4" />
-                        <p className="text-slate-700 font-medium">Initializing payment...</p>
-                        <p className="text-slate-500 text-sm mt-2">Please wait while we set up your secure payment</p>
-                        <div id="checkout" className="mt-4"></div>
-                    </div>
-                </div>
-            )}
-            {!showPaymentInit && <div id="checkout" className="hidden"></div>}
         </div>
     );
 };

@@ -1,6 +1,5 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { CreditCard, ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
@@ -11,9 +10,11 @@ import { Suspense } from 'react';
 const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL || 'https://minio.finpos.global/getpay-cdn/webcheckout/bundle.js';
 
 const PaymentPageContent = () => {
-    const [sdkLoaded, setSdkLoaded] = useState(false);
+    const [sdkStatus, setSdkStatus] = useState<'loading' | 'ready' | 'initializing' | 'success' | 'error'>('loading');
     const [sessionExpired, setSessionExpired] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [orderId, setOrderId] = useState<string | null>(null);
+    const hasInitializedRef = useRef(false);
 
     const { isLoggedIn, isLoading: authLoading } = useAuth();
     const router = useRouter();
@@ -21,6 +22,7 @@ const PaymentPageContent = () => {
     const searchParams = useSearchParams();
     const orderIdParam = searchParams.get('orderId');
 
+    // 1. Validate Session
     useEffect(() => {
         const stored = sessionStorage.getItem('paymentConfig');
         if (!stored) {
@@ -40,28 +42,87 @@ const PaymentPageContent = () => {
         }
     }, [orderIdParam]);
 
+    // 2. Auth Check
     useEffect(() => {
         if (!authLoading && !isLoggedIn) {
             router.push("/login?redirect=/checkout");
         }
     }, [isLoggedIn, authLoading, router]);
 
+    // 3. Load SDK & Initialize
     useEffect(() => {
-        if (sessionExpired) return;
+        if (sessionExpired || hasInitializedRef.current || !orderId) return;
 
-        const loadSdk = () => {
-            const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
-            if (existingScript) existingScript.remove();
+        // Function to actually run the initialization
+        const runInitialization = async () => {
+            hasInitializedRef.current = true;
+            setSdkStatus('initializing');
 
-            const script = document.createElement('script');
-            script.src = GETPAY_SDK_URL;
-            script.async = true;
-            script.onload = () => setSdkLoaded(true);
-            document.body.appendChild(script);
+            try {
+                // Wait for SDK script to load
+                await new Promise<void>((resolve, reject) => {
+                    const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
+                    if (existingScript) {
+                        resolve();
+                        return;
+                    }
+
+                    const script = document.createElement('script');
+                    script.src = GETPAY_SDK_URL;
+                    script.async = true;
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error('Failed to load payment SDK'));
+                    document.body.appendChild(script);
+                });
+
+                // Wait for GetPay object
+                await new Promise<void>((resolve, reject) => {
+                    let attempts = 0;
+                    const check = () => {
+                        if ((window as any).GetPay) resolve();
+                        else if (attempts > 50) reject(new Error('GetPay SDK failed to initialize'));
+                        else {
+                            attempts++;
+                            setTimeout(check, 100);
+                        }
+                    };
+                    check();
+                });
+
+                // Initialize GetPay
+                const storedConfig = sessionStorage.getItem('paymentConfig');
+                const config = JSON.parse(storedConfig || '{}');
+
+                const getPayOptions = {
+                    ...config.getPayOptions,
+                    websiteDomain: window.location.origin,
+                    callbackUrl: {
+                        successUrl: `${window.location.origin}/api/user/orders/success/getPay/${config.orderId}`,
+                        failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${config.orderId}`
+                    },
+                    onSuccess: () => {
+                        setSdkStatus('success');
+                    },
+                    onError: (error: any) => {
+                        console.error('GetPay error:', error);
+                        setErrorMessage(error?.error || error?.message || 'Payment initialization failed');
+                        setSdkStatus('error');
+                    }
+                };
+
+                const getPay = new (window as any).GetPay(getPayOptions);
+                getPay.initialize();
+
+            } catch (error: any) {
+                console.error('Initialization failed:', error);
+                setErrorMessage(error.message);
+                setSdkStatus('error');
+            }
         };
 
-        loadSdk();
-    }, [sessionExpired]);
+        runInitialization();
+
+    }, [sessionExpired, orderId]);
 
     const handleBackToCheckout = () => {
         sessionStorage.removeItem('paymentConfig');
@@ -130,12 +191,22 @@ const PaymentPageContent = () => {
                     </div>
 
                     <div className="p-6 min-h-[500px] relative">
+                        {/* Always visible div for SDK to render into */}
                         <div id="checkout" className="w-full"></div>
 
-                        {!sdkLoaded && (
-                            <div className="absolute inset-0 bg-white flex flex-col items-center justify-center">
+                        {(sdkStatus === 'loading' || sdkStatus === 'initializing') && (
+                            <div className="absolute inset-0 bg-white/90 z-10 flex flex-col items-center justify-center">
                                 <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
-                                <p className="text-slate-500">Loading payment form...</p>
+                                <p className="text-slate-500">Loading secure payment form...</p>
+                            </div>
+                        )}
+
+                        {sdkStatus === 'error' && (
+                            <div className="absolute inset-0 bg-white z-20 flex flex-col items-center justify-center text-center p-6">
+                                <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+                                <h3 className="text-lg font-bold text-slate-900 mb-2">Payment Error</h3>
+                                <p className="text-slate-600 mb-6">{errorMessage}</p>
+                                <Button onClick={handleBackToCheckout} variant="outline">Try Again</Button>
                             </div>
                         )}
                     </div>
