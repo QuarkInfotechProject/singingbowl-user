@@ -325,8 +325,25 @@ const PaymentPageContent = () => {
                     const divAfterInit = document.getElementById("checkout");
                     console.log("=== 2 SECONDS After GetPay.initialize() ===");
                     console.log("Checkout div innerHTML length:", divAfterInit?.innerHTML?.length);
-                    console.log("Checkout div innerHTML preview:", divAfterInit?.innerHTML?.substring(0, 500));
                     console.log("Checkout div hidden attr:", divAfterInit?.hidden);
+
+                    // Check for any iframes created by SDK
+                    const iframes = document.querySelectorAll('iframe');
+                    console.log("Total iframes on page:", iframes.length);
+                    iframes.forEach((iframe, i) => {
+                        console.log(`Iframe ${i}:`, iframe.id, iframe.src?.substring(0, 100), iframe.className);
+                    });
+
+                    // Check for any getpay-related elements
+                    const getpayElements = document.querySelectorAll('[id*="getpay"], [class*="getpay"], [id*="GetPay"], [class*="GetPay"]');
+                    console.log("GetPay-related elements:", getpayElements.length);
+
+                    // Log body's direct children count
+                    console.log("Body direct children:", document.body.children.length);
+
+                    // Check document for any new divs with payment-related IDs
+                    const paymentDivs = document.querySelectorAll('[id*="payment"], [id*="pay"], [id*="nchl"]');
+                    console.log("Payment-related divs:", Array.from(paymentDivs).map(el => el.id));
                 }, 2000);
 
                 sdkInitializedRef.current = true;
