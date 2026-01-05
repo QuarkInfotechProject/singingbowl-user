@@ -1,9 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import {
-    ChevronRight,
-    Loader2,
-} from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -24,7 +21,6 @@ import OrderSummary from "./components/OrderSummary";
 
 type PaymentMethod = "cod" | "getPay";
 
-// GetPay SDK URL
 const GETPAY_SDK_URL = process.env.NEXT_PUBLIC_GETPAY_SDK_URL || 'https://minio.finpos.global/getpay-cdn/webcheckout/bundle.js';
 
 const Checkout = () => {
@@ -34,36 +30,18 @@ const Checkout = () => {
     const [orderError, setOrderError] = useState<string | null>(null);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("cod");
-    const [showPaymentForm, setShowPaymentForm] = useState(false);
-    const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
-
-    // Use a ref to track in-flight checkout - survives re-renders and prevents race conditions
     const checkoutInProgressRef = useRef(false);
 
-    const {
-        cartItems,
-        isLoading,
-        clearCart,
-        appliedCoupon
-    } = useCart();
+    const { cartItems, isLoading, clearCart, appliedCoupon } = useCart();
     const { isLoggedIn, isLoading: authLoading } = useAuth();
     const router = useRouter();
 
-    const handleAddressSelect = (address: Address | null) => {
-        setSelectedAddress(address);
-    };
-
-    // Clear any existing payment session data when entering checkout
     useEffect(() => {
-        console.log("Checkout mounted: Clearing partial payment session storage");
         sessionStorage.removeItem('paymentConfig');
-        sessionStorage.removeItem('lastGetPayEvent');
         sessionStorage.removeItem('currentOrderId');
-        // Reset checkout guard to allow fresh checkout attempt
         checkoutInProgressRef.current = false;
     }, []);
 
-    // Load GetPay SDK script on mount (required for initialize() call)
     useEffect(() => {
         if (selectedPaymentMethod === 'getPay') {
             const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
@@ -71,11 +49,51 @@ const Checkout = () => {
                 const script = document.createElement('script');
                 script.src = GETPAY_SDK_URL;
                 script.async = true;
-                script.onload = () => console.log('GetPay script loaded on checkout page');
                 document.body.appendChild(script);
             }
         }
     }, [selectedPaymentMethod]);
+
+    const waitForGetPay = (): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const check = () => {
+                if ((window as any).GetPay) {
+                    resolve();
+                } else if (attempts > 50) {
+                    reject(new Error('GetPay SDK failed to load'));
+                } else {
+                    attempts++;
+                    setTimeout(check, 100);
+                }
+            };
+            check();
+        });
+    };
+
+    const initializeGetPay = async (orderResponse: any) => {
+        await waitForGetPay();
+
+        const getPayOptions = {
+            ...orderResponse.getPayOptions,
+            websiteDomain: window.location.origin,
+            callbackUrl: {
+                successUrl: `${window.location.origin}/api/user/orders/success/getPay/${orderResponse.orderId}`,
+                failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${orderResponse.orderId}`
+            },
+            onSuccess: () => {
+                window.location.href = `/checkout/payment?orderId=${orderResponse.orderId}`;
+            },
+            onError: (error: any) => {
+                setOrderError('Payment initialization failed: ' + (error?.error || error?.message || 'Unknown error'));
+                setIsSubmitting(false);
+                checkoutInProgressRef.current = false;
+            }
+        };
+
+        const getPay = new (window as any).GetPay(getPayOptions);
+        getPay.initialize();
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -91,19 +109,12 @@ const Checkout = () => {
             return;
         }
 
-        // CRITICAL: Prevent duplicate submissions using ref (sync check before any async work)
-        if (checkoutInProgressRef.current) {
-            console.warn('Checkout already in progress, ignoring duplicate submission');
-            return;
-        }
+        if (checkoutInProgressRef.current) return;
         checkoutInProgressRef.current = true;
 
         try {
             setIsSubmitting(true);
-
-            // Clear ALL payment-related sessionStorage to prevent stale data
             sessionStorage.removeItem('paymentConfig');
-            sessionStorage.removeItem('lastGetPayEvent');
             sessionStorage.removeItem('currentOrderId');
 
             const orderData = {
@@ -112,18 +123,12 @@ const Checkout = () => {
                 note: "",
                 paymentMethod: selectedPaymentMethod,
                 termsAndConditions: "true",
-                _t: Date.now() // Cache buster to ensure fresh request
+                _t: Date.now()
             };
 
-            // Create Order on Backend
-            console.log("Creating order with data:", orderData);
             const response = await createOrder(orderData);
-
-            // Handle response wrapping
             const orderResponse = response.data || response;
-            console.log("Order Created Response:", orderResponse);
 
-            // COD FLOW: Show success directly
             if (selectedPaymentMethod === "cod") {
                 clearCart();
                 setShowSuccessDialog(true);
@@ -131,12 +136,7 @@ const Checkout = () => {
                 return;
             }
 
-            // GetPay FLOW: Initialize SDK and redirect to payment page
             if ((orderResponse.paymentMethod === "getpay" || orderResponse.paymentMethod === "getPay") && orderResponse.getPayOptions) {
-                console.log('=== Order Created Debug ===');
-                console.log('Fresh Order ID from Server:', orderResponse.orderId);
-
-                // Store payment config for payment page reference
                 const config = {
                     ...orderResponse,
                     addressUuid: selectedAddress?.uuid,
@@ -145,121 +145,15 @@ const Checkout = () => {
                 sessionStorage.setItem('paymentConfig', JSON.stringify(config));
                 sessionStorage.setItem('currentOrderId', String(orderResponse.orderId));
 
-                // Wait for GetPay script to be ready
-                const waitForGetPay = () => {
-                    return new Promise<void>((resolve, reject) => {
-                        let attempts = 0;
-                        const check = () => {
-                            if ((window as any).GetPay) {
-                                resolve();
-                            } else if (attempts > 50) {
-                                reject(new Error('GetPay SDK failed to load'));
-                            } else {
-                                attempts++;
-                                setTimeout(check, 100);
-                            }
-                        };
-                        check();
-                    });
-                };
-
-                await waitForGetPay();
-                console.log('GetPay SDK ready, initializing...');
-
-                // CRITICAL: Show modal BEFORE init - SDK checks visibility
-                setCurrentOrderId(orderResponse.orderId);
-                setShowPaymentForm(true);
-
-                // Small delay to let React render the visible modal
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-                // DEBUG: Check DOM state before init
-                const checkoutBefore = document.getElementById('checkout');
-                console.log('=== BEFORE INIT ===');
-                console.log('checkout div exists:', !!checkoutBefore);
-                console.log('checkout computed style display:', checkoutBefore ? getComputedStyle(checkoutBefore).display : 'N/A');
-                console.log('checkout computed style visibility:', checkoutBefore ? getComputedStyle(checkoutBefore).visibility : 'N/A');
-                console.log('checkout offsetParent (null = hidden):', checkoutBefore?.offsetParent);
-                console.log('checkout innerHTML length:', checkoutBefore?.innerHTML?.length);
-
-                // Initialize GetPay SDK
-                const getPayOptions = {
-                    ...orderResponse.getPayOptions,
-                    websiteDomain: window.location.origin,
-                    callbackUrl: {
-                        successUrl: `${window.location.origin}/api/user/orders/success/getPay/${orderResponse.orderId}`,
-                        failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${orderResponse.orderId}`
-                    },
-                    onSuccess: (data: any) => {
-                        console.log('=== onSuccess CALLBACK ===');
-                        console.log('Data received:', data);
-
-                        const checkoutDiv = document.getElementById('checkout');
-                        console.log('checkout innerHTML length in onSuccess:', checkoutDiv?.innerHTML?.length);
-
-                        // SDK stores session data during initialize()
-                        // Reload the script to trigger auto-render from cached session
-                        console.log('Reloading SDK script to trigger auto-render...');
-                        const oldScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
-                        if (oldScript) oldScript.remove();
-
-                        const newScript = document.createElement('script');
-                        newScript.src = GETPAY_SDK_URL;
-                        newScript.async = true;
-                        newScript.onload = () => {
-                            console.log('SDK script reloaded, checking for render...');
-                            setTimeout(() => {
-                                const div = document.getElementById('checkout');
-                                console.log('After reload - innerHTML length:', div?.innerHTML?.length);
-                                console.log('After reload - iframes:', document.querySelectorAll('iframe').length);
-                            }, 1000);
-                        };
-                        document.body.appendChild(newScript);
-
-                        setIsSubmitting(false);
-                    },
-                    onError: (error: any) => {
-                        console.error('=== onError CALLBACK ===');
-                        console.error('Error:', error);
-                        setOrderError('Payment initialization failed: ' + (error?.error || error?.message || 'Unknown error'));
-                        setIsSubmitting(false);
-                        checkoutInProgressRef.current = false;
-                    }
-                };
-
-                console.log('Initializing GetPay with options:', getPayOptions);
-                const getPay = new (window as any).GetPay(getPayOptions);
-                console.log('GetPay instance created:', getPay);
-                console.log('GetPay methods:', Object.keys(getPay));
-
-                getPay.initialize();
-                console.log('initialize() called');
-
-                // Check DOM state after 1s, 3s, 5s
-                [1000, 3000, 5000].forEach(delay => {
-                    setTimeout(() => {
-                        const div = document.getElementById('checkout');
-                        console.log(`=== ${delay / 1000}s AFTER INIT ===`);
-                        console.log('innerHTML length:', div?.innerHTML?.length);
-                        console.log('innerHTML preview:', div?.innerHTML?.substring(0, 300));
-                        console.log('iframes on page:', document.querySelectorAll('iframe').length);
-                        // List all iframes
-                        document.querySelectorAll('iframe').forEach((f, i) => {
-                            console.log(`iframe ${i}:`, f.id, f.src?.substring(0, 80));
-                        });
-                    }, delay);
-                });
-
-                // Don't reset submitting state here - let onSuccess/onError handle it
+                await initializeGetPay(orderResponse);
             } else {
-                throw new Error("Invalid payment configuration from server - Missing GetPay options");
+                throw new Error("Invalid payment configuration from server");
             }
 
         } catch (error: any) {
-            console.error("Order creation failed:", error);
             setOrderError(error.response?.data?.error || error.response?.data?.message || "Failed to place order. Please try again.");
             setIsSubmitting(false);
-            checkoutInProgressRef.current = false; // Allow retry on error
+            checkoutInProgressRef.current = false;
         }
     };
 
@@ -279,28 +173,19 @@ const Checkout = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50">
-            {/* Main Content */}
             <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-8 md:py-12">
-
-                {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Checkout</h1>
                     <p className="text-slate-500 mt-2">Complete your order by providing delivery and payment details.</p>
                 </div>
 
-                {/* Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-
-                    {/* LEFT COLUMN: Checkout Form */}
                     <div className="lg:col-span-2 space-y-6">
-
-                        {/* Shipping Information */}
                         <AddressSection
-                            onAddressSelect={handleAddressSelect}
+                            onAddressSelect={setSelectedAddress}
                             selectedAddressId={selectedAddress?.uuid}
                         />
 
-                        {/* Payment Method Selection */}
                         {selectedAddress && (
                             <PaymentMethodSelector
                                 selectedMethod={selectedPaymentMethod}
@@ -308,10 +193,8 @@ const Checkout = () => {
                             />
                         )}
 
-                        {/* Terms & Submit */}
                         {selectedAddress && (
                             <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100">
-                                {/* Terms Checkbox */}
                                 <label className="flex items-start gap-3 cursor-pointer mb-6 group">
                                     <div className="relative flex items-center">
                                         <input
@@ -332,12 +215,10 @@ const Checkout = () => {
                                     </span>
                                 </label>
 
-                                {/* Submit Button */}
                                 <button
                                     onClick={handleSubmit}
                                     disabled={isSubmitting || cartItems.length === 0}
-                                    className={`w-full bg-[#A12717] text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-[#8a2113] active:scale-[0.99] flex items-center justify-center gap-2 ${isSubmitting || cartItems.length === 0 ? "opacity-50 cursor-not-allowed transform-none" : ""
-                                        }`}
+                                    className={`w-full bg-[#A12717] text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-[#8a2113] active:scale-[0.99] flex items-center justify-center gap-2 ${isSubmitting || cartItems.length === 0 ? "opacity-50 cursor-not-allowed transform-none" : ""}`}
                                 >
                                     {isSubmitting ? (
                                         <>
@@ -361,15 +242,12 @@ const Checkout = () => {
                         )}
                     </div>
 
-                    {/* RIGHT COLUMN: Order Summary (Sticky) */}
                     <div className="lg:col-span-1">
                         <OrderSummary selectedPaymentMethod={selectedPaymentMethod} />
                     </div>
-
                 </div>
             </div>
 
-            {/* Success Dialog (COD only) */}
             <Dialog open={showSuccessDialog} onOpenChange={() => { }}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
@@ -392,18 +270,7 @@ const Checkout = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* GetPay payment modal - uses opacity so SDK can render into #checkout while invisible */}
-            <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity ${showPaymentForm ? "bg-black/50" : "opacity-0 pointer-events-none"}`}>
-                <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto">
-                    <div className="bg-blue-600 p-4 text-white rounded-t-2xl flex justify-between items-center">
-                        <span className="font-semibold">Complete Payment</span>
-                        {currentOrderId && <span className="text-sm opacity-75">Order #{currentOrderId}</span>}
-                    </div>
-                    <div className="p-6 min-h-[600px]">
-                        <div id="checkout" className="!flex"></div>
-                    </div>
-                </div>
-            </div>
+            <div id="checkout" className="hidden"></div>
         </div>
     );
 };
