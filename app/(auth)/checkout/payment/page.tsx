@@ -124,40 +124,57 @@ const PaymentPageContent = () => {
         }
     }, [orderIdParam]);
 
-    // 1. Load Config on Mount & Validate against URL
+    const [configLoadAttempts, setConfigLoadAttempts] = useState(0);
+    const MAX_CONFIG_LOAD_ATTEMPTS = 3;
+
     useEffect(() => {
-        try {
-            const stored = sessionStorage.getItem('paymentConfig');
-            if (!stored) {
+        const loadConfig = () => {
+            try {
+                const stored = sessionStorage.getItem('paymentConfig');
+
+                if (!stored) {
+                    if (configLoadAttempts < MAX_CONFIG_LOAD_ATTEMPTS) {
+                        console.log(`Config not found, retry attempt ${configLoadAttempts + 1}/${MAX_CONFIG_LOAD_ATTEMPTS}`);
+                        setTimeout(() => {
+                            setConfigLoadAttempts(prev => prev + 1);
+                        }, 200);
+                        return;
+                    }
+                    console.error("Config not found after max retries, session expired");
+                    setSessionExpired(true);
+                    return;
+                }
+
+                const config = JSON.parse(stored);
+
+                // STRICT VALIDATION: URL Order ID must match Session Config Order ID
+                // Using loose comparison for robust handling of string vs number
+                if (orderIdParam && String(config.orderId) !== String(orderIdParam)) {
+                    console.error("Order ID Mismatch: Session has", config.orderId, "but URL requested", orderIdParam);
+                    setSessionExpired(true); // Force expire to prevent paying for wrong order
+                    return;
+                }
+
+                // Check if payment tokens are likely expired (CyberSource JWT expires in ~15 minutes)
+                // We use 14 minutes to give a small buffer
+                const SESSION_MAX_AGE_MS = 14 * 60 * 1000; // 14 minutes
+                if (config._timestamp && (Date.now() - config._timestamp > SESSION_MAX_AGE_MS)) {
+                    console.warn("Payment session too old, tokens likely expired. Age:",
+                        Math.round((Date.now() - config._timestamp) / 1000 / 60), "minutes");
+                    setSessionExpired(true);
+                    return;
+                }
+
+                console.log("Payment config loaded successfully for order:", config.orderId);
+                setPaymentConfig(config);
+            } catch (e) {
+                console.error("Config parse error", e);
                 setSessionExpired(true);
-                return;
             }
-            const config = JSON.parse(stored);
+        };
 
-            // STRICT VALIDATION: URL Order ID must match Session Config Order ID
-            // Using loose comparison for robust handling of string vs number
-            if (orderIdParam && String(config.orderId) !== String(orderIdParam)) {
-                console.error("Order ID Mismatch: Session has", config.orderId, "but URL requested", orderIdParam);
-                setSessionExpired(true); // Force expire to prevent paying for wrong order
-                return;
-            }
-
-            // Check if payment tokens are likely expired (CyberSource JWT expires in ~15 minutes)
-            // We use 14 minutes to give a small buffer
-            const SESSION_MAX_AGE_MS = 14 * 60 * 1000; // 14 minutes
-            if (config._timestamp && (Date.now() - config._timestamp > SESSION_MAX_AGE_MS)) {
-                console.warn("Payment session too old, tokens likely expired. Age:",
-                    Math.round((Date.now() - config._timestamp) / 1000 / 60), "minutes");
-                setSessionExpired(true);
-                return;
-            }
-
-            setPaymentConfig(config);
-        } catch (e) {
-            console.error("Config parse error", e);
-            setSessionExpired(true);
-        }
-    }, [orderIdParam]);
+        loadConfig();
+    }, [orderIdParam, configLoadAttempts]);
 
     // 2. Redirect if not logged in
     useEffect(() => {
