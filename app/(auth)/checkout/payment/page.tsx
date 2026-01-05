@@ -269,17 +269,14 @@ const PaymentPageContent = () => {
                         console.log("SDK initialized successfully. Payment form is ready.");
                         console.log("Config data received:", data);
 
+                        // Hide loading spinner now that the form is actually ready
+                        setSdkLoading(false);
+
                         // The SDK has been initialized successfully.
                         // The user will now see the payment form.
                         // After payment completion, GetPay will REDIRECT to:
                         // - successUrl (for successful payments)
                         // - failUrl (for failed/cancelled payments)
-                        // We don't need to do anything here except confirm initialization worked.
-
-                        // Note: The actual payment success is handled by:
-                        // 1. GetPay redirecting to our successUrl (/api/user/orders/success/getPay/{orderId})
-                        // 2. The backend verifying the payment with GetPay
-                        // 3. The backend redirecting to /checkout/order-success
                     },
 
                     onError: (error: any) => {
@@ -330,7 +327,8 @@ const PaymentPageContent = () => {
                 getPay.initialize();
 
                 sdkInitializedRef.current = true;
-                if (isMounted) setSdkLoading(false);
+                // Note: setSdkLoading(false) is now called in onSuccess callback
+                // because the form isn't actually ready until that callback fires
                 if (checkInterval) clearInterval(checkInterval);
 
             } catch (err: any) {
