@@ -34,6 +34,8 @@ const Checkout = () => {
     const [orderError, setOrderError] = useState<string | null>(null);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>("cod");
+    const [showPaymentForm, setShowPaymentForm] = useState(false);
+    const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
 
     // Use a ref to track in-flight checkout - survives re-renders and prevents race conditions
     const checkoutInProgressRef = useRef(false);
@@ -173,11 +175,15 @@ const Checkout = () => {
                         failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${orderResponse.orderId}`
                     },
                     onSuccess: () => {
-                        console.log('GetPay SDK initialized successfully, redirecting to payment page in 500ms...');
-                        // Add small delay to ensure SDK saves its internal state before redirect
-                        setTimeout(() => {
-                            window.location.href = `/checkout/payment?orderId=${orderResponse.orderId}`;
-                        }, 500);
+                        console.log('GetPay SDK initialized successfully, showing payment form');
+                        // Show payment form on the same page instead of redirecting
+                        const checkoutDiv = document.getElementById('checkout');
+                        if (checkoutDiv) {
+                            checkoutDiv.removeAttribute('hidden');
+                        }
+                        setCurrentOrderId(orderResponse.orderId);
+                        setShowPaymentForm(true);
+                        setIsSubmitting(false);
                     },
                     onError: (error: any) => {
                         console.error('GetPay initialization error:', error);
@@ -333,8 +339,21 @@ const Checkout = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* Hidden GetPay checkout container (required for SDK) */}
-            <div id="checkout" hidden></div>
+            {/* GetPay checkout container - hidden until SDK initializes */}
+            {showPaymentForm && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto">
+                        <div className="bg-blue-600 p-4 text-white rounded-t-2xl flex justify-between items-center">
+                            <span className="font-semibold">Complete Payment</span>
+                            {currentOrderId && <span className="text-sm opacity-75">Order #{currentOrderId}</span>}
+                        </div>
+                        <div className="p-6">
+                            <div id="checkout"></div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {!showPaymentForm && <div id="checkout" hidden></div>}
         </div>
     );
 };
