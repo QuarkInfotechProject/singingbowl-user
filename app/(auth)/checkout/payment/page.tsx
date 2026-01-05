@@ -57,14 +57,12 @@ const PaymentPageContent = () => {
         const runInitialization = async () => {
             hasInitializedRef.current = true;
             setSdkStatus('initializing');
-            console.log('PaymentPage: Starting initialization...');
 
             try {
                 // Wait for SDK script to load
                 await new Promise<void>((resolve, reject) => {
                     const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
                     if (existingScript) {
-                        console.log('PaymentPage: Script already exists');
                         resolve();
                         return;
                     }
@@ -73,7 +71,6 @@ const PaymentPageContent = () => {
                     script.src = GETPAY_SDK_URL;
                     script.async = true;
                     script.onload = () => {
-                        console.log('PaymentPage: Script loaded');
                         resolve();
                     };
                     script.onerror = () => reject(new Error('Failed to load payment SDK'));
@@ -93,14 +90,12 @@ const PaymentPageContent = () => {
                     };
                     check();
                 });
-                console.log('PaymentPage: GetPay object found');
 
                 // Initialize GetPay
                 const storedConfig = sessionStorage.getItem('paymentConfig');
                 const config = JSON.parse(storedConfig || '{}');
                 const isSdkInitialized = sessionStorage.getItem('sdkInitialized') === 'true';
 
-                console.log(`PaymentPage: Init status [Initialized=${isSdkInitialized}]`);
 
                 const getPayOptions = {
                     ...config.getPayOptions,
@@ -110,16 +105,12 @@ const PaymentPageContent = () => {
                         failUrl: `${window.location.origin}/checkout/payment-failed?orderId=${config.orderId}`
                     },
                     onSuccess: (data: any) => {
-                        console.log('PaymentPage: onSuccess fired', data);
                         setSdkStatus('success');
 
                         // Strategy: Reload SDK script to force auto-render
-                        console.log('PaymentPage: Reloading SDK script to trigger auto-render...');
-
                         const oldScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
                         if (oldScript) {
                             oldScript.remove();
-                            console.log('PaymentPage: Old script removed');
                         }
 
                         // Re-add script
@@ -136,7 +127,6 @@ const PaymentPageContent = () => {
                     }
                 };
 
-                console.log('PaymentPage: Calling initialize()');
                 try {
                     const getPay = new (window as any).GetPay(getPayOptions);
                     getPay.initialize();
@@ -149,15 +139,9 @@ const PaymentPageContent = () => {
                 const interval = setInterval(() => {
                     checks++;
                     const div = document.getElementById('checkout');
-                    if (div) {
-                        console.log(`PaymentPage [${checks * 0.5}s]:`, {
-                            innerHTML: div.innerHTML.length,
-                            children: div.children.length,
-                            display: window.getComputedStyle(div).display
-                        });
+                    if (div) {                        
 
                         if (div.children.length > 0 || div.innerHTML.length > 0) {
-                            console.log('PaymentPage: Content generated! Stopping checks.');
                             clearInterval(interval);
                         }
                     }

@@ -21,12 +21,16 @@ export async function POST(request: NextRequest) {
       const expiresAt = addDays(new Date(), 30);
       const cookieStore = await cookies();
 
+      const isProduction = process.env.NODE_ENV === "production";
+      const isHttps = process.env.SITE_ORIGIN?.startsWith("https://") || false;
+      const isSecure = isProduction || isHttps;
+
       cookieStore.set({
         name: "token",
         value: tokenValue,
         httpOnly: true,
-        sameSite: "strict",
-        secure: true,
+        sameSite: "lax",
+        secure: isSecure,
         path: "/",
         expires: expiresAt,
       });
