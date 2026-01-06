@@ -113,6 +113,11 @@ const PaymentPageContent = () => {
                         setSdkStatus('success');
 
                         // Strategy: Reload SDK script to force auto-render
+
+                        // Clear any existing form to prevent duplication
+                        const checkoutDiv = document.getElementById('checkout');
+                        if (checkoutDiv) checkoutDiv.innerHTML = '';
+
                         const oldScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
                         if (oldScript) {
                             oldScript.remove();
