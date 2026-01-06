@@ -59,12 +59,17 @@ const PaymentPageContent = () => {
             setSdkStatus('initializing');
 
             try {
+                // Clear the checkout container first
+                const checkoutDiv = document.getElementById('checkout');
+                if (checkoutDiv) checkoutDiv.innerHTML = '';
+
                 // Wait for SDK script to load
                 await new Promise<void>((resolve, reject) => {
+                    // Always remove existing script to ensure fresh initialization
                     const existingScript = document.querySelector(`script[src="${GETPAY_SDK_URL}"]`);
                     if (existingScript) {
-                        resolve();
-                        return;
+                        existingScript.remove();
+                        if ((window as any).GetPay) delete (window as any).GetPay;
                     }
 
                     const script = document.createElement('script');
@@ -139,7 +144,7 @@ const PaymentPageContent = () => {
                 const interval = setInterval(() => {
                     checks++;
                     const div = document.getElementById('checkout');
-                    if (div) {                        
+                    if (div) {
 
                         if (div.children.length > 0 || div.innerHTML.length > 0) {
                             clearInterval(interval);

@@ -80,8 +80,15 @@ const AuthContentInner = ({ initialMode = "login", onClose, isModal = false }: A
                 authLogin(response.user);
             }
 
-            if (onClose) onClose();
-            else router.push("/"); // fallback for standalone
+            if (onClose) {
+                onClose();
+            } else {
+                // Force a hard reload to ensure cookies and new session state are correctly recognized
+                // This fixes the issue where navigating to Cart immediately after login fails
+                const redirectParams = new URLSearchParams(window.location.search);
+                const redirectUrl = redirectParams.get('redirect') || '/';
+                window.location.href = redirectUrl;
+            }
         } catch (err: any) {
             const errorMessage = err?.response?.data?.error || err?.response?.data?.message || err?.message || "An error occurred. Please try again.";
             setError(errorMessage);

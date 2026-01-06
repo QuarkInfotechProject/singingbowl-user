@@ -133,6 +133,11 @@ const Checkout = () => {
                             selectedAddressId={selectedAddress?.uuid}
                         />
 
+                        {/* Mobile Order Summary - Visible only on mobile/tablet */}
+                        <div className="block lg:hidden">
+                            <OrderSummary selectedPaymentMethod={selectedPaymentMethod} />
+                        </div>
+
                         {selectedAddress && (
                             <PaymentMethodSelector
                                 selectedMethod={selectedPaymentMethod}
@@ -189,7 +194,7 @@ const Checkout = () => {
                         )}
                     </div>
 
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-1 hidden lg:block">
                         <OrderSummary selectedPaymentMethod={selectedPaymentMethod} />
                     </div>
                 </div>
