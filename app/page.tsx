@@ -16,7 +16,7 @@ const Home = () => {
           <ProductFeatures />
           <ProductCollection />
           {/* <BestSellers /> */}
-          <SingingBowlComponent />
+          {/* <SingingBowlComponent /> */}
           <WhySingingBowl />
           <CustomerReviews />
           <BlogGrid />
